@@ -1,6 +1,7 @@
 from flask_mail import Message
 from app import mail
 from flask import current_app, render_template_string
+import threading
 
 class EmailService:
     
@@ -21,7 +22,30 @@ class EmailService:
             return False
     
     @staticmethod
-    def send_verification_email(user, token):
+    def send_email_async(to, subject, body, html=None):
+        app = current_app._get_current_object()
+        
+        def send():
+            with app.app_context():
+                try:
+                    msg = Message(
+                        subject=subject,
+                        recipients=[to],
+                        body=body,
+                        html=html,
+                        sender=app.config['MAIL_DEFAULT_SENDER']
+                    )
+                    mail.send(msg)
+                except Exception as e:
+                    print(f"Error sending email async: {str(e)}")
+        
+        thread = threading.Thread(target=send)
+        thread.daemon = True
+        thread.start()
+        return True
+    
+    @staticmethod
+    def send_verification_email(user, token, async_send=True):
         verification_url = f"{current_app.config.get('FRONTEND_URL', 'http://localhost:3000')}/verify-email?token={token}"
         
         subject = 'Xác thực email của bạn'
@@ -56,10 +80,13 @@ class EmailService:
         </html>
         '''
         
-        return EmailService.send_email(user.email, subject, body, html)
+        if async_send:
+            return EmailService.send_email_async(user.email, subject, body, html)
+        else:
+            return EmailService.send_email(user.email, subject, body, html)
     
     @staticmethod
-    def send_reset_password_email(user, token):
+    def send_reset_password_email(user, token, async_send=True):
         reset_url = f"{current_app.config.get('FRONTEND_URL', 'http://localhost:3000')}/reset-password?token={token}"
         
         subject = 'Đặt lại mật khẩu'
@@ -97,6 +124,9 @@ class EmailService:
         </html>
         '''
         
-        return EmailService.send_email(user.email, subject, body, html)
+        if async_send:
+            return EmailService.send_email_async(user.email, subject, body, html)
+        else:
+            return EmailService.send_email(user.email, subject, body, html)
 
 

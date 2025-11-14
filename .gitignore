@@ -47,3 +47,5 @@ htmlcov/
 
 # Migrations
 migrations/versions/*.pyc
+
+DOCUMENT_MD/
