@@ -1,4 +1,5 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, make_response
+from flask_jwt_extended import set_access_cookies, set_refresh_cookies, unset_jwt_cookies
 from app.controllers.auth_controller import AuthController
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -25,16 +26,24 @@ def login():
     if request.method == 'POST':
         result = AuthController.login()
         if result[1] == 200:
-            # Lưu token vào session
+            # Lưu token vào cookie
             try:
                 response_data = result[0].get_json()
                 if response_data and 'data' in response_data:
                     access_token = response_data['data'].get('access_token')
+                    refresh_token = response_data['data'].get('refresh_token')
                     if access_token:
-                        session['access_token'] = access_token
-            except:
-                pass
-            
+                        # Tạo response với redirect
+                        resp = make_response(redirect(url_for('user.profile')))
+                        # Set JWT cookies
+                        set_access_cookies(resp, access_token)
+                        if refresh_token:
+                            set_refresh_cookies(resp, refresh_token)
+                        flash('Đăng nhập thành công', 'success')
+                        return resp
+            except Exception as e:
+                flash(f'Lỗi khi lưu token: {str(e)}', 'error')
+
             flash('Đăng nhập thành công', 'success')
             return redirect(url_for('user.profile'))
         else:
@@ -50,9 +59,12 @@ def login():
 def logout():
     if request.method == 'POST':
         AuthController.logout()
-        # Xóa token khỏi session
+        # Xóa token khỏi session và cookies
         session.pop('access_token', None)
+        resp = make_response(redirect(url_for('auth.login')))
+        unset_jwt_cookies(resp)
         flash('Đăng xuất thành công', 'success')
+        return resp
     return redirect(url_for('auth.login'))
 
 @auth_bp.route('/refresh', methods=['POST'])

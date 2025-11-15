@@ -3,13 +3,8 @@ from app.controllers.user_controller import UserController
 
 user_bp = Blueprint('user', __name__, url_prefix='/user')
 
-@user_bp.before_request
-def inject_token_from_session():
-    """Tự động inject token từ session vào request headers"""
-    if 'access_token' in session:
-        token = session.get('access_token')
-        if token:
-            request.environ['HTTP_AUTHORIZATION'] = f'Bearer {token}'
+# Token is now automatically read from cookies by Flask-JWT-Extended
+# No need for manual injection
 
 @user_bp.route('/profile', methods=['GET', 'POST'])
 def profile():
