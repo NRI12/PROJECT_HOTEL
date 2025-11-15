@@ -120,6 +120,23 @@ class AuthController:
         return success_response(message='Đăng xuất thành công')
     
     @staticmethod
+    @jwt_required()
+    def verify_token():
+        try:
+            user_id = get_jwt_identity()
+            user = User.query.get(user_id)
+            
+            if not user or not user.is_active:
+                return error_response('Token không hợp lệ hoặc tài khoản không hoạt động', 401)
+            
+            return success_response(
+                data={'user': user.to_dict()},
+                message='Token hợp lệ'
+            )
+        except Exception as e:
+            return error_response('Token không hợp lệ', 401)
+    
+    @staticmethod
     @jwt_required(refresh=True)
     def refresh():
         try:

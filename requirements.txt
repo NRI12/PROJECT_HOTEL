@@ -16,3 +16,4 @@ python-dateutil
 validators
 pytest
 pytest-flask
+flask-bcrypt

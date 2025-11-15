@@ -46,7 +46,7 @@ class EmailService:
     
     @staticmethod
     def send_verification_email(user, token, async_send=True):
-        verification_url = f"{current_app.config.get('FRONTEND_URL', 'http://localhost:3000')}/verify-email?token={token}"
+        verification_url = f"{current_app.config.get('FRONTEND_URL', 'http://localhost:8000')}/auth/verify-email.html?token={token}"
         
         subject = 'Xác thực email của bạn'
         body = f'''
@@ -87,7 +87,7 @@ class EmailService:
     
     @staticmethod
     def send_reset_password_email(user, token, async_send=True):
-        reset_url = f"{current_app.config.get('FRONTEND_URL', 'http://localhost:3000')}/reset-password?token={token}"
+        reset_url = f"{current_app.config.get('FRONTEND_URL', 'http://localhost:8000')}/auth/reset-password.html?token={token}"
         
         subject = 'Đặt lại mật khẩu'
         body = f'''

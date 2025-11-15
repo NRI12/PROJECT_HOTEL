@@ -40,7 +40,7 @@ class AuthAPI {
         return headers;
     }
 
-    async request(endpoint, method = 'GET', data = null, includeAuth = false) {
+    async request(endpoint, method = 'GET', data = null, includeAuth = false, retryOn401 = true) {
         try {
             const options = {
                 method: method,
@@ -54,6 +54,38 @@ class AuthAPI {
             const response = await fetch(`${this.baseURL}${endpoint}`, options);
             const result = await response.json();
 
+            // Nếu nhận được 401 và có includeAuth và retryOn401, thử refresh token
+            if (response.status === 401 && includeAuth && retryOn401 && endpoint !== '/refresh') {
+                const tokens = this.getTokens();
+                if (tokens.refreshToken) {
+                    const refreshResult = await this.refreshToken();
+                    if (refreshResult.success) {
+                        // Retry request với token mới (chỉ retry 1 lần)
+                        return await this.request(endpoint, method, data, includeAuth, false);
+                    } else {
+                        // Refresh thất bại, xóa tokens
+                        this.clearTokens();
+                        return {
+                            success: false,
+                            data: null,
+                            message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+                            errors: null,
+                            status: 401
+                        };
+                    }
+                } else {
+                    // Không có refresh token, xóa tokens
+                    this.clearTokens();
+                    return {
+                        success: false,
+                        data: null,
+                        message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+                        errors: null,
+                        status: 401
+                    };
+                }
+            }
+
             return {
                 success: result.success,
                 data: result.data,
@@ -65,7 +97,8 @@ class AuthAPI {
             return {
                 success: false,
                 message: 'Lỗi kết nối đến server. Vui lòng thử lại sau.',
-                error: error.message
+                error: error.message,
+                status: 0
             };
         }
     }
@@ -196,9 +229,37 @@ async function verifyTokenWithBackend() {
 
     try {
         const result = await authAPI.verifyToken();
-        return result.success;
+        if (result.success) {
+            return true;
+        }
+        
+        // Nếu token không hợp lệ, thử refresh token
+        if (result.status === 401 && tokens.refreshToken) {
+            const refreshResult = await authAPI.refreshToken();
+            if (refreshResult.success) {
+                // Thử verify lại với token mới
+                const verifyResult = await authAPI.verifyToken();
+                return verifyResult.success;
+            }
+        }
+        
+        return false;
     } catch (error) {
-        authAPI.clearTokens();
+        // Nếu có lỗi, thử refresh token trước khi xóa
+        if (tokens.refreshToken) {
+            try {
+                const refreshResult = await authAPI.refreshToken();
+                if (refreshResult.success) {
+                    const verifyResult = await authAPI.verifyToken();
+                    return verifyResult.success;
+                }
+            } catch (refreshError) {
+                // Nếu refresh cũng thất bại, xóa tokens
+                authAPI.clearTokens();
+            }
+        } else {
+            authAPI.clearTokens();
+        }
         return false;
     }
 }
@@ -316,7 +377,7 @@ class UserAPI {
         return headers;
     }
 
-    async request(endpoint, method = 'GET', data = null, isFormData = false) {
+    async request(endpoint, method = 'GET', data = null, isFormData = false, retryOn401 = true) {
         try {
             const options = {
                 method: method,
@@ -335,6 +396,40 @@ class UserAPI {
             const response = await fetch(`${this.baseURL}${endpoint}`, options);
             const result = await response.json();
 
+            // Nếu nhận được 401 và có retryOn401, thử refresh token
+            if (response.status === 401 && retryOn401) {
+                const tokens = authAPI.getTokens();
+                if (tokens.refreshToken) {
+                    const refreshResult = await authAPI.refreshToken();
+                    if (refreshResult.success) {
+                        // Retry request với token mới (chỉ retry 1 lần)
+                        return await this.request(endpoint, method, data, isFormData, false);
+                    } else {
+                        // Refresh thất bại, xóa tokens và redirect
+                        authAPI.clearTokens();
+                        return {
+                            success: false,
+                            data: null,
+                            message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+                            errors: null,
+                            pagination: null,
+                            status: 401
+                        };
+                    }
+                } else {
+                    // Không có refresh token, xóa tokens
+                    authAPI.clearTokens();
+                    return {
+                        success: false,
+                        data: null,
+                        message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+                        errors: null,
+                        pagination: null,
+                        status: 401
+                    };
+                }
+            }
+
             return {
                 success: result.success,
                 data: result.data,
@@ -347,7 +442,8 @@ class UserAPI {
             return {
                 success: false,
                 message: 'Lỗi kết nối đến server. Vui lòng thử lại sau.',
-                error: error.message
+                error: error.message,
+                status: 0
             };
         }
     }

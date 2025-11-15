@@ -18,6 +18,7 @@ def register_error_handlers(app):
     def handle_no_authorization_error(e):
         return jsonify({
             'success': False,
+            'data': None,
             'message': 'Missing or invalid authorization token',
             'error': 'Unauthorized'
         }), 401
@@ -26,6 +27,7 @@ def register_error_handlers(app):
     def handle_invalid_token_error(e):
         return jsonify({
             'success': False,
+            'data': None,
             'message': 'Invalid token',
             'error': 'Unauthorized'
         }), 401
