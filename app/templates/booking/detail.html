@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chi tiết đặt phòng</title>
+</head>
+<body>
+    <h1>Chi tiết đặt phòng</h1>
+    <p>ID đặt phòng: {{ booking_id }}</p>
+    <h2>Thông tin đặt phòng</h2>
+    <p>Khách sạn: </p>
+    <p>Phòng: </p>
+    <p>Ngày nhận phòng: </p>
+    <p>Ngày trả phòng: </p>
+    <p>Số khách: </p>
+    <p>Tổng tiền: </p>
+    <p>Trạng thái: </p>
+    <h2>Thanh toán</h2>
+    <p><a href="/payment/create?booking_id={{ booking_id }}">Thanh toán</a></p>
+    <p><a href="/booking">Quay lại danh sách</a></p>
+</body>
+</html>
+

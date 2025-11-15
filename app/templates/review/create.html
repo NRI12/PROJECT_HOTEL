@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tạo đánh giá</title>
+</head>
+<body>
+    <h1>Tạo đánh giá</h1>
+    <form method="POST" action="/review/create">
+        <div>
+            <label>ID Khách sạn:</label>
+            <input type="number" name="hotel_id" required>
+        </div>
+        <div>
+            <label>Điểm đánh giá (1-5):</label>
+            <input type="number" name="rating" min="1" max="5" required>
+        </div>
+        <div>
+            <label>Nội dung:</label>
+            <textarea name="content" required></textarea>
+        </div>
+        <div>
+            <button type="submit">Tạo đánh giá</button>
+        </div>
+    </form>
+    <p><a href="/review">Quay lại danh sách</a></p>
+</body>
+</html>
+

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tải lên avatar</title>
+</head>
+<body>
+    <h1>Tải lên avatar</h1>
+    <form method="POST" action="/user/upload-avatar" enctype="multipart/form-data">
+        <div>
+            <label>Chọn ảnh:</label>
+            <input type="file" name="avatar" accept="image/*" required>
+        </div>
+        <div>
+            <button type="submit">Tải lên</button>
+        </div>
+    </form>
+    <p><a href="/user/profile">Quay lại hồ sơ</a></p>
+</body>
+</html>
+

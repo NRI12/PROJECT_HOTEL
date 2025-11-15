@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hồ sơ người dùng</title>
+</head>
+<body>
+    <h1>Hồ sơ người dùng</h1>
+    <form method="POST" action="/user/profile">
+        <div>
+            <label>Họ và tên:</label>
+            <input type="text" name="full_name">
+        </div>
+        <div>
+            <label>Số điện thoại:</label>
+            <input type="text" name="phone">
+        </div>
+        <div>
+            <label>Địa chỉ:</label>
+            <input type="text" name="address">
+        </div>
+        <div>
+            <label>CMND/CCCD:</label>
+            <input type="text" name="id_card">
+        </div>
+        <div>
+            <button type="submit">Cập nhật</button>
+        </div>
+    </form>
+    <p><a href="/user/change-password">Đổi mật khẩu</a></p>
+    <p><a href="/user/upload-avatar">Tải lên avatar</a></p>
+    <p><a href="/user/bookings">Xem đặt phòng</a></p>
+    <p><a href="/user/favorites">Xem yêu thích</a></p>
+    <p><a href="/user/notifications">Xem thông báo</a></p>
+    <p><a href="/auth/logout">Đăng xuất</a></p>
+</body>
+</html>
+

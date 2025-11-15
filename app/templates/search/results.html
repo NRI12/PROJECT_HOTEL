@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kết quả tìm kiếm</title>
+</head>
+<body>
+    <h1>Kết quả tìm kiếm</h1>
+    <form method="GET" action="/search">
+        <div>
+            <label>Tìm kiếm:</label>
+            <input type="text" name="q" value="{{ query }}">
+            <button type="submit">Tìm kiếm</button>
+        </div>
+    </form>
+    <h2>Kết quả</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Tên khách sạn</th>
+                <th>Địa chỉ</th>
+                <th>Đánh giá</th>
+                <th>Chi tiết</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td colspan="5">Không tìm thấy kết quả</td>
+            </tr>
+        </tbody>
+    </table>
+    <p><a href="/hotel">Xem tất cả khách sạn</a></p>
+</body>
+</html>
+

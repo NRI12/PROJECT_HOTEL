@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chi tiết phòng</title>
+</head>
+<body>
+    <h1>Chi tiết phòng</h1>
+    <p>ID phòng: {{ room_id }}</p>
+    <h2>Thông tin phòng</h2>
+    <p>Tên: </p>
+    <p>Loại phòng: </p>
+    <p>Giá: </p>
+    <p>Mô tả: </p>
+    <h2>Tiện ích</h2>
+    <ul>
+        <li>Chưa có tiện ích</li>
+    </ul>
+    <form method="POST" action="/booking/create">
+        <input type="hidden" name="room_id" value="{{ room_id }}">
+        <div>
+            <label>Ngày nhận phòng:</label>
+            <input type="date" name="check_in" required>
+        </div>
+        <div>
+            <label>Ngày trả phòng:</label>
+            <input type="date" name="check_out" required>
+        </div>
+        <div>
+            <button type="submit">Đặt phòng</button>
+        </div>
+    </form>
+    <p><a href="/room">Quay lại danh sách</a></p>
+</body>
+</html>
+

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Xác thực email</title>
+</head>
+<body>
+    <h1>Xác thực email</h1>
+    <form method="POST" action="/auth/verify-email">
+        <div>
+            <label>Token xác thực:</label>
+            <input type="text" name="token" required>
+        </div>
+        <div>
+            <button type="submit">Xác thực</button>
+        </div>
+    </form>
+    <p><a href="/auth/login">Quay lại đăng nhập</a></p>
+</body>
+</html>
+

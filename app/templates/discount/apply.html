@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Áp dụng mã giảm giá</title>
+</head>
+<body>
+    <h1>Áp dụng mã giảm giá</h1>
+    <form method="POST" action="/discount/apply">
+        <div>
+            <label>Mã giảm giá:</label>
+            <input type="text" name="code" required>
+        </div>
+        <div>
+            <label>ID Đặt phòng:</label>
+            <input type="number" name="booking_id" required>
+        </div>
+        <div>
+            <button type="submit">Áp dụng</button>
+        </div>
+    </form>
+    <p><a href="/discount">Quay lại danh sách</a></p>
+</body>
+</html>
+

@@ -13,12 +13,26 @@ from marshmallow import ValidationError
 class AuthController:
     
     @staticmethod
+    def _get_request_data():
+        """Lấy dữ liệu từ request, ưu tiên form data, sau đó mới đến JSON"""
+        if request.form:
+            # Lấy dữ liệu từ form
+            data = dict(request.form)
+            # Chuyển đổi các giá trị từ list sang string nếu cần
+            for key, value in data.items():
+                if isinstance(value, list) and len(value) == 1:
+                    data[key] = value[0]
+            return data
+        elif request.is_json:
+            # Lấy dữ liệu từ JSON
+            return request.get_json() or {}
+        else:
+            return {}
+    
+    @staticmethod
     def register():
         try:
-            if not request.is_json:
-                return error_response('Yêu cầu phải là JSON', 400)
-            
-            data = request.get_json()
+            data = AuthController._get_request_data()
             if not data:
                 return error_response('Yêu cầu phải có dữ liệu', 400)
             
@@ -66,10 +80,7 @@ class AuthController:
     @staticmethod
     def login():
         try:
-            if not request.is_json:
-                return error_response('Yêu cầu phải là JSON', 400)
-            
-            data = request.get_json()
+            data = AuthController._get_request_data()
             if not data:
                 return error_response('Yêu cầu phải có dữ liệu', 400)
             
@@ -161,10 +172,7 @@ class AuthController:
     @staticmethod
     def forgot_password():
         try:
-            if not request.is_json:
-                return error_response('Yêu cầu phải là JSON', 400)
-            
-            data = request.get_json()
+            data = AuthController._get_request_data()
             if not data:
                 return error_response('Yêu cầu phải có dữ liệu', 400)
             
@@ -194,10 +202,7 @@ class AuthController:
     @staticmethod
     def reset_password():
         try:
-            if not request.is_json:
-                return error_response('Yêu cầu phải là JSON', 400)
-            
-            data = request.get_json()
+            data = AuthController._get_request_data()
             if not data:
                 return error_response('Yêu cầu phải có dữ liệu', 400)
             
@@ -231,10 +236,7 @@ class AuthController:
     @staticmethod
     def verify_email():
         try:
-            if not request.is_json:
-                return error_response('Yêu cầu phải là JSON', 400)
-            
-            data = request.get_json()
+            data = AuthController._get_request_data()
             if not data:
                 return error_response('Yêu cầu phải có dữ liệu', 400)
             

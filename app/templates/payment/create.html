@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tạo thanh toán</title>
+</head>
+<body>
+    <h1>Tạo thanh toán</h1>
+    <form method="POST" action="/payment/create">
+        <div>
+            <label>ID Đặt phòng:</label>
+            <input type="number" name="booking_id" required>
+        </div>
+        <div>
+            <label>Phương thức thanh toán:</label>
+            <select name="payment_method" required>
+                <option value="cash">Tiền mặt</option>
+                <option value="card">Thẻ</option>
+                <option value="bank_transfer">Chuyển khoản</option>
+            </select>
+        </div>
+        <div>
+            <label>Số tiền:</label>
+            <input type="number" name="amount" step="0.01" required>
+        </div>
+        <div>
+            <button type="submit">Tạo thanh toán</button>
+        </div>
+    </form>
+    <p><a href="/payment">Quay lại danh sách</a></p>
+</body>
+</html>
+

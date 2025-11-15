@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tạo đặt phòng</title>
+</head>
+<body>
+    <h1>Tạo đặt phòng</h1>
+    <form method="POST" action="/booking/create">
+        <div>
+            <label>ID Phòng:</label>
+            <input type="number" name="room_id" required>
+        </div>
+        <div>
+            <label>Ngày nhận phòng:</label>
+            <input type="date" name="check_in" required>
+        </div>
+        <div>
+            <label>Ngày trả phòng:</label>
+            <input type="date" name="check_out" required>
+        </div>
+        <div>
+            <label>Số khách:</label>
+            <input type="number" name="guest_count" min="1" required>
+        </div>
+        <div>
+            <label>Ghi chú:</label>
+            <textarea name="notes"></textarea>
+        </div>
+        <div>
+            <button type="submit">Tạo đặt phòng</button>
+        </div>
+    </form>
+    <p><a href="/booking">Quay lại danh sách</a></p>
+</body>
+</html>
+
