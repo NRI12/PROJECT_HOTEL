@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Ký - Hotel Booking</title>
+</head>
+<body style="display: none;">
+    <div>
+        <div>
+            <h1>Tạo Tài Khoản</h1>
+            <p>Đăng ký để bắt đầu đặt phòng</p>
+        </div>
+        
+        <div>
+            <div id="errorContainer"></div>
+            <div id="successContainer"></div>
+            
+            <form id="registerForm">
+                <div>
+                    <label for="fullName">Họ và tên <span>*</span></label>
+                    <input 
+                        type="text" 
+                        id="fullName" 
+                        name="fullName" 
+                        required 
+                        placeholder="Nhập họ và tên"
+                        autocomplete="name"
+                    >
+                </div>
+
+                <div>
+                    <label for="email">Email <span>*</span></label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        required 
+                        placeholder="Nhập email của bạn"
+                        autocomplete="email"
+                    >
+                </div>
+
+                <div>
+                    <label for="phone">Số điện thoại</label>
+                    <input 
+                        type="tel" 
+                        id="phone" 
+                        name="phone" 
+                        placeholder="Nhập số điện thoại (tùy chọn)"
+                        autocomplete="tel"
+                    >
+                </div>
+
+                <div>
+                    <label for="password">Mật khẩu <span>*</span></label>
+                    <div>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            required 
+                            placeholder="Nhập mật khẩu"
+                            autocomplete="new-password"
+                            oninput="checkPasswordStrength()"
+                        >
+                        <button type="button" onclick="togglePassword('password')">
+                            <span id="passwordToggleText">Hiện</span>
+                        </button>
+                    </div>
+                    <div>
+                        <div>
+                            <div id="passwordStrengthFill"></div>
+                        </div>
+                        <span id="passwordStrengthText"></span>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="confirmPassword">Xác nhận mật khẩu <span>*</span></label>
+                    <div>
+                        <input 
+                            type="password" 
+                            id="confirmPassword" 
+                            name="confirmPassword" 
+                            required 
+                            placeholder="Nhập lại mật khẩu"
+                            autocomplete="new-password"
+                        >
+                        <button type="button" onclick="togglePassword('confirmPassword')">
+                            <span id="confirmPasswordToggleText">Hiện</span>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn">
+                    Đăng Ký
+                </button>
+            </form>
+
+            <div>
+                Bằng việc đăng ký, bạn đồng ý với <a href="#">Điều khoản sử dụng</a> và <a href="#">Chính sách bảo mật</a>
+            </div>
+
+            <div>
+                Đã có tài khoản? <a href="login.html">Đăng nhập ngay</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script>
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const toggleText = document.getElementById(inputId + 'ToggleText');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                toggleText.textContent = 'Ẩn';
+            } else {
+                input.type = 'password';
+                toggleText.textContent = 'Hiện';
+            }
+        }
+
+        function checkPasswordStrength() {
+            const password = document.getElementById('password').value;
+            const strengthText = document.getElementById('passwordStrengthText');
+            
+            if (password.length === 0) {
+                strengthText.textContent = '';
+                return;
+            }
+
+            let strength = 0;
+            if (password.length >= 8) strength++;
+            if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
+            if (password.match(/[0-9]/)) strength++;
+            if (password.match(/[^a-zA-Z0-9]/)) strength++;
+
+            if (strength <= 1) {
+                strengthText.textContent = 'Mật khẩu yếu';
+            } else if (strength === 2) {
+                strengthText.textContent = 'Mật khẩu trung bình';
+            } else {
+                strengthText.textContent = 'Mật khẩu mạnh';
+            }
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const errorContainer = document.getElementById('errorContainer');
+            const successContainer = document.getElementById('successContainer');
+            
+            const fullName = document.getElementById('fullName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            errorContainer.innerHTML = '';
+            successContainer.innerHTML = '';
+
+            if (!fullName || !email || !password || !confirmPassword) {
+                errorContainer.innerHTML = '<div>Vui lòng điền đầy đủ thông tin bắt buộc</div>';
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                errorContainer.innerHTML = '<div>Mật khẩu xác nhận không khớp</div>';
+                return;
+            }
+
+            if (password.length < 6) {
+                errorContainer.innerHTML = '<div>Mật khẩu phải có ít nhất 6 ký tự</div>';
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Đang đăng ký...';
+
+            try {
+                const result = await authAPI.register(
+                    email,
+                    password,
+                    fullName,
+                    phone || null
+                );
+
+                if (result.success) {
+                    successContainer.innerHTML = `<div>${result.message || 'Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.'}</div>`;
+                    showMessage(result.message || 'Đăng ký thành công!', 'success');
+                    
+                    document.getElementById('registerForm').reset();
+                    
+                    setTimeout(() => {
+                        window.location.href = 'verify-email.html';
+                    }, 3000);
+                } else {
+                    let errorMsg = result.message || 'Đăng ký thất bại';
+                    if (result.errors) {
+                        const errorList = Object.values(result.errors).flat().join(', ');
+                        errorMsg += ': ' + errorList;
+                    }
+                    errorContainer.innerHTML = `<div>${errorMsg}</div>`;
+                    showMessage(errorMsg, 'error');
+                }
+            } catch (error) {
+                errorContainer.innerHTML = `<div>Lỗi: ${error.message}</div>`;
+                showMessage('Có lỗi xảy ra. Vui lòng thử lại.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Đăng Ký';
+            }
+        });
+
+        (async () => {
+            const tokens = authAPI.getTokens();
+            if (tokens.accessToken) {
+                const isValid = await verifyTokenWithBackend();
+                if (isValid) {
+                    window.location.replace('../index.html');
+                    return;
+                }
+            }
+            
+            document.body.style.display = 'block';
+        })();
+    </script>
+</body>
+</html>
+

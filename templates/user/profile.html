@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ Sơ - Hotel Booking</title>
+</head>
+<body>
+    <div>
+        <div>
+            <h1>Hồ Sơ Cá Nhân</h1>
+        </div>
+        
+        <div>
+            <div id="errorContainer"></div>
+            <div id="successContainer"></div>
+            
+            <div>
+                <div>
+                    <div id="avatarContainer">
+                        <img id="avatarImg" src="" alt="Avatar" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Ccircle cx=\'50\' cy=\'50\' r=\'50\' fill=\'%23ccc\'/%3E%3C/svg%3E'">
+                    </div>
+                    <div>
+                        <input type="file" id="avatarInput" accept="image/*" style="display: none;">
+                        <button type="button" onclick="document.getElementById('avatarInput').click()">Chọn Ảnh Đại Diện</button>
+                    </div>
+                </div>
+            </div>
+
+            <form id="profileForm">
+                <div>
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" readonly>
+                </div>
+
+                <div>
+                    <label for="fullName">Họ và tên</label>
+                    <input type="text" id="fullName" name="fullName" required>
+                </div>
+
+                <div>
+                    <label for="phone">Số điện thoại</label>
+                    <input type="tel" id="phone" name="phone">
+                </div>
+
+                <div>
+                    <label for="address">Địa chỉ</label>
+                    <textarea id="address" name="address" rows="3"></textarea>
+                </div>
+
+                <div>
+                    <label for="idCard">CMND/CCCD</label>
+                    <input type="text" id="idCard" name="idCard">
+                </div>
+
+                <button type="submit" id="submitBtn">Cập Nhật Hồ Sơ</button>
+            </form>
+
+            <div>
+                <a href="change-password.html">Đổi mật khẩu</a>
+                <a href="bookings.html">Đơn đặt phòng</a>
+                <a href="favorites.html">Yêu thích</a>
+                <a href="notifications.html">Thông báo</a>
+                <button type="button" onclick="logout()">Đăng xuất</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script>
+        let currentUser = null;
+
+        async function loadProfile() {
+            try {
+                const result = await userAPI.getProfile();
+                if (result.success && result.data && result.data.user) {
+                    currentUser = result.data.user;
+                    displayProfile(currentUser);
+                } else {
+                    if (result.status === 401) {
+                        window.location.href = '../auth/login.html';
+                    } else {
+                        document.getElementById('errorContainer').innerHTML = `<div>${result.message || 'Không thể tải thông tin'}</div>`;
+                    }
+                }
+            } catch (error) {
+                document.getElementById('errorContainer').innerHTML = `<div>Lỗi: ${error.message}</div>`;
+            }
+        }
+
+        function displayProfile(user) {
+            document.getElementById('email').value = user.email || '';
+            document.getElementById('fullName').value = user.full_name || '';
+            document.getElementById('phone').value = user.phone || '';
+            document.getElementById('address').value = user.address || '';
+            document.getElementById('idCard').value = user.id_card || '';
+            
+            if (user.avatar_url) {
+                document.getElementById('avatarImg').src = `http://localhost:5000${user.avatar_url}`;
+            }
+        }
+
+        document.getElementById('avatarInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                showMessage('Vui lòng chọn file ảnh', 'error');
+                return;
+            }
+
+            try {
+                const result = await userAPI.uploadAvatar(file);
+                if (result.success) {
+                    showMessage(result.message || 'Tải ảnh đại diện thành công!', 'success');
+                    if (result.data && result.data.avatar_url) {
+                        document.getElementById('avatarImg').src = `http://localhost:5000${result.data.avatar_url}`;
+                    }
+                    await loadProfile();
+                } else {
+                    showMessage(result.message || 'Tải ảnh thất bại', 'error');
+                }
+            } catch (error) {
+                showMessage('Có lỗi xảy ra. Vui lòng thử lại.', 'error');
+            }
+        });
+
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const errorContainer = document.getElementById('errorContainer');
+            const successContainer = document.getElementById('successContainer');
+            
+            const fullName = document.getElementById('fullName').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const address = document.getElementById('address').value.trim();
+            const idCard = document.getElementById('idCard').value.trim();
+
+            errorContainer.innerHTML = '';
+            successContainer.innerHTML = '';
+
+            if (!fullName) {
+                errorContainer.innerHTML = '<div>Vui lòng nhập họ và tên</div>';
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Đang cập nhật...';
+
+            try {
+                const result = await userAPI.updateProfile(fullName, phone, address, idCard);
+
+                if (result.success) {
+                    successContainer.innerHTML = `<div>${result.message || 'Cập nhật hồ sơ thành công!'}</div>`;
+                    showMessage(result.message || 'Cập nhật thành công!', 'success');
+                    await loadProfile();
+                } else {
+                    let errorMsg = result.message || 'Cập nhật thất bại';
+                    if (result.errors) {
+                        const errorList = Object.values(result.errors).flat().join(', ');
+                        errorMsg += ': ' + errorList;
+                    }
+                    errorContainer.innerHTML = `<div>${errorMsg}</div>`;
+                    showMessage(errorMsg, 'error');
+                }
+            } catch (error) {
+                errorContainer.innerHTML = `<div>Lỗi: ${error.message}</div>`;
+                showMessage('Có lỗi xảy ra. Vui lòng thử lại.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Cập Nhật Hồ Sơ';
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            const isValid = await verifyTokenWithBackend();
+            if (!isValid) {
+                window.location.href = '../auth/login.html';
+                return;
+            }
+            await loadProfile();
+        });
+    </script>
+</body>
+</html>
+
