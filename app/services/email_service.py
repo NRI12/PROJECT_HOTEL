@@ -1,9 +1,22 @@
 from flask_mail import Message
 from app import mail
-from flask import current_app, render_template_string
+from flask import current_app, url_for, request
 import threading
 
 class EmailService:
+    
+    @staticmethod
+    def _get_base_url():
+        frontend_url = current_app.config.get('FRONTEND_URL')
+        if frontend_url:
+            return frontend_url.rstrip('/')
+        
+        if request:
+            scheme = request.headers.get('X-Forwarded-Proto', request.scheme)
+            host = request.headers.get('X-Forwarded-Host', request.host)
+            return f"{scheme}://{host}"
+        
+        return 'http://localhost:5000'
     
     @staticmethod
     def send_email(to, subject, body, html=None):
@@ -46,7 +59,8 @@ class EmailService:
     
     @staticmethod
     def send_verification_email(user, token, async_send=True):
-        verification_url = f"{current_app.config.get('FRONTEND_URL', 'http://localhost:8000')}/auth/verify-email.html?token={token}"
+        base_url = EmailService._get_base_url()
+        verification_url = f"{base_url}/auth/verify-email?token={token}"
         
         subject = 'Xác thực email của bạn'
         body = f'''
@@ -87,7 +101,8 @@ class EmailService:
     
     @staticmethod
     def send_reset_password_email(user, token, async_send=True):
-        reset_url = f"{current_app.config.get('FRONTEND_URL', 'http://localhost:8000')}/auth/reset-password.html?token={token}"
+        base_url = EmailService._get_base_url()
+        reset_url = f"{base_url}/auth/reset-password?token={token}"
         
         subject = 'Đặt lại mật khẩu'
         body = f'''
@@ -128,5 +143,3 @@ class EmailService:
             return EmailService.send_email_async(user.email, subject, body, html)
         else:
             return EmailService.send_email(user.email, subject, body, html)
-
-

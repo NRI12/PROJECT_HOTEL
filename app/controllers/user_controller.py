@@ -1,42 +1,54 @@
-from flask import request
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask import request, session, redirect, url_for
 from app import db
 from app.models.user import User
 from app.models.notification import Notification
 from app.models.favorite import Favorite
 from app.schemas.user_schema import UserUpdateSchema, ChangePasswordSchema
-from app.utils.response import success_response, error_response, paginated_response
+from app.utils.response import success_response, error_response, paginated_response, validation_error_response
 from marshmallow import ValidationError
 from werkzeug.utils import secure_filename
 import os
 
 class UserController:
-    @staticmethod
-    @jwt_required()
-    def get_profile():
-        try:
-            user_id = get_jwt_identity()
-            user = User.query.get(user_id)
-            
-            if not user:
-                return error_response('User not found', 404)
-            
-            return success_response(data={'user': user.to_dict()})
-            
-        except Exception as e:
-            return error_response(f'Failed to get profile: {str(e)}', 500)
     
     @staticmethod
-    @jwt_required()
+    def _get_request_data():
+        if request.form:
+            data = dict(request.form)
+            for key, value in data.items():
+                if isinstance(value, list) and len(value) == 1:
+                    data[key] = value[0]
+            return data
+        elif request.is_json:
+            return request.get_json() or {}
+        else:
+            return {}
+    
+    @staticmethod
+    def get_profile():
+        if 'user_id' not in session:
+            return redirect(url_for('auth.login'))
+        
+        user = User.query.get(session['user_id'])
+        
+        if not user:
+            session.clear()
+            return redirect(url_for('auth.login'))
+        
+        return success_response(data={'user': user.to_dict()})
+    
+    @staticmethod
     def update_profile():
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
         try:
-            user_id = get_jwt_identity()
-            user = User.query.get(user_id)
+            user = User.query.get(session['user_id'])
             
             if not user:
                 return error_response('User not found', 404)
             
-            data = request.get_json()
+            data = UserController._get_request_data()
             schema = UserUpdateSchema()
             validated_data = schema.load(data)
             
@@ -53,66 +65,68 @@ class UserController:
             
             return success_response(
                 data={'user': user.to_dict()},
-                message='Profile updated successfully'
+                message='Cập nhật profile thành công'
             )
             
         except ValidationError as e:
-            return error_response('Validation error', 400, e.messages)
+            return validation_error_response(e.messages)
         except Exception as e:
             db.session.rollback()
-            return error_response(f'Failed to update profile: {str(e)}', 500)
+            return error_response(f'Cập nhật profile thất bại: {str(e)}', 500)
     
     @staticmethod
-    @jwt_required()
     def change_password():
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
         try:
-            user_id = get_jwt_identity()
-            user = User.query.get(user_id)
+            user = User.query.get(session['user_id'])
             
             if not user:
                 return error_response('User not found', 404)
             
-            data = request.get_json()
+            data = UserController._get_request_data()
             schema = ChangePasswordSchema()
             validated_data = schema.load(data)
             
             if not user.check_password(validated_data['old_password']):
-                return error_response('Current password is incorrect', 400)
+                return error_response('Mật khẩu hiện tại không đúng', 400)
             
             user.set_password(validated_data['new_password'])
             db.session.commit()
             
-            return success_response(message='Password changed successfully')
+            return success_response(message='Đổi mật khẩu thành công')
             
         except ValidationError as e:
-            return error_response('Validation error', 400, e.messages)
+            return validation_error_response(e.messages)
         except Exception as e:
             db.session.rollback()
-            return error_response(f'Failed to change password: {str(e)}', 500)
+            return error_response(f'Đổi mật khẩu thất bại: {str(e)}', 500)
     
     @staticmethod
-    @jwt_required()
     def upload_avatar():
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
         try:
-            user_id = get_jwt_identity()
-            user = User.query.get(user_id)
+            user = User.query.get(session['user_id'])
             
             if not user:
                 return error_response('User not found', 404)
             
             if 'avatar' not in request.files:
-                return error_response('No file provided', 400)
+                return error_response('Không có file được chọn', 400)
             
             file = request.files['avatar']
             
             if file.filename == '':
-                return error_response('No file selected', 400)
+                return error_response('Không có file được chọn', 400)
             
             allowed_extensions = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
             if not ('.' in file.filename and file.filename.rsplit('.', 1)[1].lower() in allowed_extensions):
-                return error_response('Invalid file type', 400)
+                return error_response('Định dạng file không hợp lệ. Chỉ chấp nhận: jpg, jpeg, png, gif, webp', 400)
             
-            filename = secure_filename(f"user_{user_id}_{file.filename}")
+            filename = secure_filename(f"user_{session['user_id']}_{file.filename}")
             upload_folder = os.path.join('uploads', 'users')
             os.makedirs(upload_folder, exist_ok=True)
             
@@ -124,19 +138,20 @@ class UserController:
             
             return success_response(
                 data={'avatar_url': user.avatar_url},
-                message='Avatar uploaded successfully'
+                message='Tải lên avatar thành công'
             )
             
         except Exception as e:
             db.session.rollback()
-            return error_response(f'Failed to upload avatar: {str(e)}', 500)
+            return error_response(f'Tải lên avatar thất bại: {str(e)}', 500)
     
     @staticmethod
-    @jwt_required()
     def get_bookings():
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
         try:
-            user_id = get_jwt_identity()
-            user = User.query.get(user_id)
+            user = User.query.get(session['user_id'])
             
             if not user:
                 return error_response('User not found', 404)
@@ -157,19 +172,15 @@ class UserController:
             return error_response(f'Failed to get bookings: {str(e)}', 500)
     
     @staticmethod
-    @jwt_required()
     def get_favorites():
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
         try:
-            user_id = get_jwt_identity()
-            user = User.query.get(user_id)
-            
-            if not user:
-                return error_response('User not found', 404)
-            
             page = request.args.get('page', 1, type=int)
             per_page = request.args.get('per_page', 10, type=int)
             
-            favorites_query = Favorite.query.filter_by(user_id=user_id)
+            favorites_query = Favorite.query.filter_by(user_id=session['user_id'])
             total = favorites_query.count()
             
             favorites = favorites_query.offset((page - 1) * per_page).limit(per_page).all()
@@ -181,19 +192,15 @@ class UserController:
             return error_response(f'Failed to get favorites: {str(e)}', 500)
     
     @staticmethod
-    @jwt_required()
     def get_notifications():
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
         try:
-            user_id = get_jwt_identity()
-            user = User.query.get(user_id)
-            
-            if not user:
-                return error_response('User not found', 404)
-            
             page = request.args.get('page', 1, type=int)
             per_page = request.args.get('per_page', 20, type=int)
             
-            notifications_query = Notification.query.filter_by(user_id=user_id).order_by(Notification.created_at.desc())
+            notifications_query = Notification.query.filter_by(user_id=session['user_id']).order_by(Notification.created_at.desc())
             total = notifications_query.count()
             
             notifications = notifications_query.offset((page - 1) * per_page).limit(per_page).all()
@@ -205,14 +212,14 @@ class UserController:
             return error_response(f'Failed to get notifications: {str(e)}', 500)
     
     @staticmethod
-    @jwt_required()
     def mark_notification_read(notification_id):
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
         try:
-            user_id = get_jwt_identity()
-            
             notification = Notification.query.filter_by(
                 notification_id=notification_id,
-                user_id=user_id
+                user_id=session['user_id']
             ).first()
             
             if not notification:
@@ -228,14 +235,14 @@ class UserController:
             return error_response(f'Failed to mark notification as read: {str(e)}', 500)
     
     @staticmethod
-    @jwt_required()
     def delete_notification(notification_id):
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
         try:
-            user_id = get_jwt_identity()
-            
             notification = Notification.query.filter_by(
                 notification_id=notification_id,
-                user_id=user_id
+                user_id=session['user_id']
             ).first()
             
             if not notification:
@@ -249,4 +256,3 @@ class UserController:
         except Exception as e:
             db.session.rollback()
             return error_response(f'Failed to delete notification: {str(e)}', 500)
-

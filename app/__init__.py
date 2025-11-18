@@ -1,7 +1,6 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask_jwt_extended import JWTManager
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 from flask_mail import Mail
@@ -9,7 +8,6 @@ from config.config import config
 
 db = SQLAlchemy()
 migrate = Migrate()
-jwt = JWTManager()
 bcrypt = Bcrypt()
 mail = Mail()
 
@@ -20,11 +18,9 @@ def create_app(config_name='development'):
     
     db.init_app(app)
     migrate.init_app(app, db)
-    jwt.init_app(app)
     bcrypt.init_app(app)
     mail.init_app(app)
     CORS(app)
-
 
     from app.routes.auth_routes import auth_bp
     from app.routes.user_routes import user_bp
@@ -54,4 +50,3 @@ def create_app(config_name='development'):
     register_error_handlers(app)
     
     return app
-

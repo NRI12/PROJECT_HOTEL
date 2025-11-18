@@ -1,23 +1,28 @@
 from functools import wraps
-from flask import request
-from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
+from flask import session, redirect, url_for, request
 from app.models.user import User
 from app.utils.response import error_response
 from app.utils.constants import USER_ROLES
+
+def login_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('auth.login'))
+        return fn(*args, **kwargs)
+    return wrapper
 
 def role_required(*allowed_roles):
     def decorator(fn):
         @wraps(fn)
         def wrapper(*args, **kwargs):
-            verify_jwt_in_request()
-            user_id = get_jwt_identity()
-            user = User.query.get(user_id)
+            if 'user_id' not in session:
+                return redirect(url_for('auth.login'))
             
-            if not user:
-                return error_response('User not found', 404)
-            
-            if not user.is_active:
-                return error_response('Account is deactivated', 403)
+            user = User.query.get(session['user_id'])
+            if not user or not user.is_active:
+                session.clear()
+                return redirect(url_for('auth.login'))
             
             if user.role.role_name not in allowed_roles:
                 return error_response('Insufficient permissions', 403)
@@ -45,5 +50,3 @@ def validate_json(*required_fields):
             return fn(*args, **kwargs)
         return wrapper
     return decorator
-
-

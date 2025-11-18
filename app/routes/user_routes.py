@@ -7,35 +7,49 @@ user_bp = Blueprint('user', __name__, url_prefix='/user')
 def profile():
     if request.method == 'POST':
         result = UserController.update_profile()
-        if result[1] == 200:
-            flash('Cập nhật profile thành công', 'success')
-        else:
-            flash('Cập nhật profile thất bại', 'error')
+        try:
+            result_data = result[0].get_json()
+            if result[1] == 200:
+                return render_template('user/profile.html', result=result, success='Cập nhật profile thành công')
+            else:
+                error_message = result_data.get('message', 'Cập nhật profile thất bại')
+                return render_template('user/profile.html', result=result, error=error_message)
+        except:
+            return render_template('user/profile.html', result=result, error='Cập nhật profile thất bại')
     
     result = UserController.get_profile()
-    
     return render_template('user/profile.html', result=result)
 
 @user_bp.route('/change-password', methods=['GET', 'POST'])
 def change_password():
     if request.method == 'POST':
         result = UserController.change_password()
-        if result[1] == 200:
-            flash('Đổi mật khẩu thành công', 'success')
-            return redirect(url_for('user.profile'))
-        else:
-            flash('Đổi mật khẩu thất bại', 'error')
+        try:
+            result_data = result[0].get_json()
+            if result[1] == 200:
+                flash('Đổi mật khẩu thành công', 'success')
+                return redirect(url_for('user.profile'))
+            else:
+                error_message = result_data.get('message', 'Đổi mật khẩu thất bại')
+                return render_template('user/change_password.html', error=error_message)
+        except:
+            return render_template('user/change_password.html', error='Đổi mật khẩu thất bại')
     return render_template('user/change_password.html')
 
 @user_bp.route('/upload-avatar', methods=['GET', 'POST'])
 def upload_avatar():
     if request.method == 'POST':
         result = UserController.upload_avatar()
-        if result[1] == 200:
-            flash('Tải lên avatar thành công', 'success')
-            return redirect(url_for('user.profile'))
-        else:
-            flash('Tải lên avatar thất bại', 'error')
+        try:
+            result_data = result[0].get_json()
+            if result[1] == 200:
+                flash('Tải lên avatar thành công', 'success')
+                return redirect(url_for('user.profile'))
+            else:
+                error_message = result_data.get('message', 'Tải lên avatar thất bại')
+                return render_template('user/upload_avatar.html', error=error_message)
+        except:
+            return render_template('user/upload_avatar.html', error='Tải lên avatar thất bại')
     return render_template('user/upload_avatar.html')
 
 @user_bp.route('/bookings', methods=['GET'])

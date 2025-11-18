@@ -11,13 +11,12 @@ def register():
             flash('Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản.', 'success')
             return redirect(url_for('auth.login'))
         else:
-            # Lấy thông báo lỗi cụ thể từ response
             try:
                 error_data = result[0].get_json()
                 error_message = error_data.get('message', 'Đăng ký thất bại')
-                flash(error_message, 'error')
             except:
-                flash('Đăng ký thất bại', 'error')
+                error_message = 'Đăng ký thất bại'
+            return render_template('auth/register.html', error=error_message)
     return render_template('auth/register.html')
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
@@ -31,16 +30,16 @@ def login():
             try:
                 error_data = result[0].get_json()
                 error_message = error_data.get('message', 'Đăng nhập thất bại')
-                flash(error_message, 'error')
             except:
-                flash('Đăng nhập thất bại', 'error')
+                error_message = 'Đăng nhập thất bại'
+            return render_template('auth/login.html', error=error_message)
     return render_template('auth/login.html')
 
 @auth_bp.route('/logout', methods=['GET', 'POST'])
 def logout():
     if request.method == 'POST':
         AuthController.logout()
-        flash('Đăng xuất thành công', 'success')
+        return redirect(url_for('auth.login'))
     return redirect(url_for('auth.login'))
 
 @auth_bp.route('/refresh', methods=['POST'])
@@ -57,39 +56,68 @@ def verify_token():
 def forgot_password():
     if request.method == 'POST':
         result = AuthController.forgot_password()
-        flash('Nếu email tồn tại, liên kết đặt lại mật khẩu đã được gửi.', 'info')
+        if result[1] == 200:
+            return render_template('auth/forgot_password.html', success='Nếu email tồn tại, liên kết đặt lại mật khẩu đã được gửi.')
+        else:
+            try:
+                error_data = result[0].get_json()
+                error_message = error_data.get('message', 'Yêu cầu thất bại')
+            except:
+                error_message = 'Yêu cầu thất bại'
+            return render_template('auth/forgot_password.html', error=error_message)
     return render_template('auth/forgot_password.html')
 
 @auth_bp.route('/reset-password', methods=['GET', 'POST'])
 def reset_password():
+    if request.method == 'GET':
+        token = request.args.get('token', '')
+        return render_template('auth/reset_password.html', token=token)
+    
     if request.method == 'POST':
         result = AuthController.reset_password()
         if result[1] == 200:
             flash('Đặt lại mật khẩu thành công', 'success')
             return redirect(url_for('auth.login'))
         else:
-            flash('Đặt lại mật khẩu thất bại', 'error')
-    return render_template('auth/reset_password.html')
+            try:
+                error_data = result[0].get_json()
+                error_message = error_data.get('message', 'Đặt lại mật khẩu thất bại')
+            except:
+                error_message = 'Đặt lại mật khẩu thất bại'
+            token = request.form.get('token', '')
+            return render_template('auth/reset_password.html', error=error_message, token=token)
 
 @auth_bp.route('/verify-email', methods=['GET', 'POST'])
 def verify_email():
+    if request.method == 'GET':
+        token = request.args.get('token', '')
+        return render_template('auth/verify_email.html', token=token)
+    
     if request.method == 'POST':
         result = AuthController.verify_email()
         if result[1] == 200:
             flash('Xác thực email thành công', 'success')
             return redirect(url_for('auth.login'))
         else:
-            flash('Xác thực email thất bại', 'error')
-    return render_template('auth/verify_email.html')
+            try:
+                error_data = result[0].get_json()
+                error_message = error_data.get('message', 'Xác thực email thất bại')
+            except:
+                error_message = 'Xác thực email thất bại'
+            token = request.form.get('token', '')
+            return render_template('auth/verify_email.html', error=error_message, token=token)
 
 @auth_bp.route('/resend-verification', methods=['GET', 'POST'])
 def resend_verification():
     if request.method == 'POST':
         result = AuthController.resend_verification()
         if result[1] == 200:
-            flash('Email xác thực đã được gửi thành công', 'success')
+            return render_template('auth/resend_verification.html', success='Email xác thực đã được gửi thành công')
         else:
-            flash('Gửi lại email xác thực thất bại', 'error')
+            try:
+                error_data = result[0].get_json()
+                error_message = error_data.get('message', 'Gửi lại email xác thực thất bại')
+            except:
+                error_message = 'Gửi lại email xác thực thất bại'
+            return render_template('auth/resend_verification.html', error=error_message)
     return render_template('auth/resend_verification.html')
-
-

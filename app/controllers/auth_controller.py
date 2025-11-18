@@ -1,12 +1,10 @@
-from flask import request
-from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
+from flask import request, session
 from app import db
 from app.models.user import User
-from app.models.login_history import LoginHistory
 from app.services.auth_service import AuthService
 from app.services.email_service import EmailService
 from app.schemas.user_schema import UserRegistrationSchema, UserLoginSchema, ForgotPasswordSchema, ResetPasswordSchema
-from app.utils.response import success_response, error_response
+from app.utils.response import success_response, error_response, validation_error_response
 from app.utils.validators import validate_required_fields, is_valid_token_format
 from marshmallow import ValidationError
 
@@ -14,17 +12,13 @@ class AuthController:
     
     @staticmethod
     def _get_request_data():
-        """Lấy dữ liệu từ request, ưu tiên form data, sau đó mới đến JSON"""
         if request.form:
-            # Lấy dữ liệu từ form
             data = dict(request.form)
-            # Chuyển đổi các giá trị từ list sang string nếu cần
             for key, value in data.items():
                 if isinstance(value, list) and len(value) == 1:
                     data[key] = value[0]
             return data
         elif request.is_json:
-            # Lấy dữ liệu từ JSON
             return request.get_json() or {}
         else:
             return {}
@@ -58,21 +52,14 @@ class AuthController:
             token = AuthService.create_verification_token(user)
             EmailService.send_verification_email(user, token)
             
-            access_token = create_access_token(identity=user.user_id)
-            refresh_token = create_refresh_token(identity=user.user_id)
-            
             return success_response(
-                data={
-                    'user': user.to_dict(),
-                    'access_token': access_token,
-                    'refresh_token': refresh_token
-                },
+                data={'user': user.to_dict()},
                 message='Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản.',
                 status_code=201
             )
             
         except ValidationError as e:
-            return error_response('Lỗi xác thực', 400, e.messages)
+            return validation_error_response(e.messages)
         except Exception as e:
             db.session.rollback()
             return error_response(f'Đăng ký thất bại: {str(e)}', 500)
@@ -108,66 +95,38 @@ class AuthController:
                     403
                 )
             
-            access_token = create_access_token(identity=user.user_id)
-            refresh_token = create_refresh_token(identity=user.user_id)
+            session['user_id'] = user.user_id
+            session.permanent = True
             
             return success_response(
-                data={
-                    'user': user.to_dict(),
-                    'access_token': access_token,
-                    'refresh_token': refresh_token
-                },
+                data={'user': user.to_dict()},
                 message='Đăng nhập thành công'
             )
             
         except ValidationError as e:
-            return error_response('Lỗi xác thực', 400, e.messages)
+            return validation_error_response(e.messages)
         except Exception as e:
             return error_response(f'Đăng nhập thất bại: {str(e)}', 500)
     
     @staticmethod
-    @jwt_required()
     def logout():
+        session.clear()
         return success_response(message='Đăng xuất thành công')
     
     @staticmethod
-    @jwt_required()
     def verify_token():
-        try:
-            user_id = get_jwt_identity()
-            user = User.query.get(user_id)
-            
-            if not user or not user.is_active:
-                return error_response('Token không hợp lệ hoặc tài khoản không hoạt động', 401)
-            
-            return success_response(
-                data={'user': user.to_dict()},
-                message='Token hợp lệ'
-            )
-        except Exception as e:
-            return error_response('Token không hợp lệ', 401)
-    
-    @staticmethod
-    @jwt_required(refresh=True)
-    def refresh():
-        try:
-            user_id = get_jwt_identity()
-            user = User.query.get(user_id)
-            
-            if not user or not user.is_active:
-                return error_response('Không tìm thấy người dùng hoặc tài khoản không hoạt động', 404)
-            
-            access_token = create_access_token(identity=user_id)
-            
-            return success_response(
-                data={
-                    'access_token': access_token
-                },
-                message='Làm mới token thành công'
-            )
-            
-        except Exception as e:
-            return error_response(f'Làm mới token thất bại: {str(e)}', 500)
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
+        user = User.query.get(session['user_id'])
+        if not user or not user.is_active:
+            session.clear()
+            return error_response('Token không hợp lệ hoặc tài khoản không hoạt động', 401)
+        
+        return success_response(
+            data={'user': user.to_dict()},
+            message='Token hợp lệ'
+        )
     
     @staticmethod
     def forgot_password():
@@ -195,7 +154,7 @@ class AuthController:
             )
             
         except ValidationError as e:
-            return error_response('Lỗi xác thực', 400, e.messages)
+            return validation_error_response(e.messages)
         except Exception as e:
             return error_response(f'Yêu cầu thất bại: {str(e)}', 500)
     
@@ -228,7 +187,7 @@ class AuthController:
             return success_response(message='Đặt lại mật khẩu thành công')
             
         except ValidationError as e:
-            return error_response('Lỗi xác thực', 400, e.messages)
+            return validation_error_response(e.messages)
         except Exception as e:
             db.session.rollback()
             return error_response(f'Đặt lại mật khẩu thất bại: {str(e)}', 500)
@@ -265,24 +224,19 @@ class AuthController:
             return error_response(f'Xác thực email thất bại: {str(e)}', 500)
     
     @staticmethod
-    @jwt_required()
     def resend_verification():
-        try:
-            user_id = get_jwt_identity()
-            user = User.query.get(user_id)
-            
-            if not user:
-                return error_response('Không tìm thấy người dùng', 404)
-            
-            if user.email_verified:
-                return error_response('Email đã được xác thực', 400)
-            
-            token = AuthService.create_verification_token(user)
-            EmailService.send_verification_email(user, token)
-            
-            return success_response(message='Email xác thực đã được gửi thành công')
-            
-        except Exception as e:
-            return error_response(f'Gửi lại email xác thực thất bại: {str(e)}', 500)
-
-
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
+        user = User.query.get(session['user_id'])
+        
+        if not user:
+            return error_response('Không tìm thấy người dùng', 404)
+        
+        if user.email_verified:
+            return error_response('Email đã được xác thực', 400)
+        
+        token = AuthService.create_verification_token(user)
+        EmailService.send_verification_email(user, token)
+        
+        return success_response(message='Email xác thực đã được gửi thành công')

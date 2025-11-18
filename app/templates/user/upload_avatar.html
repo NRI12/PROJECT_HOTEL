@@ -2,9 +2,35 @@
 <html>
 <head>
     <title>Tải lên avatar</title>
+    <style>
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
 </head>
 <body>
     <h1>Tải lên avatar</h1>
+    
+    {% if error %}
+        <div class="message error">{{ error }}</div>
+    {% endif %}
+    
+    {% if success %}
+        <div class="message success">{{ success }}</div>
+    {% endif %}
+    
     <form method="POST" action="/user/upload-avatar" enctype="multipart/form-data">
         <div>
             <label>Chọn ảnh:</label>
@@ -17,4 +43,3 @@
     <p><a href="/user/profile">Quay lại hồ sơ</a></p>
 </body>
 </html>
-
