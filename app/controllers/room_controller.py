@@ -5,6 +5,7 @@ from app.models.room_image import RoomImage
 from app.models.amenity import Amenity
 from app.models.hotel import Hotel
 from app.models.booking_detail import BookingDetail
+from app.schemas.room_schema import AmenityCreateSchema, AmenityUpdateSchema
 from app.schemas.room_schema import RoomCreateSchema, RoomUpdateSchema, RoomAmenitySchema, RoomStatusSchema
 from app.utils.response import success_response, error_response, paginated_response, validation_error_response
 from app.utils.validators import validate_required_fields
@@ -13,9 +14,11 @@ from werkzeug.utils import secure_filename
 from datetime import datetime, date
 from sqlalchemy import and_, or_
 import os
+from app.models.room_type import RoomType
+from app.models.user import User
+from app.schemas.room_schema import RoomTypeCreateSchema, RoomTypeUpdateSchema
 
-class RoomController:
-    
+class RoomController:    
     @staticmethod
     def _get_request_data():
         if request.form:
@@ -424,3 +427,260 @@ class RoomController:
         except Exception as e:
             db.session.rollback()
             return error_response(f'Cập nhật trạng thái thất bại: {str(e)}', 500)
+    @staticmethod
+    def list_room_types():
+        try:
+            room_types = RoomType.query.all()
+            room_types_data = [rt.to_dict() for rt in room_types]
+            return success_response(data={'room_types': room_types_data})
+        except Exception as e:
+            return error_response(f'Lỗi khi lấy danh sách loại phòng: {str(e)}', 500)
+    
+    @staticmethod
+    def create_room_type():
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
+        user = User.query.get(session['user_id'])
+        if not user or user.role.role_name != 'admin':
+            return error_response('Không có quyền tạo loại phòng', 403)
+        
+        try:
+            data = RoomController._get_request_data()
+            
+            required_fields = ['type_name']
+            is_valid, error_msg = validate_required_fields(data, required_fields)
+            if not is_valid:
+                return error_response(error_msg, 400)
+            
+            schema = RoomTypeCreateSchema()
+            validated_data = schema.load(data)
+            
+            existing = RoomType.query.filter_by(type_name=validated_data['type_name']).first()
+            if existing:
+                return error_response('Tên loại phòng đã tồn tại', 409)
+            
+            room_type = RoomType(
+                type_name=validated_data['type_name'],
+                description=validated_data.get('description')
+            )
+            
+            db.session.add(room_type)
+            db.session.commit()
+            
+            return success_response(
+                data={'room_type': room_type.to_dict()},
+                message='Tạo loại phòng thành công',
+                status_code=201
+            )
+        except ValidationError as e:
+            return validation_error_response(e.messages)
+        except Exception as e:
+            db.session.rollback()
+            return error_response(f'Tạo loại phòng thất bại: {str(e)}', 500)
+    
+    @staticmethod
+    def update_room_type(type_id):
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
+        user = User.query.get(session['user_id'])
+        if not user or user.role.role_name != 'admin':
+            return error_response('Không có quyền cập nhật loại phòng', 403)
+        
+        try:
+            room_type = RoomType.query.get(type_id)
+            if not room_type:
+                return error_response('Không tìm thấy loại phòng', 404)
+            
+            data = RoomController._get_request_data()
+            schema = RoomTypeUpdateSchema()
+            validated_data = schema.load(data)
+            
+            if 'type_name' in validated_data:
+                existing = RoomType.query.filter(
+                    RoomType.type_name == validated_data['type_name'],
+                    RoomType.type_id != type_id
+                ).first()
+                if existing:
+                    return error_response('Tên loại phòng đã tồn tại', 409)
+            
+            for key, value in validated_data.items():
+                if hasattr(room_type, key):
+                    setattr(room_type, key, value)
+            
+            db.session.commit()
+            
+            return success_response(
+                data={'room_type': room_type.to_dict()},
+                message='Cập nhật loại phòng thành công'
+            )
+        except ValidationError as e:
+            return validation_error_response(e.messages)
+        except Exception as e:
+            db.session.rollback()
+            return error_response(f'Cập nhật loại phòng thất bại: {str(e)}', 500)
+    
+    @staticmethod
+    def delete_room_type(type_id):
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
+        user = User.query.get(session['user_id'])
+        if not user or user.role.role_name != 'admin':
+            return error_response('Không có quyền xóa loại phòng', 403)
+        
+        try:
+            room_type = RoomType.query.get(type_id)
+            if not room_type:
+                return error_response('Không tìm thấy loại phòng', 404)
+            
+            if room_type.rooms:
+                return error_response('Không thể xóa loại phòng đang được sử dụng', 400)
+            
+            db.session.delete(room_type)
+            db.session.commit()
+            
+            return success_response(message='Xóa loại phòng thành công')
+        except Exception as e:
+            db.session.rollback()
+            return error_response(f'Xóa loại phòng thất bại: {str(e)}', 500)
+    @staticmethod
+    def get_room_type(type_id):
+        try:
+            room_type = RoomType.query.get(type_id)
+            if not room_type:
+                return error_response('Không tìm thấy loại phòng', 404)
+            return success_response(data={'room_type': room_type.to_dict()})
+        except Exception as e:
+            return error_response(f'Lỗi khi lấy loại phòng: {str(e)}', 500)
+    
+    @staticmethod
+    def list_amenities():
+        try:
+            amenities = Amenity.query.all()
+            amenities_data = [a.to_dict() for a in amenities]
+            return success_response(data={'amenities': amenities_data})
+        except Exception as e:
+            return error_response(f'Lỗi khi lấy danh sách tiện nghi: {str(e)}', 500)
+    
+    @staticmethod
+    def get_amenity(amenity_id):
+        try:
+            amenity = Amenity.query.get(amenity_id)
+            if not amenity:
+                return error_response('Không tìm thấy tiện nghi', 404)
+            return success_response(data={'amenity': amenity.to_dict()})
+        except Exception as e:
+            return error_response(f'Lỗi khi lấy tiện nghi: {str(e)}', 500)
+    
+    @staticmethod
+    def create_amenity():
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
+        user = User.query.get(session['user_id'])
+        if not user or user.role.role_name != 'admin':
+            return error_response('Không có quyền tạo tiện nghi', 403)
+        
+        try:
+            data = RoomController._get_request_data()
+            
+            required_fields = ['amenity_name']
+            is_valid, error_msg = validate_required_fields(data, required_fields)
+            if not is_valid:
+                return error_response(error_msg, 400)
+            
+            schema = AmenityCreateSchema()
+            validated_data = schema.load(data)
+            
+            existing = Amenity.query.filter_by(amenity_name=validated_data['amenity_name']).first()
+            if existing:
+                return error_response('Tên tiện nghi đã tồn tại', 409)
+            
+            amenity = Amenity(
+                amenity_name=validated_data['amenity_name'],
+                icon=validated_data.get('icon'),
+                category=validated_data.get('category', 'both')
+            )
+            
+            db.session.add(amenity)
+            db.session.commit()
+            
+            return success_response(
+                data={'amenity': amenity.to_dict()},
+                message='Tạo tiện nghi thành công',
+                status_code=201
+            )
+        except ValidationError as e:
+            return validation_error_response(e.messages)
+        except Exception as e:
+            db.session.rollback()
+            return error_response(f'Tạo tiện nghi thất bại: {str(e)}', 500)
+    
+    @staticmethod
+    def update_amenity(amenity_id):
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
+        user = User.query.get(session['user_id'])
+        if not user or user.role.role_name != 'admin':
+            return error_response('Không có quyền cập nhật tiện nghi', 403)
+        
+        try:
+            amenity = Amenity.query.get(amenity_id)
+            if not amenity:
+                return error_response('Không tìm thấy tiện nghi', 404)
+            
+            data = RoomController._get_request_data()
+            schema = AmenityUpdateSchema()
+            validated_data = schema.load(data)
+            
+            if 'amenity_name' in validated_data:
+                existing = Amenity.query.filter(
+                    Amenity.amenity_name == validated_data['amenity_name'],
+                    Amenity.amenity_id != amenity_id
+                ).first()
+                if existing:
+                    return error_response('Tên tiện nghi đã tồn tại', 409)
+            
+            for key, value in validated_data.items():
+                if hasattr(amenity, key):
+                    setattr(amenity, key, value)
+            
+            db.session.commit()
+            
+            return success_response(
+                data={'amenity': amenity.to_dict()},
+                message='Cập nhật tiện nghi thành công'
+            )
+        except ValidationError as e:
+            return validation_error_response(e.messages)
+        except Exception as e:
+            db.session.rollback()
+            return error_response(f'Cập nhật tiện nghi thất bại: {str(e)}', 500)
+    
+    @staticmethod
+    def delete_amenity(amenity_id):
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
+        user = User.query.get(session['user_id'])
+        if not user or user.role.role_name != 'admin':
+            return error_response('Không có quyền xóa tiện nghi', 403)
+        
+        try:
+            amenity = Amenity.query.get(amenity_id)
+            if not amenity:
+                return error_response('Không tìm thấy tiện nghi', 404)
+            
+            if amenity.rooms or amenity.hotels:
+                return error_response('Không thể xóa tiện nghi đang được sử dụng', 400)
+            
+            db.session.delete(amenity)
+            db.session.commit()
+            
+            return success_response(message='Xóa tiện nghi thành công')
+        except Exception as e:
+            db.session.rollback()
+            return error_response(f'Xóa tiện nghi thất bại: {str(e)}', 500)

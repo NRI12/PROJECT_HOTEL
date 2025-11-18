@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Invoice</title>
+</head>
+<body>
+    <h1>Invoice</h1>
+    
+    {% if result and result[0].json.data.invoice %}
+        {% set invoice = result[0].json.data.invoice %}
+        
+        <h2>Booking Code: {{ invoice.booking_code }}</h2>
+        
+        <h3>Hotel Information</h3>
+        {% if invoice.hotel %}
+        <p>Hotel: {{ invoice.hotel.hotel_name }}</p>
+        <p>Address: {{ invoice.hotel.address }}</p>
+        <p>Phone: {{ invoice.hotel.phone }}</p>
+        {% endif %}
+        
+        <h3>Customer Information</h3>
+        {% if invoice.customer %}
+        <p>Name: {{ invoice.customer.full_name }}</p>
+        <p>Email: {{ invoice.customer.email }}</p>
+        <p>Phone: {{ invoice.customer.phone }}</p>
+        {% endif %}
+        
+        <h3>Booking Details</h3>
+        <p>Check-in: {{ invoice.check_in_date }}</p>
+        <p>Check-out: {{ invoice.check_out_date }}</p>
+        <p>Number of Guests: {{ invoice.num_guests }}</p>
+        
+        <h3>Room Details</h3>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Room</th>
+                    <th>Quantity</th>
+                    <th>Price/Night</th>
+                    <th>Nights</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for detail in invoice.details %}
+                <tr>
+                    <td>{{ detail.room_name }}</td>
+                    <td>{{ detail.quantity }}</td>
+                    <td>{{ detail.price_per_night }}</td>
+                    <td>{{ detail.num_nights }}</td>
+                    <td>{{ detail.subtotal }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <h3>Payment Summary</h3>
+        <p>Total Amount: {{ invoice.total_amount }}</p>
+        <p>Discount: {{ invoice.discount_amount }}</p>
+        <p>Final Amount: {{ invoice.final_amount }}</p>
+        
+        <h3>Payments</h3>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Method</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in invoice.payments %}
+                <tr>
+                    <td>{{ payment.payment_date or 'N/A' }}</td>
+                    <td>{{ payment.payment_method }}</td>
+                    <td>{{ payment.amount }}</td>
+                    <td>{{ payment.payment_status }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Invoice not found</p>
+    {% endif %}
+    
+    <p><a href="/booking/{{ booking_id }}">Back to Booking</a></p>
+</body>
+</html>

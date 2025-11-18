@@ -1,36 +1,53 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tạo đặt phòng</title>
+    <title>Create Booking</title>
 </head>
 <body>
-    <h1>Tạo đặt phòng</h1>
+    <h1>Create Booking</h1>
+    
+    {% if error %}
+    <p style="color: red;">{{ error }}</p>
+    {% endif %}
+    
     <form method="POST" action="/booking/create">
         <div>
-            <label>ID Phòng:</label>
-            <input type="number" name="room_id" required>
+            <label>Hotel ID:</label>
+            <input type="number" name="hotel_id" required value="{{ request.args.get('hotel_id', '') }}">
         </div>
+        
         <div>
-            <label>Ngày nhận phòng:</label>
-            <input type="date" name="check_in" required>
+            <label>Check-in Date:</label>
+            <input type="date" name="check_in_date" required value="{{ request.args.get('check_in_date', '') }}">
         </div>
+        
         <div>
-            <label>Ngày trả phòng:</label>
-            <input type="date" name="check_out" required>
+            <label>Check-out Date:</label>
+            <input type="date" name="check_out_date" required value="{{ request.args.get('check_out_date', '') }}">
         </div>
+        
         <div>
-            <label>Số khách:</label>
-            <input type="number" name="guest_count" min="1" required>
+            <label>Number of Guests:</label>
+            <input type="number" name="num_guests" min="1" required value="{{ request.args.get('num_guests', '1') }}">
         </div>
+        
         <div>
-            <label>Ghi chú:</label>
-            <textarea name="notes"></textarea>
+            <label>Special Requests:</label>
+            <textarea name="special_requests">{{ request.args.get('special_requests', '') }}</textarea>
         </div>
-        <div>
-            <button type="submit">Tạo đặt phòng</button>
+        
+        <h3>Rooms</h3>
+        <div id="rooms">
+            <div>
+                <label>Room ID:</label>
+                <input type="number" name="rooms[0][room_id]" required>
+                <label>Quantity:</label>
+                <input type="number" name="rooms[0][quantity]" min="1" value="1" required>
+            </div>
         </div>
+        
+        <button type="submit">Create Booking</button>
+        <a href="/booking">Cancel</a>
     </form>
-    <p><a href="/booking">Quay lại danh sách</a></p>
 </body>
 </html>
-

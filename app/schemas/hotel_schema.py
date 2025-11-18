@@ -65,7 +65,6 @@ class AmenityUpdateSchema(Schema):
         """Xử lý amenity_ids từ form-data (có thể là list hoặc string)"""
         if 'amenity_ids' in data:
             value = data['amenity_ids']
-            # Nếu là string (comma-separated hoặc single value), chuyển thành list
             if isinstance(value, str):
                 if ',' in value:
                     data['amenity_ids'] = [int(x.strip()) for x in value.split(',') if x.strip()]

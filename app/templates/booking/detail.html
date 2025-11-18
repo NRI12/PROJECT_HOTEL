@@ -1,22 +1,102 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Chi tiết đặt phòng</title>
+    <title>Booking Detail</title>
 </head>
 <body>
-    <h1>Chi tiết đặt phòng</h1>
-    <p>ID đặt phòng: {{ booking_id }}</p>
-    <h2>Thông tin đặt phòng</h2>
-    <p>Khách sạn: </p>
-    <p>Phòng: </p>
-    <p>Ngày nhận phòng: </p>
-    <p>Ngày trả phòng: </p>
-    <p>Số khách: </p>
-    <p>Tổng tiền: </p>
-    <p>Trạng thái: </p>
-    <h2>Thanh toán</h2>
-    <p><a href="/payment/create?booking_id={{ booking_id }}">Thanh toán</a></p>
-    <p><a href="/booking">Quay lại danh sách</a></p>
+    <h1>Booking Detail</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p style="color: {% if category == 'error' %}red{% else %}green{% endif %};">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    {% if result and result[0].json.data.booking %}
+        {% set booking = result[0].json.data.booking %}
+        
+        <h2>Booking Code: {{ booking.booking_code }}</h2>
+        <p>Status: {{ booking.status }}</p>
+        <p>Payment Status: {{ booking.payment_status }}</p>
+        
+        <h3>Hotel Information</h3>
+        {% if booking.hotel %}
+        <p>Hotel: {{ booking.hotel.hotel_name }}</p>
+        <p>Address: {{ booking.hotel.address }}</p>
+        {% endif %}
+        
+        <h3>Booking Information</h3>
+        <p>Check-in: {{ booking.check_in_date }}</p>
+        <p>Check-out: {{ booking.check_out_date }}</p>
+        <p>Number of Guests: {{ booking.num_guests }}</p>
+        <p>Special Requests: {{ booking.special_requests or 'None' }}</p>
+        
+        <h3>Room Details</h3>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Room</th>
+                    <th>Quantity</th>
+                    <th>Price/Night</th>
+                    <th>Nights</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for detail in booking.details %}
+                <tr>
+                    <td>Room ID: {{ detail.room_id }}</td>
+                    <td>{{ detail.quantity }}</td>
+                    <td>{{ detail.price_per_night }}</td>
+                    <td>{{ detail.num_nights }}</td>
+                    <td>{{ detail.subtotal }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <h3>Payment</h3>
+        <p>Total Amount: {{ booking.total_amount }}</p>
+        <p>Discount: {{ booking.discount_amount }}</p>
+        <p>Final Amount: {{ booking.final_amount }}</p>
+        
+        <h3>Actions</h3>
+        {% if booking.status in ['pending', 'confirmed'] %}
+        <a href="/booking/{{ booking_id }}/edit">Edit Booking</a>
+        <form action="/booking/{{ booking_id }}/cancel" method="POST" style="display:inline;">
+            <button type="submit" onclick="return confirm('Are you sure?')">Cancel Booking</button>
+        </form>
+        {% endif %}
+        
+        {% if booking.status == 'pending' %}
+        <form action="/booking/{{ booking_id }}/confirm" method="POST" style="display:inline;">
+            <button type="submit">Confirm Booking</button>
+        </form>
+        {% endif %}
+        
+        {% if booking.status == 'confirmed' %}
+        <form action="/booking/{{ booking_id }}/check-in" method="POST" style="display:inline;">
+            <button type="submit">Check-in</button>
+        </form>
+        {% endif %}
+        
+        {% if booking.status == 'checked_in' %}
+        <form action="/booking/{{ booking_id }}/check-out" method="POST" style="display:inline;">
+            <button type="submit">Check-out</button>
+        </form>
+        {% endif %}
+        
+        <a href="/booking/{{ booking_id }}/invoice">View Invoice</a>
+        
+        <form action="/booking/{{ booking_id }}/resend-confirmation" method="POST" style="display:inline;">
+            <button type="submit">Resend Confirmation Email</button>
+        </form>
+    {% else %}
+        <p>Booking not found</p>
+    {% endif %}
+    
+    <p><a href="/booking">Back to List</a></p>
 </body>
 </html>
-

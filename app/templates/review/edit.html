@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Review</title>
+</head>
+<body>
+    <h1>Edit Review</h1>
+    
+    {% if error %}
+    <p style="color: red;">{{ error }}</p>
+    {% endif %}
+    
+    {% if result and result[0].json.data.review %}
+        {% set review = result[0].json.data.review %}
+        
+        <form method="POST" action="/review/{{ review_id }}/edit">
+            <div>
+                <label>Overall Rating (1-5):</label>
+                <input type="number" name="rating" min="1" max="5" required value="{{ request.args.get('rating', review.rating) }}">
+            </div>
+            
+            <div>
+                <label>Cleanliness Rating (1-5):</label>
+                <input type="number" name="cleanliness_rating" min="1" max="5" value="{{ request.args.get('cleanliness_rating', review.cleanliness_rating or '') }}">
+            </div>
+            
+            <div>
+                <label>Service Rating (1-5):</label>
+                <input type="number" name="service_rating" min="1" max="5" value="{{ request.args.get('service_rating', review.service_rating or '') }}">
+            </div>
+            
+            <div>
+                <label>Facilities Rating (1-5):</label>
+                <input type="number" name="facilities_rating" min="1" max="5" value="{{ request.args.get('facilities_rating', review.facilities_rating or '') }}">
+            </div>
+            
+            <div>
+                <label>Location Rating (1-5):</label>
+                <input type="number" name="location_rating" min="1" max="5" value="{{ request.args.get('location_rating', review.location_rating or '') }}">
+            </div>
+            
+            <div>
+                <label>Comment:</label>
+                <textarea name="comment">{{ request.args.get('comment', review.comment or '') }}</textarea>
+            </div>
+            
+            <button type="submit">Update Review</button>
+            <a href="/review/{{ review_id }}">Cancel</a>
+        </form>
+    {% else %}
+        <p>Review not found</p>
+    {% endif %}
+</body>
+</html>

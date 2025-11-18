@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search History</title>
+</head>
+<body>
+    <h1>Search History</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p style="color: {% if category == 'error' %}red{% else %}green{% endif %};">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    {% if result and result[0].json.data %}
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Destination</th>
+                    <th>Check-in</th>
+                    <th>Check-out</th>
+                    <th>Guests</th>
+                    <th>Search Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for history in result[0].json.data %}
+                <tr>
+                    <td>{{ history.destination }}</td>
+                    <td>{{ history.check_in_date or 'N/A' }}</td>
+                    <td>{{ history.check_out_date or 'N/A' }}</td>
+                    <td>{{ history.num_guests or 'N/A' }}</td>
+                    <td>{{ history.search_date }}</td>
+                    <td>
+                        <form action="/search/history/{{ history.search_id }}/delete" method="POST" style="display:inline;">
+                            <button type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No search history</p>
+    {% endif %}
+    
+    <p><a href="/search">New Search</a></p>
+</body>
+</html>

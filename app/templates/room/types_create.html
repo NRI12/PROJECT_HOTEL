@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Room Type</title>
+</head>
+<body>
+    <h1>Create Room Type</h1>
+    
+    {% if error %}
+    <p style="color: red;">{{ error }}</p>
+    {% endif %}
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p style="color: {% if category == 'error' %}red{% else %}green{% endif %};">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <form method="POST" action="/room/types">
+        <div>
+            <label>Type Name:</label>
+            <input type="text" name="type_name" required value="{{ request.args.get('type_name', '') }}">
+        </div>
+        
+        <div>
+            <label>Description:</label>
+            <textarea name="description">{{ request.args.get('description', '') }}</textarea>
+        </div>
+        
+        <button type="submit">Create</button>
+        <a href="/room/types">Cancel</a>
+    </form>
+</body>
+</html>

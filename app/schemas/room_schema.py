@@ -32,3 +32,21 @@ class RoomAmenitySchema(Schema):
 
 class RoomStatusSchema(Schema):
     status = fields.String(required=True, validate=validate.OneOf(['available', 'unavailable', 'maintenance']))
+
+class RoomTypeCreateSchema(Schema):
+    type_name = fields.String(required=True, validate=validate.Length(min=1, max=100))
+    description = fields.String(allow_none=True)
+
+class RoomTypeUpdateSchema(Schema):
+    type_name = fields.String(validate=validate.Length(min=1, max=100))
+    description = fields.String(allow_none=True)
+
+class AmenityCreateSchema(Schema):
+    amenity_name = fields.String(required=True, validate=validate.Length(min=1, max=100))
+    icon = fields.String(allow_none=True, validate=validate.Length(max=100))
+    category = fields.String(allow_none=True, validate=validate.OneOf(['hotel', 'room', 'both']))
+
+class AmenityUpdateSchema(Schema):
+    amenity_name = fields.String(validate=validate.Length(min=1, max=100))
+    icon = fields.String(allow_none=True, validate=validate.Length(max=100))
+    category = fields.String(allow_none=True, validate=validate.OneOf(['hotel', 'room', 'both']))

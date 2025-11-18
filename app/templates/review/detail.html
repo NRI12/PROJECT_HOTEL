@@ -1,18 +1,93 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Chi tiết đánh giá</title>
+    <title>Review Detail</title>
 </head>
 <body>
-    <h1>Chi tiết đánh giá</h1>
-    <p>ID đánh giá: {{ review_id }}</p>
-    <h2>Thông tin đánh giá</h2>
-    <p>Khách sạn: </p>
-    <p>Người đánh giá: </p>
-    <p>Điểm: </p>
-    <p>Nội dung: </p>
-    <p>Ngày tạo: </p>
-    <p><a href="/review">Quay lại danh sách</a></p>
+    <h1>Review Detail</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p style="color: {% if category == 'error' %}red{% else %}green{% endif %};">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    {% if result and result[0].json.data.review %}
+        {% set review = result[0].json.data.review %}
+        
+        <h2>Review Information</h2>
+        <p>Hotel: {{ review.hotel.hotel_name if review.hotel else 'N/A' }}</p>
+        <p>User: {{ review.user.full_name if review.user else 'N/A' }}</p>
+        <p>Booking ID: {{ review.booking_id }}</p>
+        <p>Status: {{ review.status }}</p>
+        
+        <h3>Ratings</h3>
+        <p>Overall Rating: {{ review.rating }}/5</p>
+        {% if review.cleanliness_rating %}
+        <p>Cleanliness: {{ review.cleanliness_rating }}/5</p>
+        {% endif %}
+        {% if review.service_rating %}
+        <p>Service: {{ review.service_rating }}/5</p>
+        {% endif %}
+        {% if review.facilities_rating %}
+        <p>Facilities: {{ review.facilities_rating }}/5</p>
+        {% endif %}
+        {% if review.location_rating %}
+        <p>Location: {{ review.location_rating }}/5</p>
+        {% endif %}
+        
+        <h3>Comment</h3>
+        <p>{{ review.comment or 'No comment' }}</p>
+        
+        {% if review.hotel_response %}
+        <h3>Hotel Response</h3>
+        <p>{{ review.hotel_response }}</p>
+        <p>Response Date: {{ review.response_date }}</p>
+        
+        <h4>Update Response</h4>
+        <form method="POST" action="/review/{{ review_id }}/response/update">
+            <div>
+                <label>Response:</label>
+                <textarea name="response" required>{{ review.hotel_response }}</textarea>
+            </div>
+            <button type="submit">Update Response</button>
+        </form>
+        {% else %}
+        <h3>Add Response</h3>
+        <form method="POST" action="/review/{{ review_id }}/response">
+            <div>
+                <label>Response:</label>
+                <textarea name="response" required></textarea>
+            </div>
+            <button type="submit">Add Response</button>
+        </form>
+        {% endif %}
+        
+        <h3>Actions</h3>
+        <a href="/review/{{ review_id }}/edit">Edit Review</a>
+        
+        <form action="/review/{{ review_id }}/delete" method="POST" style="display:inline;">
+            <button type="submit" onclick="return confirm('Are you sure?')">Delete Review</button>
+        </form>
+        
+        <form action="/review/{{ review_id }}/helpful" method="POST" style="display:inline;">
+            <button type="submit">Mark as Helpful</button>
+        </form>
+        
+        <h4>Report Review</h4>
+        <form method="POST" action="/review/{{ review_id }}/report">
+            <div>
+                <label>Reason:</label>
+                <textarea name="reason" required></textarea>
+            </div>
+            <button type="submit">Report</button>
+        </form>
+    {% else %}
+        <p>Review not found</p>
+    {% endif %}
+    
+    <p><a href="/review">Back to List</a></p>
 </body>
 </html>
-

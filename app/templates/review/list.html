@@ -1,29 +1,50 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Danh sách đánh giá</title>
+    <title>Reviews</title>
 </head>
 <body>
-    <h1>Danh sách đánh giá</h1>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Khách sạn</th>
-                <th>Người đánh giá</th>
-                <th>Điểm</th>
-                <th>Nội dung</th>
-                <th>Ngày tạo</th>
-                <th>Chi tiết</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td colspan="7">Chưa có đánh giá nào</td>
-            </tr>
-        </tbody>
-    </table>
-    <p><a href="/review/create">Tạo đánh giá mới</a></p>
+    <h1>Reviews</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p style="color: {% if category == 'error' %}red{% else %}green{% endif %};">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <a href="/review/create">Create New Review</a>
+    
+    {% if result and result[0].json.data %}
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Hotel</th>
+                    <th>User</th>
+                    <th>Rating</th>
+                    <th>Comment</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for review in result[0].json.data %}
+                <tr>
+                    <td>{{ review.hotel.hotel_name if review.hotel else 'N/A' }}</td>
+                    <td>{{ review.user.full_name if review.user else 'N/A' }}</td>
+                    <td>{{ review.rating }}/5</td>
+                    <td>{{ review.comment[:50] if review.comment else 'No comment' }}...</td>
+                    <td>{{ review.created_at }}</td>
+                    <td>
+                        <a href="/review/{{ review.review_id }}">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No reviews found</p>
+    {% endif %}
 </body>
 </html>
-

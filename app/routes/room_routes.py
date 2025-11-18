@@ -102,3 +102,101 @@ def update_status(room_id):
     else:
         flash('Cập nhật trạng thái thất bại', 'error')
     return redirect(url_for('room.room_detail', room_id=room_id))
+
+@room_bp.route('/types', methods=['GET'])
+def list_room_types():
+    result = RoomController.list_room_types()
+    return render_template('room/types_list.html', result=result)
+
+@room_bp.route('/types/create', methods=['GET', 'POST'])
+def create_room_type():
+    if request.method == 'POST':
+        result = RoomController.create_room_type()
+        if result[1] == 201:
+            flash('Tạo loại phòng thành công', 'success')
+            return redirect(url_for('room.list_room_types'))
+        else:
+            try:
+                error_data = result[0].get_json()
+                error_message = error_data.get('message', 'Tạo loại phòng thất bại')
+            except:
+                error_message = 'Tạo loại phòng thất bại'
+            return render_template('room/types_create.html', error=error_message)
+    return render_template('room/types_create.html')
+
+@room_bp.route('/types/<int:type_id>/edit', methods=['GET', 'POST'])
+def edit_room_type(type_id):
+    if request.method == 'POST':
+        result = RoomController.update_room_type(type_id)
+        if result[1] == 200:
+            flash('Cập nhật loại phòng thành công', 'success')
+            return redirect(url_for('room.list_room_types'))
+        else:
+            try:
+                error_data = result[0].get_json()
+                error_message = error_data.get('message', 'Cập nhật loại phòng thất bại')
+            except:
+                error_message = 'Cập nhật loại phòng thất bại'
+            result = RoomController.get_room_type(type_id)
+            return render_template('room/types_edit.html', type_id=type_id, result=result, error=error_message)
+    
+    result = RoomController.get_room_type(type_id)
+    return render_template('room/types_edit.html', type_id=type_id, result=result)
+
+@room_bp.route('/types/<int:type_id>/delete', methods=['POST'])
+def delete_room_type(type_id):
+    result = RoomController.delete_room_type(type_id)
+    if result[1] == 200:
+        flash('Xóa loại phòng thành công', 'success')
+    else:
+        flash('Xóa loại phòng thất bại', 'error')
+    return redirect(url_for('room.list_room_types'))
+
+@room_bp.route('/amenities', methods=['GET'])
+def list_amenities():
+    result = RoomController.list_amenities()
+    return render_template('room/amenities_list.html', result=result)
+
+@room_bp.route('/amenities/create', methods=['GET', 'POST'])
+def create_amenity():
+    if request.method == 'POST':
+        result = RoomController.create_amenity()
+        if result[1] == 201:
+            flash('Tạo tiện nghi thành công', 'success')
+            return redirect(url_for('room.list_amenities'))
+        else:
+            try:
+                error_data = result[0].get_json()
+                error_message = error_data.get('message', 'Tạo tiện nghi thất bại')
+            except:
+                error_message = 'Tạo tiện nghi thất bại'
+            return render_template('room/amenities_create.html', error=error_message)
+    return render_template('room/amenities_create.html')
+
+@room_bp.route('/amenities/<int:amenity_id>/edit', methods=['GET', 'POST'])
+def edit_amenity(amenity_id):
+    if request.method == 'POST':
+        result = RoomController.update_amenity(amenity_id)
+        if result[1] == 200:
+            flash('Cập nhật tiện nghi thành công', 'success')
+            return redirect(url_for('room.list_amenities'))
+        else:
+            try:
+                error_data = result[0].get_json()
+                error_message = error_data.get('message', 'Cập nhật tiện nghi thất bại')
+            except:
+                error_message = 'Cập nhật tiện nghi thất bại'
+            result = RoomController.get_amenity(amenity_id)
+            return render_template('room/amenities_edit.html', amenity_id=amenity_id, result=result, error=error_message)
+    
+    result = RoomController.get_amenity(amenity_id)
+    return render_template('room/amenities_edit.html', amenity_id=amenity_id, result=result)
+
+@room_bp.route('/amenities/<int:amenity_id>/delete', methods=['POST'])
+def delete_amenity(amenity_id):
+    result = RoomController.delete_amenity(amenity_id)
+    if result[1] == 200:
+        flash('Xóa tiện nghi thành công', 'success')
+    else:
+        flash('Xóa tiện nghi thất bại', 'error')
+    return redirect(url_for('room.list_amenities'))

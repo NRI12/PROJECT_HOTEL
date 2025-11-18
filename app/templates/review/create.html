@@ -1,28 +1,53 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tạo đánh giá</title>
+    <title>Create Review</title>
 </head>
 <body>
-    <h1>Tạo đánh giá</h1>
+    <h1>Create Review</h1>
+    
+    {% if error %}
+    <p style="color: red;">{{ error }}</p>
+    {% endif %}
+    
     <form method="POST" action="/review/create">
         <div>
-            <label>ID Khách sạn:</label>
-            <input type="number" name="hotel_id" required>
+            <label>Booking ID:</label>
+            <input type="number" name="booking_id" required value="{{ request.args.get('booking_id', '') }}">
         </div>
+        
         <div>
-            <label>Điểm đánh giá (1-5):</label>
-            <input type="number" name="rating" min="1" max="5" required>
+            <label>Overall Rating (1-5):</label>
+            <input type="number" name="rating" min="1" max="5" required value="{{ request.args.get('rating', '') }}">
         </div>
+        
         <div>
-            <label>Nội dung:</label>
-            <textarea name="content" required></textarea>
+            <label>Cleanliness Rating (1-5):</label>
+            <input type="number" name="cleanliness_rating" min="1" max="5" value="{{ request.args.get('cleanliness_rating', '') }}">
         </div>
+        
         <div>
-            <button type="submit">Tạo đánh giá</button>
+            <label>Service Rating (1-5):</label>
+            <input type="number" name="service_rating" min="1" max="5" value="{{ request.args.get('service_rating', '') }}">
         </div>
+        
+        <div>
+            <label>Facilities Rating (1-5):</label>
+            <input type="number" name="facilities_rating" min="1" max="5" value="{{ request.args.get('facilities_rating', '') }}">
+        </div>
+        
+        <div>
+            <label>Location Rating (1-5):</label>
+            <input type="number" name="location_rating" min="1" max="5" value="{{ request.args.get('location_rating', '') }}">
+        </div>
+        
+        <div>
+            <label>Comment:</label>
+            <textarea name="comment">{{ request.args.get('comment', '') }}</textarea>
+        </div>
+        
+        <button type="submit">Create Review</button>
+        <a href="/review">Cancel</a>
     </form>
-    <p><a href="/review">Quay lại danh sách</a></p>
 </body>
 </html>
-

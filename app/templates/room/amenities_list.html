@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Amenities</title>
+</head>
+<body>
+    <h1>Amenities</h1>
+    
+    {% if error %}
+    <p style="color: red;">{{ error }}</p>
+    {% endif %}
+    
+    {% if success %}
+    <p style="color: green;">{{ success }}</p>
+    {% endif %}
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p style="color: {% if category == 'error' %}red{% else %}green{% endif %};">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <a href="/room/amenities/create">Create New Amenity</a>
+    
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Amenity Name</th>
+                <th>Icon</th>
+                <th>Category</th>
+                <th>Created At</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if result and result[0].json.data.amenities %}
+                {% for amenity in result[0].json.data.amenities %}
+                <tr>
+                    <td>{{ amenity.amenity_id }}</td>
+                    <td>{{ amenity.amenity_name }}</td>
+                    <td>{{ amenity.icon or 'N/A' }}</td>
+                    <td>{{ amenity.category }}</td>
+                    <td>{{ amenity.created_at }}</td>
+                    <td>
+                        <a href="/room/amenities/{{ amenity.amenity_id }}/edit">Edit</a>
+                        <form action="/room/amenities/{{ amenity.amenity_id }}/delete" method="POST" style="display:inline;">
+                            <button type="submit" onclick="return confirm('Are you sure?')">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="6">No amenities found</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</body>
+</html>

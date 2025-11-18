@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Amenity</title>
+</head>
+<body>
+    <h1>Create Amenity</h1>
+    
+    {% if error %}
+    <p style="color: red;">{{ error }}</p>
+    {% endif %}
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p style="color: {% if category == 'error' %}red{% else %}green{% endif %};">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <form method="POST" action="/room/amenities">
+        <div>
+            <label>Amenity Name:</label>
+            <input type="text" name="amenity_name" required value="{{ request.args.get('amenity_name', '') }}">
+        </div>
+        
+        <div>
+            <label>Icon:</label>
+            <input type="text" name="icon" value="{{ request.args.get('icon', '') }}">
+        </div>
+        
+        <div>
+            <label>Category:</label>
+            <select name="category">
+                <option value="both" {% if request.args.get('category') == 'both' %}selected{% endif %}>Both</option>
+                <option value="hotel" {% if request.args.get('category') == 'hotel' %}selected{% endif %}>Hotel</option>
+                <option value="room" {% if request.args.get('category') == 'room' %}selected{% endif %}>Room</option>
+            </select>
+        </div>
+        
+        <button type="submit">Create</button>
+        <a href="/room/amenities">Cancel</a>
+    </form>
+</body>
+</html>

@@ -1,0 +1,493 @@
+from flask import request, session
+from app import db
+from app.models.booking import Booking
+from app.models.booking_detail import BookingDetail
+from app.models.hotel import Hotel
+from app.models.room import Room
+from app.models.user import User
+from app.models.payment import Payment
+from app.schemas.booking_schema import (
+    BookingCreateSchema, BookingUpdateSchema, CheckPriceSchema, 
+    BookingValidateSchema, BookingCancelSchema
+)
+from app.utils.response import success_response, error_response, paginated_response, validation_error_response
+from app.utils.validators import validate_required_fields
+from marshmallow import ValidationError
+from datetime import datetime, date
+from sqlalchemy import and_, or_
+import random
+import string
+
+class BookingController:
+    
+    @staticmethod
+    def _get_request_data():
+        if request.form:
+            data = dict(request.form)
+            for key, value in data.items():
+                if isinstance(value, list) and len(value) == 1:
+                    data[key] = value[0]
+            return data
+        elif request.is_json:
+            return request.get_json() or {}
+        else:
+            return {}
+    
+    @staticmethod
+    def _generate_booking_code():
+        return 'BK' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+    
+    @staticmethod
+    def list_bookings():
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
+        try:
+            page = request.args.get('page', 1, type=int)
+            per_page = request.args.get('per_page', 10, type=int)
+            status = request.args.get('status')
+            
+            user = User.query.get(session['user_id'])
+            
+            if user.role.role_name == 'admin':
+                query = Booking.query
+            else:
+                query = Booking.query.filter_by(user_id=session['user_id'])
+            
+            if status:
+                query = query.filter_by(status=status)
+            
+            query = query.order_by(Booking.created_at.desc())
+            
+            total = query.count()
+            bookings = query.offset((page - 1) * per_page).limit(per_page).all()
+            
+            bookings_data = []
+            for booking in bookings:
+                booking_dict = booking.to_dict()
+                booking_dict['hotel'] = booking.hotel.to_dict() if booking.hotel else None
+                booking_dict['user'] = booking.user.to_dict() if booking.user else None
+                booking_dict['details'] = [detail.to_dict() for detail in booking.booking_details]
+                bookings_data.append(booking_dict)
+            
+            return paginated_response(bookings_data, page, per_page, total)
+            
+        except Exception as e:
+            return error_response(f'Lỗi khi lấy danh sách booking: {str(e)}', 500)
+    
+    @staticmethod
+    def get_booking(booking_id):
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
+        try:
+            booking = Booking.query.get(booking_id)
+            if not booking:
+                return error_response('Không tìm thấy booking', 404)
+            
+            user = User.query.get(session['user_id'])
+            
+            if user.role.role_name != 'admin' and booking.user_id != session['user_id']:
+                hotel = Hotel.query.get(booking.hotel_id)
+                if not hotel or hotel.owner_id != session['user_id']:
+                    return error_response('Không có quyền xem booking này', 403)
+            
+            booking_dict = booking.to_dict()
+            booking_dict['hotel'] = booking.hotel.to_dict() if booking.hotel else None
+            booking_dict['user'] = booking.user.to_dict() if booking.user else None
+            booking_dict['details'] = [detail.to_dict() for detail in booking.booking_details]
+            booking_dict['payments'] = [payment.to_dict() for payment in booking.payments]
+            
+            return success_response(data={'booking': booking_dict})
+            
+        except Exception as e:
+            return error_response(f'Lỗi khi lấy chi tiết booking: {str(e)}', 500)
+    
+    @staticmethod
+    def create_booking():
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
+        try:
+            data = BookingController._get_request_data()
+            
+            required_fields = ['hotel_id', 'check_in_date', 'check_out_date', 'num_guests', 'rooms']
+            is_valid, error_msg = validate_required_fields(data, required_fields)
+            if not is_valid:
+                return error_response(error_msg, 400)
+            
+            schema = BookingCreateSchema()
+            validated_data = schema.load(data)
+            
+            check_in = validated_data['check_in_date']
+            check_out = validated_data['check_out_date']
+            
+            if check_in >= check_out:
+                return error_response('Ngày check-out phải sau ngày check-in', 400)
+            
+            if check_in < date.today():
+                return error_response('Ngày check-in không được trong quá khứ', 400)
+            
+            num_nights = (check_out - check_in).days
+            total_amount = 0
+            booking_details = []
+            
+            for room_data in validated_data['rooms']:
+                room = Room.query.get(room_data['room_id'])
+                if not room:
+                    return error_response(f'Không tìm thấy phòng ID {room_data["room_id"]}', 404)
+                
+                if room.hotel_id != validated_data['hotel_id']:
+                    return error_response('Phòng không thuộc khách sạn này', 400)
+                
+                quantity = room_data['quantity']
+                price_per_night = room.base_price
+                subtotal = price_per_night * quantity * num_nights
+                total_amount += subtotal
+                
+                booking_details.append({
+                    'room_id': room.room_id,
+                    'quantity': quantity,
+                    'price_per_night': price_per_night,
+                    'num_nights': num_nights,
+                    'subtotal': subtotal
+                })
+            
+            booking_code = BookingController._generate_booking_code()
+            
+            booking = Booking(
+                booking_code=booking_code,
+                user_id=session['user_id'],
+                hotel_id=validated_data['hotel_id'],
+                check_in_date=check_in,
+                check_out_date=check_out,
+                num_guests=validated_data['num_guests'],
+                total_amount=total_amount,
+                discount_amount=0,
+                final_amount=total_amount,
+                special_requests=validated_data.get('special_requests'),
+                status='pending'
+            )
+            
+            db.session.add(booking)
+            db.session.flush()
+            
+            for detail_data in booking_details:
+                detail = BookingDetail(
+                    booking_id=booking.booking_id,
+                    **detail_data
+                )
+                db.session.add(detail)
+            
+            db.session.commit()
+            
+            return success_response(
+                data={'booking': booking.to_dict()},
+                message='Tạo booking thành công',
+                status_code=201
+            )
+            
+        except ValidationError as e:
+            return validation_error_response(e.messages)
+        except Exception as e:
+            db.session.rollback()
+            return error_response(f'Tạo booking thất bại: {str(e)}', 500)
+    
+    @staticmethod
+    def check_price(booking_id):
+        try:
+            booking = Booking.query.get(booking_id)
+            if not booking:
+                return error_response('Không tìm thấy booking', 404)
+            
+            data = BookingController._get_request_data()
+            schema = CheckPriceSchema()
+            validated_data = schema.load(data)
+            
+            check_in = validated_data.get('check_in_date', booking.check_in_date)
+            check_out = validated_data.get('check_out_date', booking.check_out_date)
+            num_nights = (check_out - check_in).days
+            
+            total_amount = 0
+            breakdown = []
+            
+            for detail in booking.booking_details:
+                room = Room.query.get(detail.room_id)
+                price = room.base_price
+                subtotal = price * detail.quantity * num_nights
+                total_amount += subtotal
+                
+                breakdown.append({
+                    'room_id': room.room_id,
+                    'room_name': room.room_name,
+                    'quantity': detail.quantity,
+                    'price_per_night': float(price),
+                    'num_nights': num_nights,
+                    'subtotal': float(subtotal)
+                })
+            
+            return success_response(data={
+                'total_amount': float(total_amount),
+                'breakdown': breakdown,
+                'num_nights': num_nights
+            })
+            
+        except ValidationError as e:
+            return validation_error_response(e.messages)
+        except Exception as e:
+            return error_response(f'Lỗi kiểm tra giá: {str(e)}', 500)
+    
+    @staticmethod
+    def update_booking(booking_id):
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
+        try:
+            booking = Booking.query.get(booking_id)
+            if not booking:
+                return error_response('Không tìm thấy booking', 404)
+            
+            if booking.user_id != session['user_id']:
+                return error_response('Không có quyền cập nhật booking này', 403)
+            
+            if booking.status not in ['pending', 'confirmed']:
+                return error_response('Không thể cập nhật booking với trạng thái hiện tại', 400)
+            
+            data = BookingController._get_request_data()
+            schema = BookingUpdateSchema()
+            validated_data = schema.load(data)
+            
+            for key, value in validated_data.items():
+                if hasattr(booking, key):
+                    setattr(booking, key, value)
+            
+            db.session.commit()
+            
+            return success_response(
+                data={'booking': booking.to_dict()},
+                message='Cập nhật booking thành công'
+            )
+            
+        except ValidationError as e:
+            return validation_error_response(e.messages)
+        except Exception as e:
+            db.session.rollback()
+            return error_response(f'Cập nhật booking thất bại: {str(e)}', 500)
+    
+    @staticmethod
+    def cancel_booking(booking_id):
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
+        try:
+            booking = Booking.query.get(booking_id)
+            if not booking:
+                return error_response('Không tìm thấy booking', 404)
+            
+            if booking.user_id != session['user_id']:
+                return error_response('Không có quyền hủy booking này', 403)
+            
+            if booking.status in ['cancelled', 'checked_in', 'checked_out']:
+                return error_response('Không thể hủy booking với trạng thái hiện tại', 400)
+            
+            data = BookingController._get_request_data()
+            schema = BookingCancelSchema()
+            validated_data = schema.load(data)
+            
+            booking.status = 'cancelled'
+            booking.cancellation_reason = validated_data.get('reason')
+            booking.cancelled_at = datetime.utcnow()
+            
+            db.session.commit()
+            
+            return success_response(message='Hủy booking thành công')
+            
+        except ValidationError as e:
+            return validation_error_response(e.messages)
+        except Exception as e:
+            db.session.rollback()
+            return error_response(f'Hủy booking thất bại: {str(e)}', 500)
+    
+    @staticmethod
+    def confirm_booking(booking_id):
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
+        try:
+            booking = Booking.query.get(booking_id)
+            if not booking:
+                return error_response('Không tìm thấy booking', 404)
+            
+            hotel = Hotel.query.get(booking.hotel_id)
+            if hotel.owner_id != session['user_id']:
+                user = User.query.get(session['user_id'])
+                if not user or user.role.role_name != 'admin':
+                    return error_response('Không có quyền xác nhận booking này', 403)
+            
+            if booking.status != 'pending':
+                return error_response('Chỉ có thể xác nhận booking đang ở trạng thái pending', 400)
+            
+            booking.status = 'confirmed'
+            db.session.commit()
+            
+            return success_response(message='Xác nhận booking thành công')
+            
+        except Exception as e:
+            db.session.rollback()
+            return error_response(f'Xác nhận booking thất bại: {str(e)}', 500)
+    
+    @staticmethod
+    def check_in(booking_id):
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
+        try:
+            booking = Booking.query.get(booking_id)
+            if not booking:
+                return error_response('Không tìm thấy booking', 404)
+            
+            hotel = Hotel.query.get(booking.hotel_id)
+            if hotel.owner_id != session['user_id']:
+                user = User.query.get(session['user_id'])
+                if not user or user.role.role_name != 'admin':
+                    return error_response('Không có quyền check-in booking này', 403)
+            
+            if booking.status != 'confirmed':
+                return error_response('Chỉ có thể check-in booking đã xác nhận', 400)
+            
+            booking.status = 'checked_in'
+            db.session.commit()
+            
+            return success_response(message='Check-in thành công')
+            
+        except Exception as e:
+            db.session.rollback()
+            return error_response(f'Check-in thất bại: {str(e)}', 500)
+    
+    @staticmethod
+    def check_out(booking_id):
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
+        try:
+            booking = Booking.query.get(booking_id)
+            if not booking:
+                return error_response('Không tìm thấy booking', 404)
+            
+            hotel = Hotel.query.get(booking.hotel_id)
+            if hotel.owner_id != session['user_id']:
+                user = User.query.get(session['user_id'])
+                if not user or user.role.role_name != 'admin':
+                    return error_response('Không có quyền check-out booking này', 403)
+            
+            if booking.status != 'checked_in':
+                return error_response('Chỉ có thể check-out booking đã check-in', 400)
+            
+            booking.status = 'checked_out'
+            db.session.commit()
+            
+            return success_response(message='Check-out thành công')
+            
+        except Exception as e:
+            db.session.rollback()
+            return error_response(f'Check-out thất bại: {str(e)}', 500)
+    
+    @staticmethod
+    def get_invoice(booking_id):
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
+        try:
+            booking = Booking.query.get(booking_id)
+            if not booking:
+                return error_response('Không tìm thấy booking', 404)
+            
+            user = User.query.get(session['user_id'])
+            
+            if user.role.role_name != 'admin' and booking.user_id != session['user_id']:
+                hotel = Hotel.query.get(booking.hotel_id)
+                if not hotel or hotel.owner_id != session['user_id']:
+                    return error_response('Không có quyền xem hóa đơn', 403)
+            
+            invoice = {
+                'booking_code': booking.booking_code,
+                'hotel': booking.hotel.to_dict() if booking.hotel else None,
+                'customer': booking.user.to_dict() if booking.user else None,
+                'check_in_date': booking.check_in_date.isoformat(),
+                'check_out_date': booking.check_out_date.isoformat(),
+                'num_guests': booking.num_guests,
+                'details': [],
+                'total_amount': float(booking.total_amount),
+                'discount_amount': float(booking.discount_amount),
+                'final_amount': float(booking.final_amount),
+                'payments': [p.to_dict() for p in booking.payments]
+            }
+            
+            for detail in booking.booking_details:
+                room = Room.query.get(detail.room_id)
+                invoice['details'].append({
+                    'room_name': room.room_name if room else 'N/A',
+                    'quantity': detail.quantity,
+                    'price_per_night': float(detail.price_per_night),
+                    'num_nights': detail.num_nights,
+                    'subtotal': float(detail.subtotal)
+                })
+            
+            return success_response(data={'invoice': invoice})
+            
+        except Exception as e:
+            return error_response(f'Lỗi xuất hóa đơn: {str(e)}', 500)
+    
+    @staticmethod
+    def resend_confirmation(booking_id):
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
+        try:
+            booking = Booking.query.get(booking_id)
+            if not booking:
+                return error_response('Không tìm thấy booking', 404)
+            
+            if booking.user_id != session['user_id']:
+                return error_response('Không có quyền gửi lại email', 403)
+            
+            return success_response(message='Đã gửi lại email xác nhận')
+            
+        except Exception as e:
+            return error_response(f'Gửi email thất bại: {str(e)}', 500)
+    
+    @staticmethod
+    def validate_booking():
+        try:
+            data = BookingController._get_request_data()
+            
+            schema = BookingValidateSchema()
+            validated_data = schema.load(data)
+            
+            check_in = validated_data['check_in_date']
+            check_out = validated_data['check_out_date']
+            
+            if check_in >= check_out:
+                return error_response('Ngày check-out phải sau ngày check-in', 400)
+            
+            if check_in < date.today():
+                return error_response('Ngày check-in không được trong quá khứ', 400)
+            
+            hotel = Hotel.query.get(validated_data['hotel_id'])
+            if not hotel:
+                return error_response('Không tìm thấy khách sạn', 404)
+            
+            for room_data in validated_data['rooms']:
+                room = Room.query.get(room_data['room_id'])
+                if not room:
+                    return error_response(f'Không tìm thấy phòng ID {room_data["room_id"]}', 404)
+                
+                if room.hotel_id != validated_data['hotel_id']:
+                    return error_response('Phòng không thuộc khách sạn này', 400)
+            
+            return success_response(message='Dữ liệu booking hợp lệ')
+            
+        except ValidationError as e:
+            return validation_error_response(e.messages)
+        except Exception as e:
+            return error_response(f'Lỗi validate: {str(e)}', 500)

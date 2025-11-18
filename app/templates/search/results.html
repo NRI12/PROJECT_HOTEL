@@ -1,35 +1,54 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Kết quả tìm kiếm</title>
+    <title>Search Results</title>
 </head>
 <body>
-    <h1>Kết quả tìm kiếm</h1>
-    <form method="GET" action="/search">
+    <h1>Search Results</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p style="color: {% if category == 'error' %}red{% else %}green{% endif %};">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    {% if result and result[0].json.data %}
+        <p>Found {{ result[0].json.pagination.total }} hotels</p>
+        
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Hotel Name</th>
+                    <th>City</th>
+                    <th>Address</th>
+                    <th>Star Rating</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for hotel in result[0].json.data %}
+                <tr>
+                    <td>{{ hotel.hotel_name }}</td>
+                    <td>{{ hotel.city }}</td>
+                    <td>{{ hotel.address }}</td>
+                    <td>{{ hotel.star_rating or 'N/A' }}</td>
+                    <td><a href="/hotel/{{ hotel.hotel_id }}">View Details</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        {% if result[0].json.pagination.pages > 1 %}
         <div>
-            <label>Tìm kiếm:</label>
-            <input type="text" name="q" value="{{ query }}">
-            <button type="submit">Tìm kiếm</button>
+            <p>Page {{ result[0].json.pagination.page }} of {{ result[0].json.pagination.pages }}</p>
         </div>
-    </form>
-    <h2>Kết quả</h2>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Tên khách sạn</th>
-                <th>Địa chỉ</th>
-                <th>Đánh giá</th>
-                <th>Chi tiết</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td colspan="5">Không tìm thấy kết quả</td>
-            </tr>
-        </tbody>
-    </table>
-    <p><a href="/hotel">Xem tất cả khách sạn</a></p>
+        {% endif %}
+    {% else %}
+        <p>No hotels found</p>
+    {% endif %}
+    
+    <p><a href="/search">New Search</a></p>
 </body>
 </html>
-
