@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chính sách hủy phòng</title>
+</head>
+<body>
+    <h1>Chính sách hủy phòng</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="message {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    {% if error %}
+        <div class="message error">{{ error }}</div>
+    {% endif %}
+    
+    {% if result and result[0].get_json() and result[0].get_json().success %}
+        {% set policies = result[0].get_json().data.policies %}
+        
+        <h2>Danh sách chính sách hiện tại</h2>
+        {% if policies %}
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>Tên chính sách</th>
+                        <th>Mô tả</th>
+                        <th>Hủy trước (giờ)</th>
+                        <th>Hoàn tiền (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for policy in policies %}
+                        <tr>
+                            <td>{{ policy.name }}</td>
+                            <td>{{ policy.description or '' }}</td>
+                            <td>{{ policy.hours_before_checkin }}</td>
+                            <td>{{ policy.refund_percentage }}%</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Chưa có chính sách nào</p>
+        {% endif %}
+        
+        <h2>Tạo chính sách mới</h2>
+        <form method="POST" action="/hotel/{{ hotel_id }}/policies">
+            <div>
+                <label>Tên chính sách:</label>
+                <input type="text" name="name" value="{{ request.form.name or '' }}" required>
+            </div>
+            <div>
+                <label>Mô tả:</label>
+                <textarea name="description">{{ request.form.description or '' }}</textarea>
+            </div>
+            <div>
+                <label>Số giờ trước khi nhận phòng (để được hoàn tiền):</label>
+                <input type="number" name="hours_before_checkin" value="{{ request.form.hours_before_checkin or '' }}" min="0" required>
+            </div>
+            <div>
+                <label>Phần trăm hoàn tiền (0-100):</label>
+                <input type="number" name="refund_percentage" value="{{ request.form.refund_percentage or '' }}" min="0" max="100" step="0.01" required>
+            </div>
+            <div>
+                <button type="submit">Tạo chính sách</button>
+            </div>
+        </form>
+        
+    {% else %}
+        <p>Không thể tải thông tin chính sách</p>
+    {% endif %}
+    
+    <p><a href="/hotel/{{ hotel_id }}">Quay lại chi tiết khách sạn</a></p>
+    <p><a href="/hotel">Quay lại danh sách</a></p>
+</body>
+</html>
+

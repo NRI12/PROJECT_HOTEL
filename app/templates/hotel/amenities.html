@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quản lý tiện nghi</title>
+</head>
+<body>
+    <h1>Quản lý tiện nghi khách sạn</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="message {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    {% if error %}
+        <div class="message error">{{ error }}</div>
+    {% endif %}
+    
+    {% if result and result[0].get_json() and result[0].get_json().success %}
+        {% set current_amenities = result[0].get_json().data.amenities %}
+        {% set current_amenity_ids = current_amenities|map(attribute='amenity_id')|list %}
+        
+        <form method="POST" action="/hotel/{{ hotel_id }}/amenities">
+            <h3>Chọn tiện nghi:</h3>
+            
+            {% if all_amenities %}
+                {% for amenity in all_amenities %}
+                    <div>
+                        <input type="checkbox" 
+                               name="amenity_ids" 
+                               value="{{ amenity.amenity_id }}"
+                               {% if current_amenities and amenity.amenity_id in current_amenity_ids %}checked{% endif %}>
+                        <label>{{ amenity.amenity_name }}</label>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>Danh sách tiện nghi sẽ được tải từ database. Vui lòng đảm bảo có dữ liệu amenities trong database.</p>
+                <p>Hoặc nhập ID tiện nghi (mỗi ID một dòng hoặc cách nhau bằng dấu phẩy):</p>
+                <textarea name="amenity_ids" placeholder="1,2,3 hoặc mỗi ID một dòng">{{ request.form.amenity_ids or request.args.amenity_ids or '' }}</textarea>
+            {% endif %}
+            
+            <div>
+                <button type="submit">Cập nhật tiện nghi</button>
+            </div>
+        </form>
+        
+        <h3>Tiện nghi hiện tại:</h3>
+        {% if current_amenities %}
+            <ul>
+                {% for amenity in current_amenities %}
+                    <li>{{ amenity.amenity_name }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Chưa có tiện nghi nào</p>
+        {% endif %}
+        
+    {% else %}
+        <p>Không thể tải thông tin tiện nghi</p>
+    {% endif %}
+    
+    <p><a href="/hotel/{{ hotel_id }}">Quay lại chi tiết khách sạn</a></p>
+    <p><a href="/hotel">Quay lại danh sách</a></p>
+</body>
+</html>
+

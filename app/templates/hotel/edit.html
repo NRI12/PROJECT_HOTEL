@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chỉnh sửa khách sạn</title>
+</head>
+<body>
+    <h1>Chỉnh sửa khách sạn</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div>{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    {% if error %}
+        <div>{{ error }}</div>
+    {% endif %}
+    
+    {% if result and result[0].get_json() and result[0].get_json().success %}
+        {% set hotel = result[0].get_json().data.hotel %}
+    {% endif %}
+    
+    <form method="POST" action="/hotel/{{ hotel_id }}/edit">
+        <div>
+            <label>Tên khách sạn:</label>
+            <input type="text" name="hotel_name" value="{{ request.form.hotel_name or request.args.hotel_name or hotel.hotel_name or '' }}">
+        </div>
+        <div>
+            <label>Mô tả:</label>
+            <textarea name="description">{{ request.form.description or request.args.description or hotel.description or '' }}</textarea>
+        </div>
+        <div>
+            <label>Địa chỉ:</label>
+            <input type="text" name="address" value="{{ request.form.address or request.args.address or hotel.address or '' }}">
+        </div>
+        <div>
+            <label>Thành phố:</label>
+            <input type="text" name="city" value="{{ request.form.city or request.args.city or hotel.city or '' }}">
+        </div>
+        <div>
+            <label>Quận/Huyện:</label>
+            <input type="text" name="district" value="{{ request.form.district or request.args.district or hotel.district or '' }}">
+        </div>
+        <div>
+            <label>Phường/Xã:</label>
+            <input type="text" name="ward" value="{{ request.form.ward or request.args.ward or hotel.ward or '' }}">
+        </div>
+        <div>
+            <label>Vĩ độ (latitude):</label>
+            <input type="number" name="latitude" step="0.00000001" value="{{ request.form.latitude or request.args.latitude or hotel.latitude or '' }}">
+        </div>
+        <div>
+            <label>Kinh độ (longitude):</label>
+            <input type="number" name="longitude" step="0.00000001" value="{{ request.form.longitude or request.args.longitude or hotel.longitude or '' }}">
+        </div>
+        <div>
+            <label>Số sao (1-5):</label>
+            <input type="number" name="star_rating" min="1" max="5" value="{{ request.form.star_rating or request.args.star_rating or hotel.star_rating or '' }}">
+        </div>
+        <div>
+            <label>Số điện thoại:</label>
+            <input type="text" name="phone" value="{{ request.form.phone or request.args.phone or hotel.phone or '' }}">
+        </div>
+        <div>
+            <label>Email:</label>
+            <input type="email" name="email" value="{{ request.form.email or request.args.email or hotel.email or '' }}">
+        </div>
+        <div>
+            <label>Giờ nhận phòng (HH:MM):</label>
+            <input type="time" name="check_in_time" value="{{ request.form.check_in_time or request.args.check_in_time or (hotel.check_in_time[:5] if hotel.check_in_time else '14:00') }}">
+        </div>
+        <div>
+            <label>Giờ trả phòng (HH:MM):</label>
+            <input type="time" name="check_out_time" value="{{ request.form.check_out_time or request.args.check_out_time or (hotel.check_out_time[:5] if hotel.check_out_time else '12:00') }}">
+        </div>
+        <div>
+            <button type="submit">Cập nhật</button>
+        </div>
+    </form>
+    <p><a href="/hotel/{{ hotel_id }}">Quay lại chi tiết</a></p>
+    <p><a href="/hotel">Quay lại danh sách</a></p>
+</body>
+</html>

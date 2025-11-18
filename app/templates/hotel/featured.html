@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Khách sạn nổi bật</title>
+</head>
+<body>
+    <h1>Khách sạn nổi bật</h1>
+    
+    {% if result and result[0].get_json() and result[0].get_json().success %}
+        {% set hotels = result[0].get_json().data.hotels %}
+        
+        {% if hotels %}
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tên khách sạn</th>
+                        <th>Địa chỉ</th>
+                        <th>Thành phố</th>
+                        <th>Số sao</th>
+                        <th>Ảnh</th>
+                        <th>Chi tiết</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for hotel in hotels %}
+                        <tr>
+                            <td>{{ hotel.hotel_id }}</td>
+                            <td>{{ hotel.hotel_name }}</td>
+                            <td>{{ hotel.address }}</td>
+                            <td>{{ hotel.city }}</td>
+                            <td>{{ hotel.star_rating or 'N/A' }}</td>
+                            <td>
+                                {% if hotel.images %}
+                                    {% for img in hotel.images[:1] %}
+                                        {% if img.is_primary %}
+                                            <img src="{{ img.image_url }}" alt="Hotel image" style="max-width: 100px; max-height: 100px;">
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    Chưa có ảnh
+                                {% endif %}
+                            </td>
+                            <td><a href="/hotel/{{ hotel.hotel_id }}">Xem chi tiết</a></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Chưa có khách sạn nổi bật nào</p>
+        {% endif %}
+        
+    {% else %}
+        <p>Không thể tải danh sách khách sạn nổi bật</p>
+    {% endif %}
+    
+    <p><a href="/hotel">Xem tất cả khách sạn</a></p>
+</body>
+</html>
+

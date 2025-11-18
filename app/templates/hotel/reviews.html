@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Đánh giá khách sạn</title>
+</head>
+<body>
+    <h1>Đánh giá khách sạn</h1>
+    
+    {% if result and result[0].get_json() and result[0].get_json().success %}
+        {% set reviews_data = result[0].get_json().data %}
+        {% set pagination = result[0].get_json().pagination %}
+        
+        <div>
+            <p>Tổng số đánh giá: {{ pagination.total if pagination else reviews_data|length }}</p>
+            {% if pagination %}
+                <p>Trang {{ pagination.page }}/{{ pagination.pages }}</p>
+            {% endif %}
+        </div>
+        
+        {% if reviews_data %}
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>Người đánh giá</th>
+                        <th>Điểm</th>
+                        <th>Tiêu đề</th>
+                        <th>Nội dung</th>
+                        <th>Ngày đánh giá</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for review in reviews_data %}
+                        <tr>
+                            <td>{{ review.user.full_name if review.user else 'Ẩn danh' }}</td>
+                            <td>{{ review.rating }}/5</td>
+                            <td>{{ review.title or '' }}</td>
+                            <td>{{ review.comment or '' }}</td>
+                            <td>{{ review.created_at }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            {% if pagination and pagination.pages > 1 %}
+                <div>
+                    {% if pagination.page > 1 %}
+                        <a href="?page={{ pagination.page - 1 }}">Trước</a>
+                    {% endif %}
+                    <span>Trang {{ pagination.page }}/{{ pagination.pages }}</span>
+                    {% if pagination.page < pagination.pages %}
+                        <a href="?page={{ pagination.page + 1 }}">Sau</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% else %}
+            <p>Chưa có đánh giá nào</p>
+        {% endif %}
+        
+    {% else %}
+        <p>Không thể tải đánh giá</p>
+    {% endif %}
+    
+    <p><a href="/hotel/{{ hotel_id }}">Quay lại chi tiết khách sạn</a></p>
+    <p><a href="/hotel">Quay lại danh sách</a></p>
+</body>
+</html>
+

@@ -5,23 +5,98 @@
 </head>
 <body>
     <h1>Danh sách khách sạn</h1>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Tên khách sạn</th>
-                <th>Địa chỉ</th>
-                <th>Đánh giá</th>
-                <th>Chi tiết</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td colspan="5">Chưa có khách sạn nào</td>
-            </tr>
-        </tbody>
-    </table>
-    <p><a href="/search">Tìm kiếm</a></p>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="message {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <div>
+        <form method="GET" action="/hotel">
+            <input type="text" name="search" placeholder="Tìm kiếm..." value="{{ request.args.search or '' }}">
+            <input type="text" name="city" placeholder="Thành phố" value="{{ request.args.city or '' }}">
+            <input type="number" name="min_rating" placeholder="Đánh giá tối thiểu" min="1" max="5" value="{{ request.args.min_rating or '' }}">
+            <input type="number" name="max_rating" placeholder="Đánh giá tối đa" min="1" max="5" value="{{ request.args.max_rating or '' }}">
+            <select name="is_featured">
+                <option value="">Tất cả</option>
+                <option value="true" {% if request.args.is_featured == 'true' %}selected{% endif %}>Nổi bật</option>
+                <option value="false" {% if request.args.is_featured == 'false' %}selected{% endif %}>Không nổi bật</option>
+            </select>
+            <button type="submit">Tìm kiếm</button>
+        </form>
+    </div>
+    
+    {% if result and result[0].get_json() and result[0].get_json().success %}
+        {% set hotels = result[0].get_json().data %}
+        {% set pagination = result[0].get_json().pagination %}
+        
+        {% if pagination %}
+            <p>Tổng số: {{ pagination.total }} khách sạn | Trang {{ pagination.page }}/{{ pagination.pages }}</p>
+        {% endif %}
+        
+        {% if hotels %}
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tên khách sạn</th>
+                        <th>Địa chỉ</th>
+                        <th>Thành phố</th>
+                        <th>Số sao</th>
+                        <th>Ảnh</th>
+                        <th>Chi tiết</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for hotel in hotels %}
+                        <tr>
+                            <td>{{ hotel.hotel_id }}</td>
+                            <td>{{ hotel.hotel_name }}</td>
+                            <td>{{ hotel.address }}</td>
+                            <td>{{ hotel.city }}</td>
+                            <td>{{ hotel.star_rating or 'N/A' }}</td>
+                            <td>
+                                {% if hotel.images %}
+                                    {% for img in hotel.images[:1] %}
+                                        {% if img.is_primary %}
+                                            <img src="{{ img.image_url }}" alt="Hotel image" style="max-width: 100px; max-height: 100px;">
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    Chưa có ảnh
+                                {% endif %}
+                            </td>
+                            <td><a href="/hotel/{{ hotel.hotel_id }}">Xem chi tiết</a></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            {% if pagination and pagination.pages > 1 %}
+                <div>
+                    {% if pagination.page > 1 %}
+                        <a href="?page={{ pagination.page - 1 }}{% if request.args.search %}&search={{ request.args.search }}{% endif %}{% if request.args.city %}&city={{ request.args.city }}{% endif %}">Trước</a>
+                    {% endif %}
+                    <span>Trang {{ pagination.page }}/{{ pagination.pages }}</span>
+                    {% if pagination.page < pagination.pages %}
+                        <a href="?page={{ pagination.page + 1 }}{% if request.args.search %}&search={{ request.args.search }}{% endif %}{% if request.args.city %}&city={{ request.args.city }}{% endif %}">Sau</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% else %}
+            <p>Không tìm thấy khách sạn nào</p>
+        {% endif %}
+        
+    {% else %}
+        <p>Không thể tải danh sách khách sạn</p>
+    {% endif %}
+    
+    <p><a href="/hotel/create">Tạo khách sạn mới</a></p>
+    <p><a href="/hotel/featured">Xem khách sạn nổi bật</a></p>
+    <p><a href="/search">Tìm kiếm nâng cao</a></p>
 </body>
 </html>
 
