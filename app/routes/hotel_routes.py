@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.controllers.hotel_controller import HotelController
+from app.utils.decorators import role_required, hotel_owner_required
 
 hotel_bp = Blueprint('hotel', __name__, url_prefix='/hotel')
 
@@ -19,6 +20,7 @@ def hotel_detail(hotel_id):
     return render_template('hotel/detail.html', hotel_id=hotel_id, result=result)
 
 @hotel_bp.route('/create', methods=['GET', 'POST'])
+@role_required('admin', 'hotel_owner')
 def create_hotel():
     if request.method == 'POST':
         result = HotelController.create_hotel()
@@ -35,6 +37,7 @@ def create_hotel():
     return render_template('hotel/create.html')
 
 @hotel_bp.route('/<int:hotel_id>/edit', methods=['GET', 'POST'])
+@hotel_owner_required
 def edit_hotel(hotel_id):
     if request.method == 'POST':
         result = HotelController.update_hotel(hotel_id)
@@ -53,6 +56,7 @@ def edit_hotel(hotel_id):
     return render_template('hotel/edit.html', hotel_id=hotel_id, result=result)
 
 @hotel_bp.route('/<int:hotel_id>/delete', methods=['POST'])
+@hotel_owner_required
 def delete_hotel(hotel_id):
     result = HotelController.delete_hotel(hotel_id)
     if result[1] == 200:
@@ -62,6 +66,7 @@ def delete_hotel(hotel_id):
     return redirect(url_for('hotel.list_hotels'))
 
 @hotel_bp.route('/<int:hotel_id>/images', methods=['POST'])
+@hotel_owner_required
 def upload_images(hotel_id):
     result = HotelController.upload_images(hotel_id)
     if result[1] == 200:
@@ -71,6 +76,7 @@ def upload_images(hotel_id):
     return redirect(url_for('hotel.hotel_detail', hotel_id=hotel_id))
 
 @hotel_bp.route('/<int:hotel_id>/images/<int:image_id>/delete', methods=['POST'])
+@hotel_owner_required
 def delete_image(hotel_id, image_id):
     result = HotelController.delete_image(hotel_id, image_id)
     if result[1] == 200:
@@ -80,6 +86,7 @@ def delete_image(hotel_id, image_id):
     return redirect(url_for('hotel.hotel_detail', hotel_id=hotel_id))
 
 @hotel_bp.route('/<int:hotel_id>/images/<int:image_id>/primary', methods=['POST'])
+@hotel_owner_required
 def set_primary_image(hotel_id, image_id):
     result = HotelController.set_primary_image(hotel_id, image_id)
     if result[1] == 200:
@@ -121,21 +128,27 @@ def hotel_amenities(hotel_id):
     all_amenities = Amenity.query.all()
     return render_template('hotel/amenities.html', hotel_id=hotel_id, result=result, all_amenities=all_amenities)
 
-@hotel_bp.route('/<int:hotel_id>/policies', methods=['GET', 'POST'])
+@hotel_bp.route('/<int:hotel_id>/amenities/update', methods=['POST'])
+@hotel_owner_required
+def update_amenities(hotel_id):
+    result = HotelController.update_hotel_amenities(hotel_id)
+    if result[1] == 200:
+        flash('Cập nhật tiện nghi thành công', 'success')
+    else:
+        flash('Cập nhật tiện nghi thất bại', 'error')
+    return redirect(url_for('hotel.hotel_amenities', hotel_id=hotel_id))
+
+@hotel_bp.route('/<int:hotel_id>/policies', methods=['GET'])
 def hotel_policies(hotel_id):
-    if request.method == 'POST':
-        result = HotelController.create_hotel_policy(hotel_id)
-        if result[1] == 201:
-            flash('Tạo chính sách thành công', 'success')
-            return redirect(url_for('hotel.hotel_policies', hotel_id=hotel_id))
-        else:
-            try:
-                error_data = result[0].get_json()
-                error_message = error_data.get('message', 'Tạo chính sách thất bại')
-            except:
-                error_message = 'Tạo chính sách thất bại'
-            result = HotelController.get_hotel_policies(hotel_id)
-            return render_template('hotel/policies.html', hotel_id=hotel_id, result=result, error=error_message)
-    
     result = HotelController.get_hotel_policies(hotel_id)
     return render_template('hotel/policies.html', hotel_id=hotel_id, result=result)
+
+@hotel_bp.route('/<int:hotel_id>/policies/create', methods=['POST'])
+@hotel_owner_required
+def create_policy(hotel_id):
+    result = HotelController.create_hotel_policy(hotel_id)
+    if result[1] == 201:
+        flash('Tạo chính sách thành công', 'success')
+    else:
+        flash('Tạo chính sách thất bại', 'error')
+    return redirect(url_for('hotel.hotel_policies', hotel_id=hotel_id))

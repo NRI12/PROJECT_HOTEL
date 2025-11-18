@@ -1,6 +1,7 @@
 from functools import wraps
 from flask import session, redirect, url_for, request
 from app.models.user import User
+from app.models.hotel import Hotel
 from app.utils.response import error_response
 from app.utils.constants import USER_ROLES
 
@@ -30,6 +31,27 @@ def role_required(*allowed_roles):
             return fn(*args, **kwargs)
         return wrapper
     return decorator
+
+def hotel_owner_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('auth.login'))
+        
+        hotel_id = kwargs.get('hotel_id')
+        if not hotel_id:
+            return error_response('Hotel ID required', 400)
+        
+        hotel = Hotel.query.get(hotel_id)
+        if not hotel:
+            return error_response('Hotel not found', 404)
+        
+        user = User.query.get(session['user_id'])
+        if hotel.owner_id != session['user_id'] and user.role.role_name != 'admin':
+            return error_response('Forbidden', 403)
+        
+        return fn(*args, **kwargs)
+    return wrapper
 
 def validate_json(*required_fields):
     def decorator(fn):

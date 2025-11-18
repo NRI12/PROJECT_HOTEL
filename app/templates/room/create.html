@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tạo phòng mới</title>
+</head>
+<body>
+    <h1>Tạo phòng mới</h1>
+    
+    {% if error %}
+        <div style="color: red; border: 1px solid red; padding: 10px; margin: 10px 0;">
+            <strong>Lỗi:</strong> {{ error }}
+        </div>
+    {% endif %}
+    
+    <form method="POST" action="/room/create">
+        <div>
+            <label>ID Khách sạn: *</label>
+            <input type="number" name="hotel_id" value="{{ request.form.hotel_id or request.args.hotel_id or '' }}" required>
+        </div>
+        
+        <div>
+            <label>ID Loại phòng: *</label>
+            <input type="number" name="room_type_id" value="{{ request.form.room_type_id or request.args.room_type_id or '' }}" required>
+            <small>(1=Standard, 2=Deluxe, 3=Suite, ...)</small>
+        </div>
+        
+        <div>
+            <label>Số phòng:</label>
+            <input type="text" name="room_number" value="{{ request.form.room_number or request.args.room_number or '' }}" placeholder="VD: 101, A-203">
+        </div>
+        
+        <div>
+            <label>Tên phòng: *</label>
+            <input type="text" name="room_name" value="{{ request.form.room_name or request.args.room_name or '' }}" required placeholder="VD: Phòng Deluxe view biển">
+        </div>
+        
+        <div>
+            <label>Mô tả:</label>
+            <textarea name="description" rows="4" placeholder="Mô tả chi tiết về phòng">{{ request.form.description or request.args.description or '' }}</textarea>
+        </div>
+        
+        <div>
+            <label>Diện tích (m²):</label>
+            <input type="number" step="0.01" name="area" value="{{ request.form.area or request.args.area or '' }}" placeholder="VD: 25.5">
+        </div>
+        
+        <div>
+            <label>Số khách tối đa: *</label>
+            <input type="number" name="max_guests" value="{{ request.form.max_guests or request.args.max_guests or '2' }}" min="1" required>
+        </div>
+        
+        <div>
+            <label>Số giường:</label>
+            <input type="number" name="num_beds" value="{{ request.form.num_beds or request.args.num_beds or '1' }}" min="1">
+        </div>
+        
+        <div>
+            <label>Loại giường:</label>
+            <input type="text" name="bed_type" value="{{ request.form.bed_type or request.args.bed_type or '' }}" placeholder="VD: 1 giường King, 2 giường đơn">
+        </div>
+        
+        <div>
+            <label>Giá cơ bản (VNĐ/đêm): *</label>
+            <input type="number" step="0.01" name="base_price" value="{{ request.form.base_price or request.args.base_price or '' }}" min="0" required placeholder="VD: 500000">
+        </div>
+        
+        <div>
+            <label>Giá cuối tuần (VNĐ/đêm):</label>
+            <input type="number" step="0.01" name="weekend_price" value="{{ request.form.weekend_price or request.args.weekend_price or '' }}" min="0" placeholder="VD: 600000">
+        </div>
+        
+        <div>
+            <label>Số lượng phòng:</label>
+            <input type="number" name="quantity" value="{{ request.form.quantity or request.args.quantity or '1' }}" min="1">
+        </div>
+        
+        <div>
+            <button type="submit">Tạo phòng</button>
+            <a href="/room">Hủy</a>
+        </div>
+    </form>
+    
+    <p><small>* Trường bắt buộc</small></p>
+</body>
+</html>
