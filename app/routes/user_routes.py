@@ -1,15 +1,7 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.controllers.user_controller import UserController
 
 user_bp = Blueprint('user', __name__, url_prefix='/user')
-
-@user_bp.before_request
-def inject_token_from_session():
-    """Tự động inject token từ session vào request headers"""
-    if 'access_token' in session:
-        token = session.get('access_token')
-        if token:
-            request.environ['HTTP_AUTHORIZATION'] = f'Bearer {token}'
 
 @user_bp.route('/profile', methods=['GET', 'POST'])
 def profile():
@@ -19,7 +11,9 @@ def profile():
             flash('Cập nhật profile thành công', 'success')
         else:
             flash('Cập nhật profile thất bại', 'error')
+    
     result = UserController.get_profile()
+    
     return render_template('user/profile.html', result=result)
 
 @user_bp.route('/change-password', methods=['GET', 'POST'])

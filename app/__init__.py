@@ -24,7 +24,8 @@ def create_app(config_name='development'):
     bcrypt.init_app(app)
     mail.init_app(app)
     CORS(app)
-    
+
+
     from app.routes.auth_routes import auth_bp
     from app.routes.user_routes import user_bp
     from app.routes.hotel_routes import hotel_bp

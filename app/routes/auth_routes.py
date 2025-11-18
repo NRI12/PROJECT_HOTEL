@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.controllers.auth_controller import AuthController
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -25,16 +25,6 @@ def login():
     if request.method == 'POST':
         result = AuthController.login()
         if result[1] == 200:
-            # Lưu token vào session
-            try:
-                response_data = result[0].get_json()
-                if response_data and 'data' in response_data:
-                    access_token = response_data['data'].get('access_token')
-                    if access_token:
-                        session['access_token'] = access_token
-            except:
-                pass
-            
             flash('Đăng nhập thành công', 'success')
             return redirect(url_for('user.profile'))
         else:
@@ -50,8 +40,6 @@ def login():
 def logout():
     if request.method == 'POST':
         AuthController.logout()
-        # Xóa token khỏi session
-        session.pop('access_token', None)
         flash('Đăng xuất thành công', 'success')
     return redirect(url_for('auth.login'))
 

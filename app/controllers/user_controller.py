@@ -11,7 +11,6 @@ from werkzeug.utils import secure_filename
 import os
 
 class UserController:
-    
     @staticmethod
     @jwt_required()
     def get_profile():
