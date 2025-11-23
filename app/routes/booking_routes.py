@@ -19,6 +19,28 @@ def booking_detail(booking_id):
 @booking_bp.route('/create', methods=['GET', 'POST'])
 @login_required
 def create_booking():
+    hotel_id = request.args.get('hotel_id', type=int)
+    room_id = request.args.get('room_id', type=int)
+    
+    hotel_data = None
+    room_data = None
+    
+    if hotel_id:
+        from app.models.hotel import Hotel
+        hotel = Hotel.query.get(hotel_id)
+        if hotel:
+            hotel_data = hotel.to_dict()
+            # Thêm images
+            hotel_data['images'] = [img.to_dict() for img in hotel.images]
+    
+    if room_id:
+        from app.models.room import Room
+        room = Room.query.get(room_id)
+        if room:
+            room_data = room.to_dict()
+            room_data['images'] = [img.to_dict() for img in room.images]
+            room_data['amenities'] = [a.to_dict() for a in room.amenities]
+    
     if request.method == 'POST':
         result = BookingController.create_booking()
         if result[1] == 201:
@@ -31,8 +53,15 @@ def create_booking():
                 error_message = error_data.get('message', 'Tạo booking thất bại')
             except:
                 error_message = 'Tạo booking thất bại'
-            return render_template('booking/create.html', error=error_message)
-    return render_template('booking/create.html')
+            return render_template('booking/create.html', 
+                                 hotel=hotel_data, 
+                                 room=room_data,
+                                 error=error_message)
+    
+    # Truyền data vào template
+    return render_template('booking/create.html', 
+                         hotel=hotel_data, 
+                         room=room_data)
 
 @booking_bp.route('/<int:booking_id>/check-price', methods=['POST'])
 def check_price(booking_id):

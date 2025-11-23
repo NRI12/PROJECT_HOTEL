@@ -103,8 +103,8 @@ def hotel_reviews(hotel_id):
 @hotel_bp.route('/<int:hotel_id>/rooms', methods=['GET'])
 def hotel_rooms(hotel_id):
     result = HotelController.get_hotel_rooms(hotel_id)
-    return render_template('hotel/rooms.html', hotel_id=hotel_id, result=result)
-
+    print(result)
+    return result
 @hotel_bp.route('/<int:hotel_id>/amenities', methods=['GET', 'POST'])
 def hotel_amenities(hotel_id):
     from app.models.amenity import Amenity

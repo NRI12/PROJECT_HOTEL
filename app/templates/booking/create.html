@@ -109,22 +109,32 @@
                                     <div class="hotel-summary-card">
                                         <div class="row">
                                             <div class="col-md-4">
-                                                <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500" alt="Hotel" class="img-fluid rounded">
+                                                {% if hotel and hotel.images %}
+                                                    <img src="{{ hotel.images[0].image_url }}" alt="{{ hotel.hotel_name }}" class="img-fluid rounded">
+                                                {% else %}
+                                                    <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500" alt="Hotel" class="img-fluid rounded">
+                                                {% endif %}
                                             </div>
                                             <div class="col-md-8">
-                                                <h4 id="hotelName">Tên khách sạn</h4>
+                                                <h4 id="hotelName">{{ hotel.hotel_name if hotel else 'Tên khách sạn' }}</h4>
                                                 <div class="hotel-rating mb-2">
                                                     <span class="stars text-warning">
-                                                        <i class="bi bi-star-fill"></i>
-                                                        <i class="bi bi-star-fill"></i>
-                                                        <i class="bi bi-star-fill"></i>
-                                                        <i class="bi bi-star-fill"></i>
-                                                        <i class="bi bi-star-fill"></i>
+                                                        {% if hotel and hotel.star_rating %}
+                                                            {% for i in range(hotel.star_rating) %}
+                                                                <i class="bi bi-star-fill"></i>
+                                                            {% endfor %}
+                                                        {% else %}
+                                                            <i class="bi bi-star-fill"></i>
+                                                            <i class="bi bi-star-fill"></i>
+                                                            <i class="bi bi-star-fill"></i>
+                                                            <i class="bi bi-star-fill"></i>
+                                                            <i class="bi bi-star-fill"></i>
+                                                        {% endif %}
                                                     </span>
                                                 </div>
                                                 <p class="text-secondary mb-1">
                                                     <i class="bi bi-geo-alt me-1"></i>
-                                                    <span id="hotelAddress">Địa chỉ khách sạn</span>
+                                                    <span id="hotelAddress">{{ hotel.address if hotel else 'Địa chỉ khách sạn' }}</span>
                                                 </p>
                                             </div>
                                         </div>
@@ -138,8 +148,13 @@
                                             <i class="bi bi-building me-1"></i>
                                             Mã khách sạn <span class="text-danger">*</span>
                                         </label>
+                                        {% if hotel %}
+                                        <input type="hidden" name="hotel_id" value="{{ hotel.hotel_id }}" id="hotelId">
+                                        <input type="text" class="form-control" value="{{ hotel.hotel_name }} (#{{ hotel.hotel_id }})" readonly>
+                                        {% else %}
                                         <input type="number" class="form-control" name="hotel_id" required 
                                                value="{{ request.args.get('hotel_id', '') }}" id="hotelId">
+                                        {% endif %}
                                     </div>
                                     
                                     <div class="col-md-6">
@@ -177,6 +192,25 @@
                                         Chọn phòng
                                     </h5>
                                     <div id="roomsContainer">
+                                        {% if room or request.args.get('room_id') %}
+                                        <!-- Hidden inputs khi đã có room_id từ URL -->
+                                        <input type="hidden" name="rooms[0][room_id]" value="{{ room.room_id if room else request.args.get('room_id') }}">
+                                        <input type="hidden" name="rooms[0][quantity]" value="1">
+                                        
+                                        <!-- Hiển thị thông tin phòng đã chọn -->
+                                        <div class="alert alert-info">
+                                            <i class="bi bi-info-circle me-2"></i>
+                                            {% if room %}
+                                                <strong>Phòng đã chọn:</strong> {{ room.room_name or 'Phòng #' + room.room_id|string }}
+                                                {% if room.base_price %}
+                                                    - <strong>Giá:</strong> {{ "{:,.0f}".format(room.base_price) }}₫/đêm
+                                                {% endif %}
+                                            {% else %}
+                                                <strong>Phòng đã chọn:</strong> Phòng #{{ request.args.get('room_id') }}
+                                            {% endif %}
+                                        </div>
+                                        {% else %}
+                                        <!-- Input fields thông thường khi chưa có room_id -->
                                         <div class="room-selection-item mb-3">
                                             <div class="row g-3">
                                                 <div class="col-md-6">
@@ -194,10 +228,13 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        {% endif %}
                                     </div>
+                                    {% if not room and not request.args.get('room_id') %}
                                     <button type="button" class="btn btn-outline-primary" onclick="addRoom()">
                                         <i class="bi bi-plus-circle me-1"></i> Thêm phòng
                                     </button>
+                                    {% endif %}
                                 </div>
 
                                 <!-- Contact Information -->
@@ -527,8 +564,8 @@
 
         function updateReviewSummary() {
             // Update hotel name
-            const hotelId = document.querySelector('[name="hotel_id"]').value;
-            document.getElementById('reviewHotelName').textContent = 'Hotel #' + hotelId;
+            const hotelName = document.getElementById('hotelName').textContent;
+            document.getElementById('reviewHotelName').textContent = hotelName;
             
             // Update dates
             const checkIn = document.getElementById('checkInDate').value;
