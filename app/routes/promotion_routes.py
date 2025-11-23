@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.controllers.promotion_controller import PromotionController
+from app.utils.decorators import login_required, role_required
 
 promotion_bp = Blueprint('promotion', __name__, url_prefix='/promotion')
 
@@ -14,6 +15,7 @@ def promotion_detail(promotion_id):
     return render_template('promotion/detail.html', promotion_id=promotion_id, result=result)
 
 @promotion_bp.route('/create', methods=['GET', 'POST'])
+@role_required('admin', 'hotel_owner')
 def create_promotion():
     if request.method == 'POST':
         result = PromotionController.create_promotion()
@@ -30,6 +32,7 @@ def create_promotion():
     return render_template('promotion/create.html')
 
 @promotion_bp.route('/<int:promotion_id>/edit', methods=['GET', 'POST'])
+@role_required('admin', 'hotel_owner')
 def edit_promotion(promotion_id):
     if request.method == 'POST':
         result = PromotionController.update_promotion(promotion_id)
@@ -43,6 +46,7 @@ def edit_promotion(promotion_id):
     return render_template('promotion/edit.html', promotion_id=promotion_id, result=result)
 
 @promotion_bp.route('/<int:promotion_id>/delete', methods=['POST'])
+@role_required('admin', 'hotel_owner')
 def delete_promotion(promotion_id):
     result = PromotionController.delete_promotion(promotion_id)
     if result[1] == 200:

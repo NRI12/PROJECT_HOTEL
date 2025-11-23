@@ -1,70 +1,169 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Hồ sơ người dùng</title>
-    <style>
-        .message {
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 4px;
-        }
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-    </style>
-</head>
-<body>
-    <h1>Hồ sơ người dùng</h1>
+{% extends "user/base_user.html" %}
+
+{% block title %}Hồ sơ người dùng{% endblock %}
+{% block page_icon %}person-badge{% endblock %}
+{% block page_title %}Hồ sơ cá nhân{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- User Info Card -->
+    <div class="col-lg-4 mb-4">
+        <div class="user-info-card text-center">
+            <div class="mb-3">
+                <img src="https://via.placeholder.com/80/ffffff/667eea?text=Avatar" alt="Avatar" class="user-avatar">
+            </div>
+            <h5 class="mb-1">{{ user.full_name if user and user.full_name else 'Người dùng' }}</h5>
+            <p class="mb-0 opacity-75">
+                <i class="bi bi-envelope me-1"></i>
+                {{ user.email if user and user.email else 'email@example.com' }}
+            </p>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">
+                    <i class="bi bi-lightning-charge-fill text-warning me-2"></i>
+                    Thao tác nhanh
+                </h6>
+            </div>
+            <div class="list-group list-group-flush">
+                <a href="/user/change-password" class="list-group-item list-group-item-action">
+                    <i class="bi bi-key text-primary me-2"></i> Đổi mật khẩu
+                </a>
+                <a href="/user/upload-avatar" class="list-group-item list-group-item-action">
+                    <i class="bi bi-image text-success me-2"></i> Đổi avatar
+                </a>
+                <a href="/user/bookings" class="list-group-item list-group-item-action">
+                    <i class="bi bi-calendar-check text-info me-2"></i> Xem đặt phòng
+                </a>
+                <a href="/user/favorites" class="list-group-item list-group-item-action">
+                    <i class="bi bi-heart text-danger me-2"></i> Danh sách yêu thích
+                </a>
+                <a href="/user/notifications" class="list-group-item list-group-item-action">
+                    <i class="bi bi-bell text-warning me-2"></i> Thông báo
+                    <span class="badge bg-danger rounded-pill float-end">3</span>
+                </a>
+            </div>
+        </div>
+    </div>
     
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="message {{ category }}">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-    
-    {% if error %}
-        <div class="message error">{{ error }}</div>
-    {% endif %}
-    
-    {% if success %}
-        <div class="message success">{{ success }}</div>
-    {% endif %}
-    
-    <form method="POST" action="/user/profile">
-        <div>
-            <label>Họ và tên:</label>
-            <input type="text" name="full_name">
+    <!-- Profile Form -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-pencil-square me-2"></i>
+                    Cập nhật thông tin
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/user/profile">
+                    <div class="row">
+                        <!-- Full Name -->
+                        <div class="col-md-6 mb-3">
+                            <label for="full_name" class="form-label">
+                                <i class="bi bi-person-fill me-1"></i>
+                                Họ và tên
+                            </label>
+                            <input type="text" class="form-control" id="full_name" name="full_name" 
+                                   value="{{ user.full_name if user and user.full_name else '' }}" 
+                                   placeholder="Nguyễn Văn A">
+                        </div>
+                        
+                        <!-- Phone -->
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label">
+                                <i class="bi bi-telephone-fill me-1"></i>
+                                Số điện thoại
+                            </label>
+                            <input type="text" class="form-control" id="phone" name="phone" 
+                                   value="{{ user.phone if user and user.phone else '' }}" 
+                                   placeholder="0123456789">
+                        </div>
+                        
+                        <!-- Address -->
+                        <div class="col-12 mb-3">
+                            <label for="address" class="form-label">
+                                <i class="bi bi-geo-alt-fill me-1"></i>
+                                Địa chỉ
+                            </label>
+                            <input type="text" class="form-control" id="address" name="address" 
+                                   value="{{ user.address if user and user.address else '' }}" 
+                                   placeholder="123 Đường ABC, Quận XYZ, TP. HCM">
+                        </div>
+                        
+                        <!-- ID Card -->
+                        <div class="col-md-6 mb-3">
+                            <label for="id_card" class="form-label">
+                                <i class="bi bi-card-text me-1"></i>
+                                CMND/CCCD
+                            </label>
+                            <input type="text" class="form-control" id="id_card" name="id_card" 
+                                   value="{{ user.id_card if user and user.id_card else '' }}" 
+                                   placeholder="001234567890">
+                        </div>
+                        
+                        <!-- Email (Read-only) -->
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">
+                                <i class="bi bi-envelope-fill me-1"></i>
+                                Email
+                            </label>
+                            <input type="email" class="form-control" id="email" 
+                                   value="{{ user.email if user and user.email else '' }}" 
+                                   readonly disabled>
+                            <small class="form-text text-muted">Email không thể thay đổi</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Info Alert -->
+                    <div class="alert alert-info" role="alert">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong>Lưu ý:</strong> Vui lòng cung cấp thông tin chính xác để việc đặt phòng được diễn ra thuận lợi.
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle me-2"></i>
+                            Cập nhật thông tin
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
-        <div>
-            <label>Số điện thoại:</label>
-            <input type="text" name="phone">
+        
+        <!-- Account Stats -->
+        <div class="row mt-4">
+            <div class="col-md-4 mb-3">
+                <div class="card border-0 shadow-sm text-center">
+                    <div class="card-body">
+                        <i class="bi bi-calendar-check text-primary" style="font-size: 2rem;"></i>
+                        <h3 class="mt-2 mb-0">0</h3>
+                        <p class="text-muted mb-0">Đặt phòng</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card border-0 shadow-sm text-center">
+                    <div class="card-body">
+                        <i class="bi bi-heart text-danger" style="font-size: 2rem;"></i>
+                        <h3 class="mt-2 mb-0">0</h3>
+                        <p class="text-muted mb-0">Yêu thích</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card border-0 shadow-sm text-center">
+                    <div class="card-body">
+                        <i class="bi bi-star-fill text-warning" style="font-size: 2rem;"></i>
+                        <h3 class="mt-2 mb-0">0</h3>
+                        <p class="text-muted mb-0">Đánh giá</p>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div>
-            <label>Địa chỉ:</label>
-            <input type="text" name="address">
-        </div>
-        <div>
-            <label>CMND/CCCD:</label>
-            <input type="text" name="id_card">
-        </div>
-        <div>
-            <button type="submit">Cập nhật</button>
-        </div>
-    </form>
-    <p><a href="/user/change-password">Đổi mật khẩu</a></p>
-    <p><a href="/user/upload-avatar">Tải lên avatar</a></p>
-    <p><a href="/user/bookings">Xem đặt phòng</a></p>
-    <p><a href="/user/favorites">Xem yêu thích</a></p>
-    <p><a href="/user/notifications">Xem thông báo</a></p>
-    <p><a href="/auth/logout">Đăng xuất</a></p>
-</body>
-</html>
+    </div>
+</div>
+{% endblock %}

@@ -5,25 +5,108 @@
 </head>
 <body>
     <h1>Danh sách mã giảm giá</h1>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Mã giảm giá</th>
-                <th>Phần trăm giảm</th>
-                <th>Số tiền giảm</th>
-                <th>Ngày hết hạn</th>
-                <th>Trạng thái</th>
-                <th>Thao tác</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td colspan="7">Chưa có mã giảm giá nào</td>
-            </tr>
-        </tbody>
-    </table>
-    <p><a href="/discount/apply">Áp dụng mã giảm giá</a></p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="flash-{{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <p>
+        <a href="{{ url_for('discount.create_discount') }}">Tạo mã mới</a> |
+        <a href="{{ url_for('discount.my_codes') }}">Mã đã dùng của tôi</a> |
+        <a href="/discount/apply">Áp dụng mã giảm giá</a>
+    </p>
+
+    <form method="GET" action="{{ url_for('discount.list_discounts') }}">
+        <div>
+            <label>Trạng thái:</label>
+            <select name="is_active">
+                <option value="">Tất cả</option>
+                <option value="true" {% if request.args.get('is_active') == 'true' %}selected{% endif %}>Đang hoạt động</option>
+                <option value="false" {% if request.args.get('is_active') == 'false' %}selected{% endif %}>Ngừng hoạt động</option>
+            </select>
+        </div>
+        <div>
+            <label>Hiển thị mỗi trang:</label>
+            <input type="number" name="per_page" min="1" value="{{ request.args.get('per_page', 10) }}">
+        </div>
+        <div>
+            <button type="submit">Lọc</button>
+            <a href="{{ url_for('discount.list_discounts') }}">Xóa lọc</a>
+        </div>
+    </form>
+
+    {% set payload = result[0].json if result and result[1] == 200 else None %}
+    {% set discounts = payload.data if payload and payload.data else [] %}
+    {% set pagination = payload.pagination if payload and payload.pagination else None %}
+
+    {% if discounts %}
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Mã</th>
+                    <th>Mô tả</th>
+                    <th>Loại</th>
+                    <th>Giá trị</th>
+                    <th>Đơn tối thiểu</th>
+                    <th>Giới hạn</th>
+                    <th>Bắt đầu</th>
+                    <th>Kết thúc</th>
+                    <th>Đã dùng</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for discount in discounts %}
+                <tr>
+                    <td>{{ discount.code_id }}</td>
+                    <td>{{ discount.code }}</td>
+                    <td>{{ discount.description or 'Không có' }}</td>
+                    <td>{{ 'Phần trăm' if discount.discount_type == 'percentage' else 'Cố định' }}</td>
+                    <td>{{ discount.discount_value }}</td>
+                    <td>{{ discount.min_order_amount }}</td>
+                    <td>
+                        {% if discount.usage_limit %}
+                            {{ discount.used_count }}/{{ discount.usage_limit }}
+                        {% else %}
+                            Không giới hạn
+                        {% endif %}
+                    </td>
+                    <td>{{ discount.start_date }}</td>
+                    <td>{{ discount.end_date }}</td>
+                    <td>{{ discount.used_count }}</td>
+                    <td>{{ 'Hoạt động' if discount.is_active else 'Ngừng' }}</td>
+                    <td>
+                        <a href="{{ url_for('discount.discount_detail', code=discount.code) }}">Chi tiết</a> |
+                        <a href="{{ url_for('discount.edit_discount', code_id=discount.code_id) }}">Sửa</a>
+                        <form method="POST" action="{{ url_for('discount.delete_discount', code_id=discount.code_id) }}" style="display:inline;">
+                            <button type="submit" onclick="return confirm('Xóa mã này?')">Xóa</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if pagination %}
+            <p>Trang {{ pagination.page }} / {{ pagination.pages }} - Tổng {{ pagination.total }} mã</p>
+            <div>
+                {% if pagination.page > 1 %}
+                    <a href="{{ url_for('discount.list_discounts', page=pagination.page - 1, per_page=pagination.per_page, is_active=request.args.get('is_active')) }}">« Trang trước</a>
+                {% endif %}
+                {% if pagination.page < pagination.pages %}
+                    <a href="{{ url_for('discount.list_discounts', page=pagination.page + 1, per_page=pagination.per_page, is_active=request.args.get('is_active')) }}">Trang sau »</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% else %}
+        <p>Chưa có mã giảm giá nào.</p>
+    {% endif %}
 </body>
 </html>
 

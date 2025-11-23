@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mã giảm giá của tôi</title>
+</head>
+<body>
+    <h1>Mã giảm giá của tôi</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="flash-{{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% set payload = result[0].json if result and result[1] == 200 else None %}
+    {% set codes = payload.data.codes if payload and payload.data and payload.data.codes else [] %}
+
+    {% if codes %}
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Mã</th>
+                    <th>Mô tả</th>
+                    <th>Giá trị</th>
+                    <th>Đơn tối thiểu</th>
+                    <th>Đã giảm</th>
+                    <th>Ngày dùng</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for code in codes %}
+                <tr>
+                    <td>{{ code.code }}</td>
+                    <td>{{ code.description or 'Không có' }}</td>
+                    <td>{{ code.discount_value }}</td>
+                    <td>{{ code.min_order_amount }}</td>
+                    <td>{{ code.discount_amount }}</td>
+                    <td>{{ code.used_at or 'N/A' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Bạn chưa sử dụng mã giảm giá nào.</p>
+    {% endif %}
+
+    <p><a href="{{ url_for('discount.list_discounts') }}">Quay lại danh sách</a></p>
+</body>
+</html>
+

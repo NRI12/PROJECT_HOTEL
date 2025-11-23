@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.controllers.discount_controller import DiscountController
+from app.utils.decorators import login_required, role_required
 
 discount_bp = Blueprint('discount', __name__, url_prefix='/discount')
 
@@ -14,6 +15,7 @@ def discount_detail(code):
     return render_template('discount/detail.html', code=code, result=result)
 
 @discount_bp.route('/create', methods=['GET', 'POST'])
+@role_required('admin', 'hotel_owner')
 def create_discount():
     if request.method == 'POST':
         result = DiscountController.create_discount()
@@ -30,6 +32,7 @@ def create_discount():
     return render_template('discount/create.html')
 
 @discount_bp.route('/edit/<int:code_id>', methods=['GET', 'POST'])
+@role_required('admin', 'hotel_owner')
 def edit_discount(code_id):
     if request.method == 'POST':
         result = DiscountController.update_discount(code_id)
@@ -42,6 +45,7 @@ def edit_discount(code_id):
     return render_template('discount/edit.html', code_id=code_id)
 
 @discount_bp.route('/delete/<int:code_id>', methods=['POST'])
+@role_required('admin', 'hotel_owner')
 def delete_discount(code_id):
     result = DiscountController.delete_discount(code_id)
     if result[1] == 200:
@@ -55,6 +59,7 @@ def validate_discount():
     return DiscountController.validate_discount()
 
 @discount_bp.route('/my-codes', methods=['GET'])
+@login_required
 def my_codes():
     result = DiscountController.get_my_codes()
     return render_template('discount/my_codes.html', result=result)

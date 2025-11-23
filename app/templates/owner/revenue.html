@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Thống kê doanh thu</title>
+</head>
+<body>
+    <h1>Thống kê doanh thu</h1>
+
+    {% if error %}
+        <p class="flash-error">{{ error }}</p>
+    {% endif %}
+    {% if success %}
+        <p class="flash-success">{{ success }}</p>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="flash-{{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="GET">
+        <label>Từ ngày:</label>
+        <input type="date" name="start_date" value="{{ request.args.get('start_date', '') }}">
+        <label>Đến ngày:</label>
+        <input type="date" name="end_date" value="{{ request.args.get('end_date', '') }}">
+        <button type="submit">Lọc</button>
+        <a href="{{ url_for('owner.revenue_summary') }}">Xóa lọc</a>
+    </form>
+
+    {% set payload = result[0].json if result and result[1] == 200 else None %}
+    {% set data = payload.data if payload and payload.data else None %}
+
+    {% if data %}
+        <p>Tổng doanh thu: {{ data.total_revenue }}</p>
+
+        {% set monthly = data.monthly_revenue if data.monthly_revenue else [] %}
+        {% if monthly %}
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>Thời gian</th>
+                        <th>Doanh thu</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in monthly %}
+                    <tr>
+                        <td>{{ item.period }}</td>
+                        <td>{{ item.amount }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Không có dữ liệu theo tháng.</p>
+        {% endif %}
+    {% else %}
+        <p>Không có dữ liệu doanh thu.</p>
+    {% endif %}
+
+    <p><a href="{{ url_for('owner.revenue_detail') }}">Xem chi tiết doanh thu</a></p>
+</body>
+</html>
+

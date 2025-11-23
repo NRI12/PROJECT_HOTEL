@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.controllers.review_controller import ReviewController
+from app.utils.decorators import login_required, role_required
 
 review_bp = Blueprint('review', __name__, url_prefix='/review')
 
@@ -14,6 +15,7 @@ def review_detail(review_id):
     return render_template('review/detail.html', review_id=review_id, result=result)
 
 @review_bp.route('/create', methods=['GET', 'POST'])
+@login_required
 def create_review():
     if request.method == 'POST':
         result = ReviewController.create_review()
@@ -31,6 +33,7 @@ def create_review():
     return render_template('review/create.html')
 
 @review_bp.route('/<int:review_id>/edit', methods=['GET', 'POST'])
+@login_required
 def edit_review(review_id):
     if request.method == 'POST':
         result = ReviewController.update_review(review_id)
@@ -50,6 +53,7 @@ def edit_review(review_id):
     return render_template('review/edit.html', review_id=review_id, result=result)
 
 @review_bp.route('/<int:review_id>/delete', methods=['POST'])
+@login_required
 def delete_review(review_id):
     result = ReviewController.delete_review(review_id)
     if result[1] == 200:
@@ -59,6 +63,7 @@ def delete_review(review_id):
     return redirect(url_for('review.list_reviews'))
 
 @review_bp.route('/<int:review_id>/response', methods=['POST'])
+@role_required('admin', 'hotel_owner')
 def add_response(review_id):
     result = ReviewController.add_response(review_id)
     if result[1] == 200:
@@ -68,6 +73,7 @@ def add_response(review_id):
     return redirect(url_for('review.review_detail', review_id=review_id))
 
 @review_bp.route('/<int:review_id>/response/update', methods=['POST'])
+@role_required('admin', 'hotel_owner')
 def update_response(review_id):
     result = ReviewController.update_response(review_id)
     if result[1] == 200:
@@ -77,6 +83,7 @@ def update_response(review_id):
     return redirect(url_for('review.review_detail', review_id=review_id))
 
 @review_bp.route('/<int:review_id>/report', methods=['POST'])
+@login_required
 def report_review(review_id):
     result = ReviewController.report_review(review_id)
     if result[1] == 200:
@@ -86,6 +93,7 @@ def report_review(review_id):
     return redirect(url_for('review.review_detail', review_id=review_id))
 
 @review_bp.route('/<int:review_id>/helpful', methods=['POST'])
+@login_required
 def mark_helpful(review_id):
     result = ReviewController.mark_helpful(review_id)
     if result[1] == 200:

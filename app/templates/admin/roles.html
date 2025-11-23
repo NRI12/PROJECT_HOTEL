@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quản lý role</title>
+</head>
+<body>
+    <h1>Quản lý role</h1>
+
+    {% if error %}
+        <p class="flash-error">{{ error }}</p>
+    {% endif %}
+    {% if success %}
+        <p class="flash-success">{{ success }}</p>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="flash-{{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <h2>Tạo role mới</h2>
+    <form method="POST" action="{{ url_for('admin.admin_roles_create') }}">
+        <label>Tên role:</label>
+        <input type="text" name="role_name" required>
+        <label>Mô tả:</label>
+        <input type="text" name="description">
+        <button type="submit">Tạo</button>
+    </form>
+
+    {% set payload = result[0].json if result and result[1] == 200 else None %}
+    {% set roles = payload.data.roles if payload and payload.data and payload.data.roles else [] %}
+
+    {% if roles %}
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tên</th>
+                    <th>Mô tả</th>
+                    <th>Ngày tạo</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for role in roles %}
+                <tr>
+                    <td>{{ role.role_id }}</td>
+                    <td>{{ role.role_name }}</td>
+                    <td>{{ role.description or '' }}</td>
+                    <td>{{ role.created_at }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('admin.admin_roles_update', role_id=role.role_id) }}" style="display:inline;">
+                            <input type="text" name="role_name" placeholder="Tên mới">
+                            <input type="text" name="description" placeholder="Mô tả">
+                            <button type="submit">Cập nhật</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('admin.admin_roles_delete', role_id=role.role_id) }}" style="display:inline;">
+                            <button type="submit" onclick="return confirm('Xóa role này?')">Xóa</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Không có role nào.</p>
+    {% endif %}
+
+    <p><a href="{{ url_for('admin.admin_dashboard') }}">Quay lại dashboard</a></p>
+</body>
+</html>
+

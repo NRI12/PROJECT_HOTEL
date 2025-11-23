@@ -1,53 +1,569 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-    <title>Create Booking</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đặt Phòng - HotelBooking</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <h1>Create Booking</h1>
-    
-    {% if error %}
-    <p style="color: red;">{{ error }}</p>
-    {% endif %}
-    
-    <form method="POST" action="/booking/create">
-        <div>
-            <label>Hotel ID:</label>
-            <input type="number" name="hotel_id" required value="{{ request.args.get('hotel_id', '') }}">
-        </div>
-        
-        <div>
-            <label>Check-in Date:</label>
-            <input type="date" name="check_in_date" required value="{{ request.args.get('check_in_date', '') }}">
-        </div>
-        
-        <div>
-            <label>Check-out Date:</label>
-            <input type="date" name="check_out_date" required value="{{ request.args.get('check_out_date', '') }}">
-        </div>
-        
-        <div>
-            <label>Number of Guests:</label>
-            <input type="number" name="num_guests" min="1" required value="{{ request.args.get('num_guests', '1') }}">
-        </div>
-        
-        <div>
-            <label>Special Requests:</label>
-            <textarea name="special_requests">{{ request.args.get('special_requests', '') }}</textarea>
-        </div>
-        
-        <h3>Rooms</h3>
-        <div id="rooms">
-            <div>
-                <label>Room ID:</label>
-                <input type="number" name="rooms[0][room_id]" required>
-                <label>Quantity:</label>
-                <input type="number" name="rooms[0][quantity]" min="1" value="1" required>
+
+    <!-- HEADER / NAVIGATION -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('main.index') }}">
+                <i class="bi bi-building"></i> HotelBooking
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.index') }}">Trang chủ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.search_page') }}">Khách sạn</a>
+                    </li>
+                </ul>
+                
+                {% if session.get('user_id') %}
+                <div class="d-flex gap-2 ms-3">
+                    <a href="{{ url_for('user.profile') }}" class="btn btn-outline-primary">Tài khoản</a>
+                </div>
+                {% else %}
+                <div class="d-flex gap-2 ms-3">
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary">Đăng nhập</a>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Đăng ký</a>
+                </div>
+                {% endif %}
             </div>
         </div>
-        
-        <button type="submit">Create Booking</button>
-        <a href="/booking">Cancel</a>
-    </form>
+    </nav>
+
+    <!-- BOOKING SECTION -->
+    <section class="booking-section py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto">
+                    <!-- Steps Progress -->
+                    <div class="booking-steps-indicator mb-5">
+                        <div class="steps-container">
+                            <div class="step-item active" data-step="1">
+                                <div class="step-number">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>1</span>
+                                </div>
+                                <div class="step-label">Thông tin đặt phòng</div>
+                            </div>
+                            <div class="step-line"></div>
+                            <div class="step-item" data-step="2">
+                                <div class="step-number">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>2</span>
+                                </div>
+                                <div class="step-label">Thông tin khách</div>
+                            </div>
+                            <div class="step-line"></div>
+                            <div class="step-item" data-step="3">
+                                <div class="step-number">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>3</span>
+                                </div>
+                                <div class="step-label">Xem lại & Thanh toán</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Error Message -->
+                    {% if error %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        {{ error }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endif %}
+
+                    <form method="POST" action="{{ url_for('booking.create_booking') }}" id="bookingForm">
+                        <!-- STEP 1: Xác nhận thông tin đặt phòng -->
+                        <div class="booking-step" id="step1">
+                            <div class="content-card">
+                                <h3 class="content-title">
+                                    <i class="bi bi-1-circle-fill text-primary me-2"></i>
+                                    Xác nhận thông tin đặt phòng
+                                </h3>
+
+                                <!-- Hotel Summary -->
+                                <div class="booking-summary mb-4">
+                                    <h5 class="mb-3">Thông tin khách sạn</h5>
+                                    <div class="hotel-summary-card">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500" alt="Hotel" class="img-fluid rounded">
+                                            </div>
+                                            <div class="col-md-8">
+                                                <h4 id="hotelName">Tên khách sạn</h4>
+                                                <div class="hotel-rating mb-2">
+                                                    <span class="stars text-warning">
+                                                        <i class="bi bi-star-fill"></i>
+                                                        <i class="bi bi-star-fill"></i>
+                                                        <i class="bi bi-star-fill"></i>
+                                                        <i class="bi bi-star-fill"></i>
+                                                        <i class="bi bi-star-fill"></i>
+                                                    </span>
+                                                </div>
+                                                <p class="text-secondary mb-1">
+                                                    <i class="bi bi-geo-alt me-1"></i>
+                                                    <span id="hotelAddress">Địa chỉ khách sạn</span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Booking Information -->
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label">
+                                            <i class="bi bi-building me-1"></i>
+                                            Mã khách sạn <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="number" class="form-control" name="hotel_id" required 
+                                               value="{{ request.args.get('hotel_id', '') }}" id="hotelId">
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label class="form-label">
+                                            <i class="bi bi-people me-1"></i>
+                                            Số lượng khách <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="number" class="form-control" name="num_guests" min="1" required 
+                                               value="{{ request.args.get('num_guests', '1') }}">
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label class="form-label">
+                                            <i class="bi bi-calendar-check me-1"></i>
+                                            Ngày nhận phòng <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="date" class="form-control" name="check_in_date" required 
+                                               value="{{ request.args.get('check_in_date', '') }}" id="checkInDate">
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label class="form-label">
+                                            <i class="bi bi-calendar-x me-1"></i>
+                                            Ngày trả phòng <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="date" class="form-control" name="check_out_date" required 
+                                               value="{{ request.args.get('check_out_date', '') }}" id="checkOutDate">
+                                    </div>
+                                </div>
+
+                                <!-- Room Selection -->
+                                <div class="mb-4">
+                                    <h5 class="mb-3">
+                                        <i class="bi bi-door-open me-2"></i>
+                                        Chọn phòng
+                                    </h5>
+                                    <div id="roomsContainer">
+                                        <div class="room-selection-item mb-3">
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Mã phòng <span class="text-danger">*</span></label>
+                                                    <input type="number" class="form-control" name="rooms[0][room_id]" required>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Số lượng <span class="text-danger">*</span></label>
+                                                    <input type="number" class="form-control" name="rooms[0][quantity]" min="1" value="1" required>
+                                                </div>
+                                                <div class="col-md-2 d-flex align-items-end">
+                                                    <button type="button" class="btn btn-outline-danger w-100" onclick="removeRoom(this)" style="display: none;">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary" onclick="addRoom()">
+                                        <i class="bi bi-plus-circle me-1"></i> Thêm phòng
+                                    </button>
+                                </div>
+
+                                <!-- Contact Information -->
+                                <h5 class="mb-3">
+                                    <i class="bi bi-person-lines-fill me-2"></i>
+                                    Thông tin liên hệ
+                                </h5>
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Họ tên <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="contact_name" required>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
+                                        <input type="tel" class="form-control" name="contact_phone" required>
+                                    </div>
+                                    
+                                    <div class="col-12">
+                                        <label class="form-label">Email <span class="text-danger">*</span></label>
+                                        <input type="email" class="form-control" name="contact_email" required>
+                                    </div>
+                                    
+                                    <div class="col-12">
+                                        <label class="form-label">Yêu cầu đặc biệt</label>
+                                        <textarea class="form-control" name="special_requests" rows="3" 
+                                                  placeholder="VD: Phòng không hút thuốc, giường đôi, tầng cao...">{{ request.args.get('special_requests', '') }}</textarea>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('main.search_page') }}" class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-left me-1"></i> Quay lại
+                                    </a>
+                                    <button type="button" class="btn btn-primary" onclick="nextStep(2)">
+                                        Tiếp theo <i class="bi bi-arrow-right ms-1"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- STEP 2: Thông tin khách -->
+                        <div class="booking-step" id="step2" style="display: none;">
+                            <div class="content-card">
+                                <h3 class="content-title">
+                                    <i class="bi bi-2-circle-fill text-primary me-2"></i>
+                                    Thông tin khách
+                                </h3>
+
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <strong>Lưu ý:</strong> Vui lòng chuẩn bị CMND/CCCD hoặc Passport khi check-in tại khách sạn.
+                                </div>
+
+                                <div id="guestsInfoContainer">
+                                    <div class="guest-info-item mb-4">
+                                        <h5 class="mb-3">Khách #1 (Người đại diện)</h5>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Họ và tên</label>
+                                                <input type="text" class="form-control" name="guests[0][name]">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Số CMND/CCCD/Passport</label>
+                                                <input type="text" class="form-control" name="guests[0][id_number]">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-between mt-4">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="prevStep(1)">
+                                        <i class="bi bi-arrow-left me-1"></i> Quay lại
+                                    </button>
+                                    <button type="button" class="btn btn-primary" onclick="nextStep(3)">
+                                        Tiếp theo <i class="bi bi-arrow-right ms-1"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- STEP 3: Xem lại & Thanh toán -->
+                        <div class="booking-step" id="step3" style="display: none;">
+                            <div class="content-card">
+                                <h3 class="content-title">
+                                    <i class="bi bi-3-circle-fill text-primary me-2"></i>
+                                    Xem lại & Thanh toán
+                                </h3>
+
+                                <!-- Booking Summary -->
+                                <div class="booking-review-summary mb-4">
+                                    <h5 class="mb-3">Tóm tắt đặt phòng</h5>
+                                    <div class="summary-details">
+                                        <div class="row mb-3">
+                                            <div class="col-6 text-secondary">Khách sạn:</div>
+                                            <div class="col-6 text-end fw-bold" id="reviewHotelName">-</div>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-6 text-secondary">Ngày nhận - trả phòng:</div>
+                                            <div class="col-6 text-end fw-bold" id="reviewDates">-</div>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-6 text-secondary">Số khách:</div>
+                                            <div class="col-6 text-end fw-bold" id="reviewGuests">-</div>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-6 text-secondary">Số phòng:</div>
+                                            <div class="col-6 text-end fw-bold" id="reviewRooms">-</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Price Details -->
+                                <div class="price-breakdown mb-4">
+                                    <h5 class="mb-3">Chi tiết giá</h5>
+                                    <div class="price-details">
+                                        <div class="price-row">
+                                            <span>Giá phòng × số đêm</span>
+                                            <span class="fw-bold">2.000.000₫</span>
+                                        </div>
+                                        <div class="price-row">
+                                            <span>Thuế & phí dịch vụ</span>
+                                            <span class="fw-bold">200.000₫</span>
+                                        </div>
+                                        <div class="price-row discount-row">
+                                            <span>Giảm giá</span>
+                                            <span class="fw-bold text-success">-200.000₫</span>
+                                        </div>
+                                        <div class="price-row total-row">
+                                            <span class="fw-bold">Tổng cộng</span>
+                                            <span class="fw-bold text-primary fs-4">2.000.000₫</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Discount Code -->
+                                <div class="discount-code-section mb-4">
+                                    <h5 class="mb-3">Mã giảm giá</h5>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" name="discount_code" placeholder="Nhập mã giảm giá">
+                                        <button class="btn btn-outline-primary" type="button" onclick="applyDiscount()">
+                                            Áp dụng
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Payment Method -->
+                                <div class="payment-method-section mb-4">
+                                    <h5 class="mb-3">Phương thức thanh toán</h5>
+                                    <div class="payment-options">
+                                        <div class="form-check payment-option">
+                                            <input class="form-check-input" type="radio" name="payment_method" id="vnpay" value="vnpay" checked>
+                                            <label class="form-check-label" for="vnpay">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi bi-credit-card text-primary fs-3 me-3"></i>
+                                                    <div>
+                                                        <strong>VNPay</strong>
+                                                        <p class="mb-0 small text-secondary">Thanh toán qua cổng VNPay</p>
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        </div>
+
+                                        <div class="form-check payment-option">
+                                            <input class="form-check-input" type="radio" name="payment_method" id="momo" value="momo">
+                                            <label class="form-check-label" for="momo">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi bi-wallet2 text-danger fs-3 me-3"></i>
+                                                    <div>
+                                                        <strong>Momo</strong>
+                                                        <p class="mb-0 small text-secondary">Thanh toán qua ví Momo</p>
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        </div>
+
+                                        <div class="form-check payment-option">
+                                            <input class="form-check-input" type="radio" name="payment_method" id="hotel" value="hotel">
+                                            <label class="form-check-label" for="hotel">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="bi bi-cash-stack text-success fs-3 me-3"></i>
+                                                    <div>
+                                                        <strong>Thanh toán tại khách sạn</strong>
+                                                        <p class="mb-0 small text-secondary">Thanh toán khi nhận phòng</p>
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Terms and Conditions -->
+                                <div class="form-check mb-4">
+                                    <input class="form-check-input" type="checkbox" id="agreeTerms" required>
+                                    <label class="form-check-label" for="agreeTerms">
+                                        Tôi đồng ý với <a href="#" class="text-primary">Điều khoản sử dụng</a> và 
+                                        <a href="#" class="text-primary">Chính sách bảo mật</a> của HotelBooking
+                                    </label>
+                                </div>
+
+                                <div class="d-flex justify-content-between">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="prevStep(2)">
+                                        <i class="bi bi-arrow-left me-1"></i> Quay lại
+                                    </button>
+                                    <button type="submit" class="btn btn-success btn-lg">
+                                        <i class="bi bi-check-circle me-1"></i> Xác nhận đặt phòng
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2025 HotelBooking. Tất cả các quyền được bảo lưu.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script>
+        let currentStep = 1;
+        let roomCount = 1;
+
+        function updateStepIndicator(step) {
+            document.querySelectorAll('.step-item').forEach((item, index) => {
+                if (index + 1 < step) {
+                    item.classList.add('completed');
+                    item.classList.remove('active');
+                } else if (index + 1 === step) {
+                    item.classList.add('active');
+                    item.classList.remove('completed');
+                } else {
+                    item.classList.remove('active', 'completed');
+                }
+            });
+        }
+
+        function nextStep(step) {
+            // Hide current step
+            document.getElementById('step' + currentStep).style.display = 'none';
+            
+            // Show next step
+            document.getElementById('step' + step).style.display = 'block';
+            
+            // Update current step
+            currentStep = step;
+            
+            // Update indicator
+            updateStepIndicator(step);
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            // If moving to step 3, update review summary
+            if (step === 3) {
+                updateReviewSummary();
+            }
+        }
+
+        function prevStep(step) {
+            // Hide current step
+            document.getElementById('step' + currentStep).style.display = 'none';
+            
+            // Show previous step
+            document.getElementById('step' + step).style.display = 'block';
+            
+            // Update current step
+            currentStep = step;
+            
+            // Update indicator
+            updateStepIndicator(step);
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function addRoom() {
+            roomCount++;
+            const container = document.getElementById('roomsContainer');
+            const newRoom = document.createElement('div');
+            newRoom.className = 'room-selection-item mb-3';
+            newRoom.innerHTML = `
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Mã phòng <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" name="rooms[${roomCount - 1}][room_id]" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Số lượng <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" name="rooms[${roomCount - 1}][quantity]" min="1" value="1" required>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="button" class="btn btn-outline-danger w-100" onclick="removeRoom(this)">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(newRoom);
+            
+            // Show delete button on first room if there are now multiple rooms
+            if (roomCount > 1) {
+                document.querySelector('.room-selection-item:first-child .btn-outline-danger').style.display = 'block';
+            }
+        }
+
+        function removeRoom(button) {
+            const roomItem = button.closest('.room-selection-item');
+            roomItem.remove();
+            roomCount--;
+            
+            // Hide delete button on first room if only one room left
+            if (roomCount === 1) {
+                document.querySelector('.room-selection-item:first-child .btn-outline-danger').style.display = 'none';
+            }
+        }
+
+        function updateReviewSummary() {
+            // Update hotel name
+            const hotelId = document.querySelector('[name="hotel_id"]').value;
+            document.getElementById('reviewHotelName').textContent = 'Hotel #' + hotelId;
+            
+            // Update dates
+            const checkIn = document.getElementById('checkInDate').value;
+            const checkOut = document.getElementById('checkOutDate').value;
+            document.getElementById('reviewDates').textContent = checkIn + ' - ' + checkOut;
+            
+            // Update guests
+            const guests = document.querySelector('[name="num_guests"]').value;
+            document.getElementById('reviewGuests').textContent = guests + ' người';
+            
+            // Update rooms count
+            const roomsCount = document.querySelectorAll('.room-selection-item').length;
+            document.getElementById('reviewRooms').textContent = roomsCount + ' phòng';
+        }
+
+        function applyDiscount() {
+            const code = document.querySelector('[name="discount_code"]').value;
+            if (code) {
+                alert('Áp dụng mã giảm giá: ' + code);
+                // Here you would typically make an AJAX call to validate and apply the discount
+            }
+        }
+
+        // Set minimum date to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('checkInDate').setAttribute('min', today);
+        document.getElementById('checkOutDate').setAttribute('min', today);
+
+        // Update checkout min date when checkin changes
+        document.getElementById('checkInDate').addEventListener('change', function() {
+            const checkInDate = new Date(this.value);
+            checkInDate.setDate(checkInDate.getDate() + 1);
+            const minCheckOut = checkInDate.toISOString().split('T')[0];
+            document.getElementById('checkOutDate').setAttribute('min', minCheckOut);
+        });
+    </script>
 </body>
 </html>

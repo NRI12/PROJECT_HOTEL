@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Trạng thái phòng</title>
+</head>
+<body>
+    <h1>Trạng thái phòng</h1>
+
+    {% if error %}
+        <p class="flash-error">{{ error }}</p>
+    {% endif %}
+    {% if success %}
+        <p class="flash-success">{{ success }}</p>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="flash-{{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% set payload = result[0].json if result and result[1] == 200 else None %}
+    {% set rooms = payload.data.rooms if payload and payload.data and payload.data.rooms else [] %}
+
+    {% if rooms %}
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Khách sạn</th>
+                    <th>Tên phòng</th>
+                    <th>Số lượng</th>
+                    <th>Giá cơ bản</th>
+                    <th>Trạng thái</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for room in rooms %}
+                <tr>
+                    <td>{{ room.room_id }}</td>
+                    <td>{{ room.hotel_id }}</td>
+                    <td>{{ room.room_name }}</td>
+                    <td>{{ room.quantity }}</td>
+                    <td>{{ room.base_price }}</td>
+                    <td>{{ 'Hoạt động' if room.is_active else 'Tạm dừng' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Không có phòng nào.</p>
+    {% endif %}
+
+    <p><a href="{{ url_for('owner.dashboard') }}">Quay lại dashboard</a></p>
+</body>
+</html>
+

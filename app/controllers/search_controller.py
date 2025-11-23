@@ -66,6 +66,24 @@ class SearchController:
             for hotel in hotels:
                 hotel_dict = hotel.to_dict()
                 hotel_dict['images'] = [img.to_dict() for img in hotel.images]
+                
+                # Thêm thông tin giá, đánh giá cho template
+                from app.models.review import Review
+                min_price = db.session.query(func.min(Room.base_price))\
+                    .filter(Room.hotel_id == hotel.hotel_id)\
+                    .filter(Room.status == 'available')\
+                    .scalar() or 1000000
+                
+                review_count = Review.query.filter_by(hotel_id=hotel.hotel_id, status='active').count()
+                
+                avg_rating = db.session.query(func.avg(Review.rating))\
+                    .filter_by(hotel_id=hotel.hotel_id, status='active')\
+                    .scalar() or 4.0
+                
+                hotel_dict['min_price'] = int(min_price)
+                hotel_dict['review_count'] = review_count
+                hotel_dict['avg_rating'] = float(avg_rating) if avg_rating else 4.0
+                
                 hotels_data.append(hotel_dict)
             
             if 'user_id' in session and validated_data.get('destination'):
@@ -277,3 +295,89 @@ class SearchController:
             return validation_error_response(e.messages)
         except Exception as e:
             return error_response(f'Lỗi kiểm tra phòng trống: {str(e)}', 500)
+    
+    @staticmethod
+    def search_for_web():
+        try:
+            data = SearchController._get_request_data()
+            
+            from app.schemas.search_schema import SearchSchema
+            from marshmallow import ValidationError
+            
+            schema = SearchSchema()
+            validated_data = schema.load(data)
+            
+            query = Hotel.query.filter_by(status='active')
+            
+            if validated_data.get('destination'):
+                destination = validated_data['destination']
+                query = query.filter(
+                    or_(
+                        Hotel.city.ilike(f'%{destination}%'),
+                        Hotel.address.ilike(f'%{destination}%'),
+                        Hotel.hotel_name.ilike(f'%{destination}%')
+                    )
+                )
+            
+            if validated_data.get('min_price'):
+                query = query.join(Room).filter(Room.base_price >= validated_data['min_price'])
+            
+            if validated_data.get('max_price'):
+                query = query.join(Room).filter(Room.base_price <= validated_data['max_price'])
+            
+            if validated_data.get('star_rating'):
+                query = query.filter(Hotel.star_rating >= validated_data['star_rating'])
+            
+            page = request.args.get('page', 1, type=int)
+            per_page = request.args.get('per_page', 10, type=int)
+            
+            total = query.distinct().count()
+            hotels = query.distinct().offset((page - 1) * per_page).limit(per_page).all()
+            
+            hotels_data = []
+            for hotel in hotels:
+                from app.models.review import Review
+                min_price = db.session.query(func.min(Room.base_price))\
+                    .filter(Room.hotel_id == hotel.hotel_id)\
+                    .filter(Room.status == 'available')\
+                    .scalar() or 1000000
+                
+                review_count = Review.query.filter_by(hotel_id=hotel.hotel_id, status='active').count()
+                
+                avg_rating = db.session.query(func.avg(Review.rating))\
+                    .filter_by(hotel_id=hotel.hotel_id, status='active')\
+                    .scalar() or 4.0
+                
+                hotels_data.append({
+                    'hotel': hotel,
+                    'min_price': int(min_price),
+                    'review_count': review_count,
+                    'avg_rating': float(avg_rating) if avg_rating else 4.0
+                })
+            
+            if 'user_id' in session and validated_data.get('destination'):
+                history = SearchHistory(
+                    user_id=session['user_id'],
+                    destination=validated_data['destination'],
+                    check_in_date=validated_data.get('check_in'),
+                    check_out_date=validated_data.get('check_out'),
+                    num_guests=validated_data.get('num_guests')
+                )
+                db.session.add(history)
+                db.session.commit()
+            
+            total_pages = (total + per_page - 1) // per_page
+            return {
+                'hotels': hotels_data,
+                'total': total,
+                'page': page,
+                'per_page': per_page,
+                'total_pages': total_pages
+            }
+            
+        except ValidationError as e:
+            print(f'Validation error: {e.messages}')
+            return {'hotels': [], 'total': 0, 'page': 1, 'per_page': 10, 'total_pages': 1}
+        except Exception as e:
+            print(f'Lỗi tìm kiếm: {str(e)}')
+            return {'hotels': [], 'total': 0, 'page': 1, 'per_page': 10, 'total_pages': 1}

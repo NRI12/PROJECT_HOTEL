@@ -4,24 +4,97 @@
     <title>Danh sách thông báo</title>
 </head>
 <body>
-    <h1>Danh sách thông báo</h1>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Tiêu đề</th>
-                <th>Nội dung</th>
-                <th>Ngày tạo</th>
-                <th>Đã đọc</th>
-                <th>Chi tiết</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td colspan="6">Chưa có thông báo nào</td>
-            </tr>
-        </tbody>
-    </table>
+    <h1>Danh sách thông báo{% if view_mode == 'unread' %} chưa đọc{% endif %}</h1>
+
+    {% if error %}
+        <p class="flash-error">{{ error }}</p>
+    {% endif %}
+    {% if success %}
+        <p class="flash-success">{{ success }}</p>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="flash-{{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="GET" action="{{ url_for('notification.list_notifications_api') }}">
+        <div>
+            <label>Loại:</label>
+            <input type="text" name="type" value="{{ request.args.get('type', '') }}">
+        </div>
+        <div>
+            <label>Trạng thái đọc:</label>
+            <select name="is_read">
+                <option value="" {% if request.args.get('is_read','') == '' %}selected{% endif %}>Tất cả</option>
+                <option value="false" {% if request.args.get('is_read') == 'false' %}selected{% endif %}>Chưa đọc</option>
+                <option value="true" {% if request.args.get('is_read') == 'true' %}selected{% endif %}>Đã đọc</option>
+            </select>
+        </div>
+        <div>
+            <button type="submit">Lọc</button>
+            <a href="{{ url_for('notification.list_notifications_api') }}">Xóa lọc</a>
+        </div>
+    </form>
+
+    <form method="POST" action="{{ url_for('notification.mark_all_notifications_read_api') }}">
+        <button type="submit">Đánh dấu tất cả là đã đọc</button>
+    </form>
+    <form method="POST" action="{{ url_for('notification.clear_notifications_api') }}">
+        <button type="submit">Xóa toàn bộ thông báo</button>
+    </form>
+
+    {% set payload = result[0].json if result and result[1] == 200 else None %}
+    {% set notifications = payload.data.notifications if payload and payload.data and payload.data.notifications else [] %}
+
+    {% if notifications %}
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tiêu đề</th>
+                    <th>Nội dung</th>
+                    <th>Loại</th>
+                    <th>Ngày tạo</th>
+                    <th>Đã đọc</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for notification in notifications %}
+                <tr>
+                    <td>{{ notification.notification_id }}</td>
+                    <td>{{ notification.title }}</td>
+                    <td>{{ notification.message }}</td>
+                    <td>{{ notification.type }}</td>
+                    <td>{{ notification.created_at }}</td>
+                    <td>{{ 'Có' if notification.is_read else 'Không' }}</td>
+                    <td>
+                        <a href="{{ url_for('notification.notification_detail_api', notification_id=notification.notification_id, next=request.full_path) }}">Xem</a>
+                        {% if not notification.is_read %}
+                        <form method="POST" action="{{ url_for('notification.mark_notification_read_api', notification_id=notification.notification_id, next=request.full_path) }}" style="display:inline;">
+                            <button type="submit">Đánh dấu đã đọc</button>
+                        </form>
+                        {% endif %}
+                        <form method="POST" action="{{ url_for('notification.delete_notification_api', notification_id=notification.notification_id) }}" style="display:inline;">
+                            <button type="submit">Xóa</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Không có thông báo nào.</p>
+    {% endif %}
+
+    <p>
+        <a href="{{ url_for('notification.list_notifications_api') }}">Tất cả</a> |
+        <a href="{{ url_for('notification.list_unread_notifications_api') }}">Chưa đọc</a>
+    </p>
 </body>
 </html>
 

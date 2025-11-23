@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Báo cáo thống kê</title>
+</head>
+<body>
+    <h1>Báo cáo thống kê</h1>
+
+    {% if error %}
+        <p class="flash-error">{{ error }}</p>
+    {% endif %}
+    {% if success %}
+        <p class="flash-success">{{ success }}</p>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="flash-{{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% set payload = result[0].json if result and result[1] == 200 else None %}
+    {% set data = payload.data if payload and payload.data else None %}
+
+    {% if data %}
+        <ul>
+            <li>Tổng khách sạn: {{ data.total_hotels }}</li>
+            <li>Tổng phòng: {{ data.total_rooms }}</li>
+            <li>Booking hoàn tất: {{ data.completed_bookings }}</li>
+            <li>Tổng đánh giá: {{ data.total_reviews }}</li>
+            <li>Điểm trung bình: {{ data.average_rating }}</li>
+            <li>Tỷ lệ lấp đầy: {{ data.occupancy_rate }}%</li>
+        </ul>
+    {% else %}
+        <p>Không có dữ liệu thống kê.</p>
+    {% endif %}
+
+    <h2>Xuất báo cáo</h2>
+    <form method="POST" action="{{ url_for('owner.export_report') }}">
+        <label>Từ ngày:</label>
+        <input type="date" name="start_date" value="{{ request.args.get('start_date', '') }}">
+        <label>Đến ngày:</label>
+        <input type="date" name="end_date" value="{{ request.args.get('end_date', '') }}">
+        <button type="submit">Xuất</button>
+    </form>
+
+    <p><a href="{{ url_for('owner.dashboard') }}">Quay lại dashboard</a></p>
+</body>
+</html>
+

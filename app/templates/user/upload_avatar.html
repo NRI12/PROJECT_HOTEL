@@ -1,45 +1,143 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Tải lên avatar</title>
-    <style>
-        .message {
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 4px;
-        }
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-    </style>
-</head>
-<body>
-    <h1>Tải lên avatar</h1>
-    
-    {% if error %}
-        <div class="message error">{{ error }}</div>
-    {% endif %}
-    
-    {% if success %}
-        <div class="message success">{{ success }}</div>
-    {% endif %}
-    
-    <form method="POST" action="/user/upload-avatar" enctype="multipart/form-data">
-        <div>
-            <label>Chọn ảnh:</label>
-            <input type="file" name="avatar" accept="image/*" required>
+{% extends "user/base_user.html" %}
+
+{% block title %}Tải lên avatar{% endblock %}
+{% block page_icon %}image{% endblock %}
+{% block page_title %}Đổi avatar{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Current Avatar -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-person-circle me-2"></i>
+                    Avatar hiện tại
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <img src="{{ user.avatar_url if user and user.avatar_url else 'https://via.placeholder.com/200/667eea/ffffff?text=Avatar' }}" 
+                         alt="Current Avatar" 
+                         class="rounded-circle border border-3 border-primary"
+                         style="width: 200px; height: 200px; object-fit: cover;">
+                </div>
+                <p class="text-muted mb-0">
+                    <i class="bi bi-info-circle"></i>
+                    Kích thước khuyến nghị: 200x200px
+                </p>
+            </div>
         </div>
-        <div>
-            <button type="submit">Tải lên</button>
+        
+        <!-- Upload Form -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-cloud-upload me-2"></i>
+                    Tải lên avatar mới
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/user/upload-avatar" enctype="multipart/form-data">
+                    <!-- File Upload Area -->
+                    <div class="mb-4">
+                        <label for="avatar" class="form-label">
+                            <i class="bi bi-image-fill me-1"></i>
+                            Chọn ảnh <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <input type="file" class="form-control" id="avatar" name="avatar" 
+                                   accept="image/*" required>
+                            <label class="input-group-text" for="avatar">
+                                <i class="bi bi-folder2-open"></i> Chọn file
+                            </label>
+                        </div>
+                        <small class="form-text text-muted">
+                            Định dạng hỗ trợ: JPG, PNG, GIF (Tối đa 5MB)
+                        </small>
+                    </div>
+                    
+                    <!-- Preview Area -->
+                    <div class="mb-4">
+                        <label class="form-label">
+                            <i class="bi bi-eye me-1"></i>
+                            Xem trước
+                        </label>
+                        <div class="text-center p-4 border rounded bg-light">
+                            <img id="preview" src="https://via.placeholder.com/150/e0e0e0/999999?text=Preview" 
+                                 alt="Preview" 
+                                 class="rounded-circle"
+                                 style="width: 150px; height: 150px; object-fit: cover;">
+                        </div>
+                    </div>
+                    
+                    <!-- Upload Guidelines -->
+                    <div class="alert alert-info mb-4" role="alert">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong>Hướng dẫn:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Sử dụng ảnh rõ nét, không mờ</li>
+                            <li>Nên chọn ảnh chân dung (avatar)</li>
+                            <li>Tránh ảnh có nội dung không phù hợp</li>
+                            <li>Kích thước tệp không quá 5MB</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Submit Buttons -->
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-cloud-upload me-2"></i>
+                                    Tải lên
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-grid">
+                                <a href="/user/profile" class="btn btn-outline-secondary btn-lg">
+                                    <i class="bi bi-arrow-left me-2"></i>
+                                    Hủy bỏ
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
-    </form>
-    <p><a href="/user/profile">Quay lại hồ sơ</a></p>
-</body>
-</html>
+        
+        <!-- Avatar Tips -->
+        <div class="card border-0 bg-light mt-4">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2">
+                    <i class="bi bi-lightbulb text-warning me-1"></i>
+                    Mẹo chọn avatar đẹp
+                </h6>
+                <ul class="mb-0 small">
+                    <li>Chọn ảnh có ánh sáng tốt, tránh quá tối hoặc quá sáng</li>
+                    <li>Khuôn mặt nên ở giữa và chiếm khoảng 60% ảnh</li>
+                    <li>Tránh sử dụng ảnh selfie quá gần</li>
+                    <li>Nền đơn giản sẽ làm nổi bật khuôn mặt</li>
+                    <li>Cười tự nhiên sẽ tạo ấn tượng tốt hơn</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Preview image before upload
+    document.getElementById('avatar').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('preview').src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+</script>
+{% endblock %}

@@ -4,29 +4,101 @@
     <title>Trang quản trị</title>
 </head>
 <body>
-    <h1>Trang quản trị</h1>
-    <nav>
+    <h1>Dashboard Admin</h1>
+
+    {% if error %}
+        <p class="flash-error">{{ error }}</p>
+    {% endif %}
+    {% if success %}
+        <p class="flash-success">{{ success }}</p>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="flash-{{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% set payload = result[0].json if result and result[1] == 200 else None %}
+    {% set summary = payload.data.summary if payload and payload.data and payload.data.summary else None %}
+    {% set recent_hotels = payload.data.recent_hotels if payload and payload.data and payload.data.recent_hotels else [] %}
+    {% set recent_users = payload.data.recent_users if payload and payload.data and payload.data.recent_users else [] %}
+
+    <h2>Thống kê tổng quan</h2>
+    {% if summary %}
         <ul>
-            <li><a href="/admin/users">Quản lý người dùng</a></li>
-            <li><a href="/admin/hotels">Quản lý khách sạn</a></li>
-            <li><a href="/admin/bookings">Quản lý đặt phòng</a></li>
+            <li>Tổng người dùng: {{ summary.total_users }} ({{ summary.active_users }} đang hoạt động)</li>
+            <li>Tổng khách sạn: {{ summary.total_hotels }} ({{ summary.pending_hotels }} chờ duyệt)</li>
+            <li>Tổng booking: {{ summary.total_bookings }}</li>
+            <li>Tổng thanh toán: {{ summary.total_payments }}</li>
+            <li>Doanh thu hoàn tất: {{ summary.total_revenue }}</li>
         </ul>
-    </nav>
-    <h2>Thống kê</h2>
-    <table border="1">
-        <tr>
-            <th>Tổng số người dùng</th>
-            <td>0</td>
-        </tr>
-        <tr>
-            <th>Tổng số khách sạn</th>
-            <td>0</td>
-        </tr>
-        <tr>
-            <th>Tổng số đặt phòng</th>
-            <td>0</td>
-        </tr>
-    </table>
+    {% else %}
+        <p>Không có dữ liệu.</p>
+    {% endif %}
+
+    <h2>Khách sạn mới</h2>
+    {% if recent_hotels %}
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tên</th>
+                    <th>Status</th>
+                    <th>Ngày tạo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for hotel in recent_hotels %}
+                <tr>
+                    <td>{{ hotel.hotel_id }}</td>
+                    <td>{{ hotel.hotel_name }}</td>
+                    <td>{{ hotel.status }}</td>
+                    <td>{{ hotel.created_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Không có khách sạn mới.</p>
+    {% endif %}
+
+    <h2>Người dùng mới</h2>
+    {% if recent_users %}
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Họ tên</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Ngày tham gia</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in recent_users %}
+                <tr>
+                    <td>{{ user.user_id }}</td>
+                    <td>{{ user.full_name }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.role.role_name if user.role else '' }}</td>
+                    <td>{{ user.created_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Không có người dùng mới.</p>
+    {% endif %}
+
+    <p>
+        <a href="{{ url_for('admin.admin_users') }}">Người dùng</a> |
+        <a href="{{ url_for('admin.admin_hotels') }}">Khách sạn</a> |
+        <a href="{{ url_for('admin.admin_bookings') }}">Booking</a> |
+        <a href="{{ url_for('admin.admin_statistics') }}">Thống kê</a>
+    </p>
 </body>
 </html>
 

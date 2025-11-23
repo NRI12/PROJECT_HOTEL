@@ -1,15 +1,53 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Làm mới token</title>
-</head>
-<body>
-    <h1>Làm mới token</h1>
-    <form method="POST" action="/auth/refresh">
-        <div>
-            <button type="submit">Làm mới token</button>
-        </div>
-    </form>
-</body>
-</html>
+{% extends "auth/base_auth.html" %}
 
+{% block title %}Làm mới token{% endblock %}
+
+{% block banner_title %}Làm mới phiên đăng nhập{% endblock %}
+{% block banner_subtitle %}Gia hạn thời gian đăng nhập của bạn{% endblock %}
+
+{% block heading %}Làm mới token{% endblock %}
+
+{% block form_content %}
+<div class="text-center mb-4">
+    <div class="mb-3">
+        <i class="bi bi-arrow-clockwise text-primary" style="font-size: 3rem;"></i>
+    </div>
+    <p class="text-muted">
+        Phiên đăng nhập của bạn sắp hết hạn. Nhấn vào nút bên dưới để làm mới token và tiếp tục sử dụng dịch vụ.
+    </p>
+</div>
+
+<!-- Info Alert -->
+<div class="alert alert-info" role="alert">
+    <i class="bi bi-info-circle me-2"></i>
+    <strong>Thông tin:</strong> Việc làm mới token sẽ giúp bạn duy trì phiên đăng nhập mà không cần đăng nhập lại.
+</div>
+
+<form method="POST" action="/auth/refresh">
+    <!-- Submit Button -->
+    <div class="d-grid">
+        <button type="submit" class="btn btn-primary btn-lg">
+            <i class="bi bi-arrow-clockwise me-2"></i>Làm mới token
+        </button>
+    </div>
+</form>
+
+<!-- Additional Info Card -->
+<div class="card mt-4 border-0 bg-light">
+    <div class="card-body">
+        <h6 class="card-subtitle mb-2 text-muted">
+            <i class="bi bi-shield-check me-1"></i>
+            An toàn và bảo mật
+        </h6>
+        <p class="card-text small mb-0">
+            Token của bạn được mã hóa và bảo vệ. Việc làm mới token là một quá trình an toàn và không ảnh hưởng đến bảo mật tài khoản.
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block auth_links %}
+<p class="mb-0">
+    <a href="/auth/login"><i class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập lại</a>
+</p>
+{% endblock %}

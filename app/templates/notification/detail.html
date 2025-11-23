@@ -5,13 +5,48 @@
 </head>
 <body>
     <h1>Chi tiết thông báo</h1>
-    <p>ID thông báo: {{ notification_id }}</p>
-    <h2>Thông tin thông báo</h2>
-    <p>Tiêu đề: </p>
-    <p>Nội dung: </p>
-    <p>Ngày tạo: </p>
-    <p>Đã đọc: </p>
-    <p><a href="/notification">Quay lại danh sách</a></p>
+
+    {% if error %}
+        <p class="flash-error">{{ error }}</p>
+    {% endif %}
+    {% if success %}
+        <p class="flash-success">{{ success }}</p>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="flash-{{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% set payload = result[0].json if result and result[1] == 200 else None %}
+    {% set notification = payload.data.notification if payload and payload.data and payload.data.notification else None %}
+
+    {% if notification %}
+        <p>ID thông báo: {{ notification.notification_id }}</p>
+        <p>Tiêu đề: {{ notification.title }}</p>
+        <p>Nội dung: {{ notification.message }}</p>
+        <p>Loại: {{ notification.type }}</p>
+        <p>Ngày tạo: {{ notification.created_at }}</p>
+        <p>Trạng thái: {{ 'Đã đọc' if notification.is_read else 'Chưa đọc' }}</p>
+        <p>Liên quan ID: {{ notification.related_id or 'Không' }}</p>
+
+        {% if not notification.is_read %}
+        <form method="POST" action="{{ url_for('notification.mark_notification_read_api', notification_id=notification.notification_id, next=request.full_path) }}">
+            <button type="submit">Đánh dấu đã đọc</button>
+        </form>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('notification.delete_notification_api', notification_id=notification.notification_id) }}">
+            <button type="submit">Xóa thông báo</button>
+        </form>
+    {% else %}
+        <p>Không tìm thấy thông báo.</p>
+    {% endif %}
+
+    <p><a href="{{ back_url or url_for('notification.list_notifications_api') }}">Quay lại danh sách</a></p>
 </body>
 </html>
 

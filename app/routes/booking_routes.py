@@ -1,19 +1,23 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.controllers.booking_controller import BookingController
+from app.utils.decorators import login_required, booking_owner_or_hotel_owner_required, role_required
 
 booking_bp = Blueprint('booking', __name__, url_prefix='/booking')
 
 @booking_bp.route('/', methods=['GET'])
+@login_required
 def list_bookings():
     result = BookingController.list_bookings()
     return render_template('booking/list.html', result=result)
 
 @booking_bp.route('/<int:booking_id>', methods=['GET'])
+@booking_owner_or_hotel_owner_required
 def booking_detail(booking_id):
     result = BookingController.get_booking(booking_id)
     return render_template('booking/detail.html', booking_id=booking_id, result=result)
 
 @booking_bp.route('/create', methods=['GET', 'POST'])
+@login_required
 def create_booking():
     if request.method == 'POST':
         result = BookingController.create_booking()
@@ -36,6 +40,7 @@ def check_price(booking_id):
     return result
 
 @booking_bp.route('/<int:booking_id>/edit', methods=['GET', 'POST'])
+@login_required
 def edit_booking(booking_id):
     if request.method == 'POST':
         result = BookingController.update_booking(booking_id)
@@ -55,6 +60,7 @@ def edit_booking(booking_id):
     return render_template('booking/edit.html', booking_id=booking_id, result=result)
 
 @booking_bp.route('/<int:booking_id>/cancel', methods=['POST'])
+@login_required
 def cancel_booking(booking_id):
     result = BookingController.cancel_booking(booking_id)
     if result[1] == 200:
@@ -64,6 +70,7 @@ def cancel_booking(booking_id):
     return redirect(url_for('booking.booking_detail', booking_id=booking_id))
 
 @booking_bp.route('/<int:booking_id>/confirm', methods=['POST'])
+@role_required('admin', 'hotel_owner')
 def confirm_booking(booking_id):
     result = BookingController.confirm_booking(booking_id)
     if result[1] == 200:
@@ -73,6 +80,7 @@ def confirm_booking(booking_id):
     return redirect(url_for('booking.booking_detail', booking_id=booking_id))
 
 @booking_bp.route('/<int:booking_id>/check-in', methods=['POST'])
+@role_required('admin', 'hotel_owner')
 def check_in(booking_id):
     result = BookingController.check_in(booking_id)
     if result[1] == 200:
@@ -82,6 +90,7 @@ def check_in(booking_id):
     return redirect(url_for('booking.booking_detail', booking_id=booking_id))
 
 @booking_bp.route('/<int:booking_id>/check-out', methods=['POST'])
+@role_required('admin', 'hotel_owner')
 def check_out(booking_id):
     result = BookingController.check_out(booking_id)
     if result[1] == 200:
@@ -91,11 +100,13 @@ def check_out(booking_id):
     return redirect(url_for('booking.booking_detail', booking_id=booking_id))
 
 @booking_bp.route('/<int:booking_id>/invoice', methods=['GET'])
+@booking_owner_or_hotel_owner_required
 def invoice(booking_id):
     result = BookingController.get_invoice(booking_id)
     return render_template('booking/invoice.html', booking_id=booking_id, result=result)
 
 @booking_bp.route('/<int:booking_id>/resend-confirmation', methods=['POST'])
+@login_required
 def resend_confirmation(booking_id):
     result = BookingController.resend_confirmation(booking_id)
     if result[1] == 200:

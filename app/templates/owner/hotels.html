@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Khách sạn của tôi</title>
+</head>
+<body>
+    <h1>Khách sạn của tôi</h1>
+
+    {% if error %}
+        <p class="flash-error">{{ error }}</p>
+    {% endif %}
+    {% if success %}
+        <p class="flash-success">{{ success }}</p>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="flash-{{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% set payload = result[0].json if result and result[1] == 200 else None %}
+    {% set hotels = payload.data.hotels if payload and payload.data and payload.data.hotels else [] %}
+
+    {% if hotels %}
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tên</th>
+                    <th>Địa chỉ</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày tạo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for hotel in hotels %}
+                <tr>
+                    <td>{{ hotel.hotel_id }}</td>
+                    <td>{{ hotel.hotel_name }}</td>
+                    <td>{{ hotel.address }}</td>
+                    <td>{{ 'Hoạt động' if hotel.is_active else 'Tạm dừng' }}</td>
+                    <td>{{ hotel.created_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Chưa có khách sạn nào.</p>
+    {% endif %}
+
+    <p><a href="{{ url_for('owner.dashboard') }}">Quay lại dashboard</a></p>
+</body>
+</html>
+

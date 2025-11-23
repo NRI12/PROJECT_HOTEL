@@ -5,24 +5,72 @@
 </head>
 <body>
     <h1>Quản lý người dùng</h1>
-    <p><a href="/admin">Quay lại trang quản trị</a></p>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Email</th>
-                <th>Họ và tên</th>
-                <th>Số điện thoại</th>
-                <th>Trạng thái</th>
-                <th>Thao tác</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td colspan="6">Chưa có người dùng nào</td>
-            </tr>
-        </tbody>
-    </table>
+
+    {% if error %}
+        <p class="flash-error">{{ error }}</p>
+    {% endif %}
+    {% if success %}
+        <p class="flash-success">{{ success }}</p>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="flash-{{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="GET">
+        <label>Từ khóa:</label>
+        <input type="text" name="q" value="{{ request.args.get('q', '') }}">
+        <label>Role ID:</label>
+        <input type="number" name="role_id" value="{{ request.args.get('role_id', '') }}">
+        <label>Trạng thái:</label>
+        <select name="is_active">
+            <option value="" {% if request.args.get('is_active','') == '' %}selected{% endif %}>Tất cả</option>
+            <option value="true" {% if request.args.get('is_active') == 'true' %}selected{% endif %}>Hoạt động</option>
+            <option value="false" {% if request.args.get('is_active') == 'false' %}selected{% endif %}>Bị khóa</option>
+        </select>
+        <button type="submit">Lọc</button>
+        <a href="{{ url_for('admin.admin_users') }}">Xóa lọc</a>
+    </form>
+
+    {% set payload = result[0].json if result and result[1] == 200 else None %}
+    {% set users = payload.data.users if payload and payload.data and payload.data.users else [] %}
+
+    {% if users %}
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Email</th>
+                    <th>Tên</th>
+                    <th>Role</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.user_id }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.full_name }}</td>
+                    <td>{{ user.role.role_name if user.role else '' }}</td>
+                    <td>{{ 'Hoạt động' if user.is_active else 'Bị khóa' }}</td>
+                    <td>
+                        <a href="{{ url_for('admin.admin_user_detail', user_id=user.user_id) }}">Chi tiết</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Không có người dùng.</p>
+    {% endif %}
+
+    <p><a href="{{ url_for('admin.admin_dashboard') }}">Quay lại dashboard</a></p>
 </body>
 </html>
 

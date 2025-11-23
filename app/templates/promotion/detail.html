@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chi tiết khuyến mãi</title>
+</head>
+<body>
+    <h1>Chi tiết khuyến mãi</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="flash-{{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% set payload = result[0].json if result and result[1] == 200 else None %}
+    {% set promotion = payload.data.promotion if payload and payload.data and payload.data.promotion else None %}
+
+    {% if promotion %}
+        <h2>{{ promotion.title }}</h2>
+        <p>Mô tả: {{ promotion.description or 'Không có' }}</p>
+        <p>Phạm vi:
+            {% if promotion.room %}
+                Phòng #{{ promotion.room.room_id }} - {{ promotion.room.room_name or '' }}
+            {% elif promotion.hotel %}
+                Khách sạn #{{ promotion.hotel.hotel_id }} - {{ promotion.hotel.hotel_name }}
+            {% else %}
+                Toàn hệ thống
+            {% endif %}
+        </p>
+        <p>Loại giảm: {{ 'Phần trăm' if promotion.discount_type == 'percentage' else 'Cố định' }}</p>
+        <p>Giá trị giảm: {{ promotion.discount_value }}</p>
+        <p>Áp dụng từ: {{ promotion.start_date }}</p>
+        <p>Đến: {{ promotion.end_date }}</p>
+        <p>Ngày áp dụng: {{ promotion.applicable_days or 'Tất cả' }}</p>
+        <p>Số đêm tối thiểu: {{ promotion.min_nights or 1 }}</p>
+        <p>Trạng thái: {{ 'Đang hoạt động' if promotion.is_active else 'Đã tắt' }}</p>
+
+        <p>
+            <a href="{{ url_for('promotion.edit_promotion', promotion_id=promotion.promotion_id) }}">Chỉnh sửa</a>
+        </p>
+        <form method="POST" action="{{ url_for('promotion.delete_promotion', promotion_id=promotion.promotion_id) }}">
+            <button type="submit" onclick="return confirm('Bạn chắc chắn muốn xóa?')">Xóa khuyến mãi</button>
+        </form>
+    {% else %}
+        <p>Không tìm thấy khuyến mãi.</p>
+    {% endif %}
+
+    <p><a href="{{ url_for('promotion.list_promotions') }}">Quay lại danh sách</a></p>
+</body>
+</html>
+

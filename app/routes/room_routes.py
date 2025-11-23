@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.controllers.room_controller import RoomController
-from app.utils.decorators import hotel_owner_required
+from app.utils.decorators import hotel_owner_required, room_owner_required, role_required
 
 room_bp = Blueprint('room', __name__, url_prefix='/room')
 
@@ -15,6 +15,7 @@ def room_detail(room_id):
     return render_template('room/detail.html', room_id=room_id, result=result)
 
 @room_bp.route('/create', methods=['GET', 'POST'])
+@role_required('admin', 'hotel_owner')
 def create_room():
     if request.method == 'POST':
         result = RoomController.create_room()
@@ -31,6 +32,7 @@ def create_room():
     return render_template('room/create.html')
 
 @room_bp.route('/<int:room_id>/edit', methods=['GET', 'POST'])
+@room_owner_required
 def edit_room(room_id):
     if request.method == 'POST':
         result = RoomController.update_room(room_id)
@@ -49,6 +51,7 @@ def edit_room(room_id):
     return render_template('room/edit.html', room_id=room_id, result=result)
 
 @room_bp.route('/<int:room_id>/delete', methods=['POST'])
+@room_owner_required
 def delete_room(room_id):
     result = RoomController.delete_room(room_id)
     if result[1] == 200:
@@ -58,6 +61,7 @@ def delete_room(room_id):
     return redirect(url_for('room.list_rooms'))
 
 @room_bp.route('/<int:room_id>/images', methods=['POST'])
+@room_owner_required
 def upload_images(room_id):
     result = RoomController.upload_images(room_id)
     if result[1] == 200:
@@ -67,6 +71,7 @@ def upload_images(room_id):
     return redirect(url_for('room.room_detail', room_id=room_id))
 
 @room_bp.route('/<int:room_id>/images/<int:image_id>/delete', methods=['POST'])
+@room_owner_required
 def delete_image(room_id, image_id):
     result = RoomController.delete_image(room_id, image_id)
     if result[1] == 200:
@@ -81,6 +86,7 @@ def room_amenities(room_id):
     return render_template('room/amenities.html', room_id=room_id, result=result)
 
 @room_bp.route('/<int:room_id>/amenities/update', methods=['POST'])
+@room_owner_required
 def update_amenities(room_id):
     result = RoomController.update_room_amenities(room_id)
     if result[1] == 200:
@@ -95,6 +101,7 @@ def check_availability(room_id):
     return render_template('room/availability.html', room_id=room_id, result=result)
 
 @room_bp.route('/<int:room_id>/status', methods=['POST'])
+@room_owner_required
 def update_status(room_id):
     result = RoomController.update_room_status(room_id)
     if result[1] == 200:
@@ -109,6 +116,7 @@ def list_room_types():
     return render_template('room/types_list.html', result=result)
 
 @room_bp.route('/types/create', methods=['GET', 'POST'])
+@role_required('admin')
 def create_room_type():
     if request.method == 'POST':
         result = RoomController.create_room_type()
@@ -125,6 +133,7 @@ def create_room_type():
     return render_template('room/types_create.html')
 
 @room_bp.route('/types/<int:type_id>/edit', methods=['GET', 'POST'])
+@role_required('admin')
 def edit_room_type(type_id):
     if request.method == 'POST':
         result = RoomController.update_room_type(type_id)
@@ -144,6 +153,7 @@ def edit_room_type(type_id):
     return render_template('room/types_edit.html', type_id=type_id, result=result)
 
 @room_bp.route('/types/<int:type_id>/delete', methods=['POST'])
+@role_required('admin')
 def delete_room_type(type_id):
     result = RoomController.delete_room_type(type_id)
     if result[1] == 200:
@@ -158,6 +168,7 @@ def list_amenities():
     return render_template('room/amenities_list.html', result=result)
 
 @room_bp.route('/amenities/create', methods=['GET', 'POST'])
+@role_required('admin')
 def create_amenity():
     if request.method == 'POST':
         result = RoomController.create_amenity()
@@ -174,6 +185,7 @@ def create_amenity():
     return render_template('room/amenities_create.html')
 
 @room_bp.route('/amenities/<int:amenity_id>/edit', methods=['GET', 'POST'])
+@role_required('admin')
 def edit_amenity(amenity_id):
     if request.method == 'POST':
         result = RoomController.update_amenity(amenity_id)
@@ -193,6 +205,7 @@ def edit_amenity(amenity_id):
     return render_template('room/amenities_edit.html', amenity_id=amenity_id, result=result)
 
 @room_bp.route('/amenities/<int:amenity_id>/delete', methods=['POST'])
+@role_required('admin')
 def delete_amenity(amenity_id):
     result = RoomController.delete_amenity(amenity_id)
     if result[1] == 200:

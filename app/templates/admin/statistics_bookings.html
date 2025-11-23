@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Thống kê booking chi tiết</title>
+</head>
+<body>
+    <h1>Thống kê booking chi tiết</h1>
+
+    {% if error %}
+        <p class="flash-error">{{ error }}</p>
+    {% endif %}
+    {% if success %}
+        <p class="flash-success">{{ success }}</p>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="flash-{{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% set payload = result[0].json if result and result[1] == 200 else None %}
+    {% set data = payload.data if payload and payload.data else None %}
+
+    {% if data %}
+        <h2>Theo trạng thái booking</h2>
+        {% if data.by_status %}
+            <ul>
+                {% for status, count in data.by_status.items() %}
+                <li>{{ status }}: {{ count }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Không có dữ liệu trạng thái.</p>
+        {% endif %}
+
+        <h2>Theo trạng thái thanh toán</h2>
+        {% if data.by_payment_status %}
+            <ul>
+                {% for status, count in data.by_payment_status.items() %}
+                <li>{{ status }}: {{ count }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Không có dữ liệu thanh toán.</p>
+        {% endif %}
+    {% else %}
+        <p>Không có dữ liệu thống kê.</p>
+    {% endif %}
+
+    <p><a href="{{ url_for('admin.admin_statistics') }}">Quay lại thống kê</a></p>
+</body>
+</html>
+

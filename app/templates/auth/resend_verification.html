@@ -1,41 +1,59 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Gửi lại email xác thực</title>
-    <style>
-        .message {
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 4px;
-        }
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-    </style>
-</head>
-<body>
-    <h1>Gửi lại email xác thực</h1>
-    
-    {% if error %}
-        <div class="message error">{{ error }}</div>
-    {% endif %}
-    
-    {% if success %}
-        <div class="message success">{{ success }}</div>
-    {% endif %}
-    
-    <form method="POST" action="/auth/resend-verification">
-        <div>
-            <button type="submit">Gửi lại email xác thực</button>
+{% extends "auth/base_auth.html" %}
+
+{% block title %}Gửi lại email xác thực{% endblock %}
+
+{% block banner_title %}Xác thực email{% endblock %}
+{% block banner_subtitle %}Gửi lại email xác thực để hoàn tất đăng ký{% endblock %}
+
+{% block heading %}Gửi lại email xác thực{% endblock %}
+
+{% block form_content %}
+<div class="text-center mb-4">
+    <div class="mb-3">
+        <i class="bi bi-arrow-repeat text-primary" style="font-size: 3rem;"></i>
+    </div>
+    <p class="text-muted">
+        Nhấn vào nút bên dưới để chúng tôi gửi lại email xác thực đến địa chỉ email đã đăng ký của bạn.
+    </p>
+</div>
+
+<!-- Info Alert -->
+<div class="alert alert-warning" role="alert">
+    <i class="bi bi-exclamation-triangle me-2"></i>
+    <strong>Lưu ý:</strong> Bạn cần đăng nhập trước khi yêu cầu gửi lại email xác thực. Nếu bạn chưa đăng nhập, vui lòng <a href="/auth/login" class="alert-link">đăng nhập tại đây</a>.
+</div>
+
+<form method="POST" action="/auth/resend-verification">
+    <!-- Info Card -->
+    <div class="card border-primary mb-4">
+        <div class="card-body">
+            <h5 class="card-title">
+                <i class="bi bi-info-circle-fill text-primary me-2"></i>
+                Những điều cần biết
+            </h5>
+            <ul class="mb-0">
+                <li>Email xác thực sẽ được gửi đến địa chỉ email bạn đã đăng ký</li>
+                <li>Vui lòng kiểm tra cả thư mục spam/junk</li>
+                <li>Email có thể mất vài phút để đến hộp thư của bạn</li>
+                <li>Mã xác thực có hiệu lực trong 24 giờ</li>
+            </ul>
         </div>
-    </form>
-    <p><a href="/auth/login">Quay lại đăng nhập</a></p>
-</body>
-</html>
+    </div>
+    
+    <!-- Submit Button -->
+    <div class="d-grid">
+        <button type="submit" class="btn btn-primary btn-lg">
+            <i class="bi bi-send me-2"></i>Gửi lại email xác thực
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block auth_links %}
+<p class="mb-0">
+    <a href="/auth/login"><i class="bi bi-arrow-left me-1"></i>Quay lại đăng nhập</a>
+</p>
+<p class="mt-2 mb-0">
+    Đã có mã xác thực? <a href="/auth/verify-email">Xác thực ngay</a>
+</p>
+{% endblock %}

@@ -1,109 +1,725 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-    <title>Chi tiết khách sạn</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if result and result[0].get_json() and result[0].get_json().success %}{{ result[0].get_json().data.hotel.hotel_name }}{% else %}Chi tiết khách sạn{% endif %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <h1>Chi tiết khách sạn</h1>
-    
+
+    <!-- HEADER / NAVIGATION -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('main.index') }}">
+                <i class="bi bi-building"></i> HotelBooking
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.index') }}">Trang chủ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.search_page') }}">Khách sạn</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#promotions">Ưu đãi</a>
+                    </li>
+                </ul>
+                
+                {% if session.get('user_id') %}
+                <ul class="navbar-nav navbar-icons">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('favorite.favorite_list') }}" title="Yêu thích">
+                            <i class="bi bi-heart"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('notification.list_notifications') }}" title="Thông báo">
+                            <i class="bi bi-bell"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('booking.list_bookings') }}" title="Đặt phòng">
+                            <i class="bi bi-calendar-check"></i>
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="d-flex gap-2 ms-3">
+                    <a href="{{ url_for('user.profile') }}" class="btn btn-outline-primary">Tài khoản</a>
+                    <form action="{{ url_for('auth.logout') }}" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-primary">Đăng xuất</button>
+                    </form>
+                </div>
+                {% else %}
+                <div class="d-flex gap-2 ms-3">
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary">Đăng nhập</a>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Đăng ký</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
+        <div class="container mt-3">
             {% for category, message in messages %}
-                <div class="message {{ category }}">{{ message }}</div>
+                <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
             {% endfor %}
+        </div>
         {% endif %}
     {% endwith %}
-    
+
     {% if result and result[0].get_json() and result[0].get_json().success %}
         {% set hotel = result[0].get_json().data.hotel %}
         
-        <div>
-            <h2>{{ hotel.hotel_name }}</h2>
-            <p><strong>Địa chỉ:</strong> {{ hotel.address }}</p>
-            <p><strong>Thành phố:</strong> {{ hotel.city }}</p>
-            {% if hotel.district %}<p><strong>Quận/Huyện:</strong> {{ hotel.district }}</p>{% endif %}
-            {% if hotel.ward %}<p><strong>Phường/Xã:</strong> {{ hotel.ward }}</p>{% endif %}
-            {% if hotel.star_rating %}<p><strong>Số sao:</strong> {{ hotel.star_rating }}</p>{% endif %}
-            {% if hotel.phone %}<p><strong>Điện thoại:</strong> {{ hotel.phone }}</p>{% endif %}
-            {% if hotel.email %}<p><strong>Email:</strong> {{ hotel.email }}</p>{% endif %}
-            {% if hotel.description %}<p><strong>Mô tả:</strong> {{ hotel.description }}</p>{% endif %}
-            {% if hotel.check_in_time %}<p><strong>Giờ nhận phòng:</strong> {{ hotel.check_in_time }}</p>{% endif %}
-            {% if hotel.check_out_time %}<p><strong>Giờ trả phòng:</strong> {{ hotel.check_out_time }}</p>{% endif %}
-            <p><strong>Trạng thái:</strong> {{ hotel.status }}</p>
-            <p><strong>Nổi bật:</strong> {{ 'Có' if hotel.is_featured else 'Không' }}</p>
-            {% if hotel.average_rating %}<p><strong>Đánh giá trung bình:</strong> {{ hotel.average_rating }}/5 ({{ hotel.review_count }} đánh giá)</p>{% endif %}
-        </div>
-        
-        <div>
-            <h3>Ảnh khách sạn</h3>
-            {% if hotel.images %}
-                {% for image in hotel.images %}
-                    <div>
-                        <img src="{{ image.image_url }}" alt="Hotel image" style="max-width: 200px; max-height: 200px;">
-                        {% if image.is_primary %}<p>(Ảnh chính)</p>{% endif %}
-                        <form method="POST" action="/hotel/{{ hotel_id }}/images/{{ image.image_id }}/primary" style="display: inline;">
-                            <button type="submit">Đặt làm ảnh chính</button>
-                        </form>
-                        <form method="POST" action="/hotel/{{ hotel_id }}/images/{{ image.image_id }}/delete" style="display: inline;">
-                            <button type="submit">Xóa</button>
-                        </form>
+        <!-- HOTEL HEADER -->
+        <section class="hotel-detail-header">
+            <div class="container py-4">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <h1 class="hotel-detail-title">{{ hotel.hotel_name }}</h1>
+                        <div class="hotel-detail-meta">
+                            <div class="hotel-rating me-3">
+                                <span class="stars">
+                                    {% for i in range(hotel.star_rating or 4) %}
+                                    <i class="bi bi-star-fill"></i>
+                                    {% endfor %}
+                                </span>
+                                <span class="ms-2">Khách sạn {{ hotel.star_rating or 4 }} sao</span>
+                            </div>
+                            {% if hotel.average_rating %}
+                            <div class="review-badge me-3">
+                                <span class="badge bg-primary">{{ "%.1f"|format(hotel.average_rating) }}/5</span>
+                                <span class="ms-1">({{ hotel.review_count }} đánh giá)</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="hotel-address mt-2">
+                            <i class="bi bi-geo-alt-fill text-danger"></i>
+                            <span>{{ hotel.address }}, {% if hotel.ward %}{{ hotel.ward }}, {% endif %}{% if hotel.district %}{{ hotel.district }}, {% endif %}{{ hotel.city }}</span>
+                            {% if hotel.latitude and hotel.longitude %}
+                            <a href="https://www.google.com/maps?q={{ hotel.latitude }},{{ hotel.longitude }}" target="_blank" class="ms-2 text-primary">
+                                <i class="bi bi-map"></i> Xem bản đồ
+                            </a>
+                            {% endif %}
+                        </div>
                     </div>
-                {% endfor %}
-            {% else %}
-                <p>Chưa có ảnh</p>
-            {% endif %}
-            
-            <h4>Upload ảnh mới</h4>
-            <form method="POST" action="/hotel/{{ hotel_id }}/images" enctype="multipart/form-data">
-                <input type="file" name="images" multiple accept="image/*">
-                <button type="submit">Upload ảnh</button>
-            </form>
+                    <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                        <button class="btn btn-outline-primary me-2" onclick="shareHotel()">
+                            <i class="bi bi-share"></i> Chia sẻ
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="toggleFavorite({{ hotel.hotel_id }})">
+                            <i class="bi bi-heart"></i> Yêu thích
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- GALLERY -->
+        <section class="hotel-gallery">
+            <div class="container">
+                <div class="gallery-grid">
+                    {% if hotel.images %}
+                        {% for image in hotel.images[:5] %}
+                        <div class="gallery-item {% if loop.index == 1 %}gallery-item-large{% endif %}">
+                            <img src="{{ image.image_url }}" alt="{{ hotel.hotel_name }}" onclick="openLightbox({{ loop.index0 }})">
+                        </div>
+                        {% endfor %}
+                        {% if hotel.images|length > 5 %}
+                        <button class="gallery-view-all" onclick="openLightbox(0)">
+                            <i class="bi bi-images"></i> Xem tất cả {{ hotel.images|length }} ảnh
+                        </button>
+                        {% endif %}
+                    {% else %}
+                        <div class="gallery-item gallery-item-large">
+                            <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200" alt="{{ hotel.hotel_name }}">
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <!-- MAIN CONTENT -->
+        <section class="hotel-content py-4">
+            <div class="container">
+                <div class="row">
+                    <!-- Left Content -->
+                    <div class="col-lg-8">
+                        <!-- Navigation Tabs -->
+                        <ul class="nav nav-tabs hotel-tabs mb-4" id="hotelTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button">
+                                    <i class="bi bi-info-circle"></i> Tổng quan
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="rooms-tab" data-bs-toggle="tab" data-bs-target="#rooms" type="button">
+                                    <i class="bi bi-door-closed"></i> Phòng & Giá
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="amenities-tab" data-bs-toggle="tab" data-bs-target="#amenities" type="button">
+                                    <i class="bi bi-star"></i> Tiện nghi
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button">
+                                    <i class="bi bi-chat-dots"></i> Đánh giá
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="policies-tab" data-bs-toggle="tab" data-bs-target="#policies" type="button">
+                                    <i class="bi bi-file-text"></i> Chính sách
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="location-tab" data-bs-toggle="tab" data-bs-target="#location" type="button">
+                                    <i class="bi bi-geo-alt"></i> Vị trí
+                                </button>
+                            </li>
+                        </ul>
+
+                        <!-- Tab Content -->
+                        <div class="tab-content" id="hotelTabsContent">
+                            <!-- OVERVIEW TAB -->
+                            <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                                <div class="content-card">
+                                    <h3 class="content-title">Giới thiệu về {{ hotel.hotel_name }}</h3>
+                                    <p class="text-secondary">{{ hotel.description or 'Chưa có mô tả chi tiết.' }}</p>
+                                    
+                                    <div class="row mt-4">
+                                        <div class="col-md-6">
+                                            <div class="info-box">
+                                                <i class="bi bi-clock-fill text-primary"></i>
+                                                <div class="ms-3">
+                                                    <h6>Thời gian nhận phòng</h6>
+                                                    <p class="mb-0">Từ {{ hotel.check_in_time or '14:00' }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="info-box">
+                                                <i class="bi bi-clock text-danger"></i>
+                                                <div class="ms-3">
+                                                    <h6>Thời gian trả phòng</h6>
+                                                    <p class="mb-0">Trước {{ hotel.check_out_time or '12:00' }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {% if hotel.phone or hotel.email %}
+                                    <div class="contact-info mt-4">
+                                        <h5>Thông tin liên hệ</h5>
+                                        {% if hotel.phone %}
+                                        <p><i class="bi bi-telephone"></i> <strong>Điện thoại:</strong> {{ hotel.phone }}</p>
+                                        {% endif %}
+                                        {% if hotel.email %}
+                                        <p><i class="bi bi-envelope"></i> <strong>Email:</strong> {{ hotel.email }}</p>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- ROOMS TAB -->
+                            <div class="tab-pane fade" id="rooms" role="tabpanel">
+                                <div class="content-card">
+                                    <h3 class="content-title">Phòng & Giá</h3>
+                                    <div id="rooms-list">
+                                        <p class="text-center">Đang tải danh sách phòng...</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- AMENITIES TAB -->
+                            <div class="tab-pane fade" id="amenities" role="tabpanel">
+                                <div class="content-card">
+                                    <h3 class="content-title">Tiện nghi khách sạn</h3>
+                                    {% if hotel.amenities %}
+                                    <div class="amenities-grid">
+                                        {% for amenity in hotel.amenities %}
+                                        <div class="amenity-item">
+                                            <i class="bi bi-check-circle-fill text-success"></i>
+                                            <span>{{ amenity.amenity_name }}</span>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                                    <p class="text-secondary">Chưa có thông tin về tiện nghi.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- REVIEWS TAB -->
+                            <div class="tab-pane fade" id="reviews" role="tabpanel">
+                                <div class="content-card">
+                                    <h3 class="content-title">Đánh giá từ khách hàng</h3>
+                                    
+                                    {% if hotel.average_rating %}
+                                    <div class="review-summary">
+                                        <div class="review-score">
+                                            <div class="score-big">{{ "%.1f"|format(hotel.average_rating) }}</div>
+                                            <div class="score-stars">
+                                                {% for i in range(5) %}
+                                                    {% if i < hotel.average_rating|int %}
+                                                    <i class="bi bi-star-fill text-warning"></i>
+                                                    {% else %}
+                                                    <i class="bi bi-star text-warning"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                            <p class="mb-0">{{ hotel.review_count }} đánh giá</p>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <div id="reviews-list" class="mt-4">
+                                        <p class="text-center">Đang tải đánh giá...</p>
+                                    </div>
+                                    
+                                    <div class="text-center mt-4">
+                                        <a href="{{ url_for('hotel.hotel_reviews', hotel_id=hotel.hotel_id) }}" class="btn btn-outline-primary">
+                                            Xem tất cả đánh giá
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- POLICIES TAB -->
+                            <div class="tab-pane fade" id="policies" role="tabpanel">
+                                <div class="content-card">
+                                    <h3 class="content-title">Chính sách khách sạn</h3>
+                                    
+                                    {% if hotel.cancellation_policies %}
+                                    <div class="policy-section">
+                                        <h5><i class="bi bi-x-circle"></i> Chính sách hủy phòng</h5>
+                                        {% for policy in hotel.cancellation_policies %}
+                                        <div class="policy-item">
+                                            <h6>{{ policy.name }}</h6>
+                                            <p>{{ policy.description }}</p>
+                                            <div class="policy-details">
+                                                <span class="badge bg-info">Hủy trước {{ policy.hours_before_checkin }} giờ</span>
+                                                <span class="badge bg-success">Hoàn {{ policy.refund_percentage }}%</span>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                                    <p class="text-secondary">Chưa có chính sách hủy phòng chi tiết.</p>
+                                    {% endif %}
+                                    
+                                    <div class="policy-section mt-4">
+                                        <h5><i class="bi bi-people"></i> Chính sách chung</h5>
+                                        <ul class="policy-list">
+                                            <li>Check-in: {{ hotel.check_in_time or '14:00' }} | Check-out: {{ hotel.check_out_time or '12:00' }}</li>
+                                            <li>Vui lòng xuất trình giấy tờ tùy thân có ảnh khi check-in</li>
+                                            <li>Không hút thuốc trong phòng</li>
+                                            <li>Không được mang thú cưng (trừ khi được thông báo)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- LOCATION TAB -->
+                            <div class="tab-pane fade" id="location" role="tabpanel">
+                                <div class="content-card">
+                                    <h3 class="content-title">Vị trí</h3>
+                                    <div class="location-info mb-3">
+                                        <i class="bi bi-geo-alt-fill text-danger"></i>
+                                        <strong>{{ hotel.address }}, {% if hotel.ward %}{{ hotel.ward }}, {% endif %}{% if hotel.district %}{{ hotel.district }}, {% endif %}{{ hotel.city }}</strong>
+                                    </div>
+                                    
+                                    {% if hotel.latitude and hotel.longitude %}
+                                    <div class="map-container">
+                                        <iframe
+                                            width="100%"
+                                            height="400"
+                                            frameborder="0"
+                                            style="border:0; border-radius: 0.5rem;"
+                                            src="https://www.google.com/maps?q={{ hotel.latitude }},{{ hotel.longitude }}&output=embed"
+                                            allowfullscreen>
+                                        </iframe>
+                                    </div>
+                                    {% else %}
+                                    <p class="text-secondary">Chưa có thông tin bản đồ.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Sidebar - Booking Form -->
+                    <div class="col-lg-4">
+                        <div class="booking-sidebar">
+                            <div class="booking-card">
+                                <h4 class="booking-title">Đặt phòng ngay</h4>
+                                
+                                <form id="bookingForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">Ngày nhận phòng</label>
+                                        <input type="date" class="form-control" id="checkin" required>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Ngày trả phòng</label>
+                                        <input type="date" class="form-control" id="checkout" required>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Số lượng khách</label>
+                                        <select class="form-select" id="guests">
+                                            <option value="1">1 người</option>
+                                            <option value="2" selected>2 người</option>
+                                            <option value="3">3 người</option>
+                                            <option value="4">4+ người</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="price-summary">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Giá mỗi đêm từ:</span>
+                                            <span class="fw-bold" id="nightPrice">-</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Số đêm:</span>
+                                            <span id="numNights">0</span>
+                                        </div>
+                                        <hr>
+                                        <div class="d-flex justify-content-between">
+                                            <strong>Tạm tính:</strong>
+                                            <strong class="text-primary" id="totalPrice">0₫</strong>
+                                        </div>
+                                    </div>
+                                    
+                                    <button type="button" class="btn btn-primary w-100 mt-3" onclick="goToRoomSelection()">
+                                        <i class="bi bi-calendar-check"></i> Chọn phòng
+                                    </button>
+                                </form>
+                                
+                                <div class="booking-features mt-3">
+                                    <div class="feature-item">
+                                        <i class="bi bi-check-circle text-success"></i>
+                                        <span>Xác nhận tức thì</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <i class="bi bi-check-circle text-success"></i>
+                                        <span>Không cần thanh toán trước</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <i class="bi bi-check-circle text-success"></i>
+                                        <span>Hủy miễn phí</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Lightbox Modal -->
+        <div class="modal fade" id="lightboxModal" tabindex="-1">
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content bg-dark">
+                    <div class="modal-header border-0">
+                        <h5 class="modal-title text-white">{{ hotel.hotel_name }}</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <div id="lightboxCarousel" class="carousel slide" data-bs-ride="false">
+                            <div class="carousel-inner">
+                                {% for image in hotel.images %}
+                                <div class="carousel-item {% if loop.index == 1 %}active{% endif %}">
+                                    <img src="{{ image.image_url }}" class="d-block w-100" alt="{{ hotel.hotel_name }}" style="max-height: 80vh; object-fit: contain;">
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <button class="carousel-control-prev" type="button" data-bs-target="#lightboxCarousel" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon"></span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#lightboxCarousel" data-bs-slide="next">
+                                <span class="carousel-control-next-icon"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        
-        <div>
-            <h3>Tiện nghi</h3>
-            {% if hotel.amenities %}
-                <ul>
-                    {% for amenity in hotel.amenities %}
-                        <li>{{ amenity.amenity_name }}</li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>Chưa có tiện nghi</p>
-            {% endif %}
-            <p><a href="/hotel/{{ hotel_id }}/amenities">Quản lý tiện nghi</a></p>
-        </div>
-        
-        <div>
-            <h3>Chính sách hủy</h3>
-            {% if hotel.cancellation_policies %}
-                <ul>
-                    {% for policy in hotel.cancellation_policies %}
-                        <li>
-                            <strong>{{ policy.name }}</strong>: {{ policy.description }}
-                            (Hủy trước {{ policy.hours_before_checkin }} giờ, hoàn {{ policy.refund_percentage }}%)
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>Chưa có chính sách hủy</p>
-            {% endif %}
-            <p><a href="/hotel/{{ hotel_id }}/policies">Quản lý chính sách</a></p>
-        </div>
-        
-        <div>
-            <p><a href="/hotel/{{ hotel_id }}/rooms">Xem phòng</a></p>
-            <p><a href="/hotel/{{ hotel_id }}/reviews">Xem đánh giá</a></p>
-            <p><a href="/hotel/{{ hotel_id }}/edit">Chỉnh sửa</a></p>
-            <form method="POST" action="/hotel/{{ hotel_id }}/delete" style="display: inline;">
-                <button type="submit" onclick="return confirm('Bạn có chắc muốn xóa khách sạn này?')">Xóa khách sạn</button>
-            </form>
-        </div>
-        
+
     {% else %}
-        <p>Không tìm thấy khách sạn</p>
+        <div class="container my-5">
+            <div class="alert alert-warning text-center">
+                <i class="bi bi-exclamation-triangle fs-1 d-block mb-3"></i>
+                <h4>Không tìm thấy khách sạn</h4>
+                <p>Khách sạn bạn đang tìm không tồn tại hoặc đã bị xóa.</p>
+                <a href="{{ url_for('main.search_page') }}" class="btn btn-primary mt-3">Quay lại trang tìm kiếm</a>
+            </div>
+        </div>
     {% endif %}
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <h3 class="footer-title">
+                        <i class="bi bi-building"></i> HotelBooking
+                    </h3>
+                    <p style="color: rgba(255, 255, 255, 0.8);">
+                        Nền tảng đặt phòng khách sạn hàng đầu Việt Nam.
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <h3 class="footer-title">Liên kết</h3>
+                    <ul class="footer-links">
+                        <li><a href="{{ url_for('main.index') }}">Trang chủ</a></li>
+                        <li><a href="{{ url_for('main.search_page') }}">Khách sạn</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h3 class="footer-title">Liên hệ</h3>
+                    <p style="color: rgba(255, 255, 255, 0.8);">
+                        <i class="bi bi-telephone"></i> Hotline: 1900-1234<br>
+                        <i class="bi bi-envelope"></i> Email: support@hotelbooking.vn
+                    </p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 HotelBooking. Tất cả các quyền được bảo lưu.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <p><a href="/hotel">Quay lại danh sách</a></p>
+    <!-- Custom JS -->
+    <script>
+        const hotelId = {{ hotel_id }};
+        
+        // Open lightbox
+        function openLightbox(index) {
+            const modal = new bootstrap.Modal(document.getElementById('lightboxModal'));
+            const carousel = bootstrap.Carousel.getOrCreateInstance(document.getElementById('lightboxCarousel'));
+            carousel.to(index);
+            modal.show();
+        }
+        
+        // Share hotel
+        function shareHotel() {
+            if (navigator.share) {
+                navigator.share({
+                    title: document.title,
+                    url: window.location.href
+                }).catch(err => console.log('Error sharing:', err));
+            } else {
+                // Fallback: copy to clipboard
+                navigator.clipboard.writeText(window.location.href);
+                alert('Link đã được sao chép!');
+            }
+        }
+        
+        // Toggle favorite
+        function toggleFavorite(hotelId) {
+            fetch(`/favorite/toggle`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ hotel_id: hotelId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Đã cập nhật danh sách yêu thích!');
+                } else {
+                    alert('Vui lòng đăng nhập để sử dụng tính năng này!');
+                    window.location.href = '/auth/login';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra. Vui lòng thử lại!');
+            });
+        }
+        
+        // Calculate booking price
+        function calculatePrice() {
+            const checkin = document.getElementById('checkin').value;
+            const checkout = document.getElementById('checkout').value;
+            
+            if (checkin && checkout) {
+                const checkinDate = new Date(checkin);
+                const checkoutDate = new Date(checkout);
+                const nights = Math.ceil((checkoutDate - checkinDate) / (1000 * 60 * 60 * 24));
+                
+                if (nights > 0) {
+                    document.getElementById('numNights').textContent = nights;
+                    // Will be updated when room is selected
+                } else {
+                    document.getElementById('numNights').textContent = '0';
+                    document.getElementById('totalPrice').textContent = '0₫';
+                }
+            }
+        }
+        
+        document.getElementById('checkin').addEventListener('change', calculatePrice);
+        document.getElementById('checkout').addEventListener('change', calculatePrice);
+        
+        // Set min date for checkin to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('checkin').setAttribute('min', today);
+        
+        // Set min date for checkout based on checkin
+        document.getElementById('checkin').addEventListener('change', function() {
+            const checkinDate = this.value;
+            const nextDay = new Date(checkinDate);
+            nextDay.setDate(nextDay.getDate() + 1);
+            document.getElementById('checkout').setAttribute('min', nextDay.toISOString().split('T')[0]);
+        });
+        
+        // Go to room selection
+        function goToRoomSelection() {
+            const checkin = document.getElementById('checkin').value;
+            const checkout = document.getElementById('checkout').value;
+            const guests = document.getElementById('guests').value;
+            
+            if (!checkin || !checkout) {
+                alert('Vui lòng chọn ngày nhận và trả phòng!');
+                return;
+            }
+            
+            // Switch to rooms tab
+            const roomsTab = new bootstrap.Tab(document.getElementById('rooms-tab'));
+            roomsTab.show();
+            
+            // Load rooms
+            loadRooms();
+        }
+        
+        // Load rooms
+        function loadRooms() {
+            fetch(`/hotel/${hotelId}/rooms`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data.rooms.length > 0) {
+                        let html = '<div class="rooms-list">';
+                        data.data.rooms.forEach(room => {
+                            html += `
+                                <div class="room-card">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            ${room.images && room.images.length > 0 ? 
+                                                `<img src="${room.images[0].image_url}" class="room-image" alt="${room.room_name}">` :
+                                                '<img src="https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=400" class="room-image" alt="Room">'
+                                            }
+                                        </div>
+                                        <div class="col-md-8">
+                                            <h5>${room.room_name}</h5>
+                                            <p class="text-secondary"><i class="bi bi-arrows-fullscreen"></i> Diện tích: ${room.room_size || 'N/A'} m²</p>
+                                            <p class="text-secondary"><i class="bi bi-people"></i> Tối đa: ${room.max_occupancy} khách</p>
+                                            <div class="room-amenities mb-2">
+                                                ${room.amenities ? room.amenities.slice(0, 5).map(a => `<span class="badge bg-light text-dark">${a.amenity_name}</span>`).join(' ') : ''}
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <span class="price-amount">${room.price_per_night.toLocaleString()}₫</span>
+                                                    <span class="text-secondary">/đêm</span>
+                                                </div>
+                                                <a href="/booking/create?hotel_id=${hotelId}&room_id=${room.room_id}" class="btn btn-primary">Chọn phòng</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        html += '</div>';
+                        document.getElementById('rooms-list').innerHTML = html;
+                    } else {
+                        document.getElementById('rooms-list').innerHTML = '<p class="text-center text-secondary">Không có phòng nào khả dụng.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading rooms:', error);
+                    document.getElementById('rooms-list').innerHTML = '<p class="text-center text-danger">Có lỗi khi tải danh sách phòng.</p>';
+                });
+        }
+        
+        // Load reviews
+        function loadReviews() {
+            fetch(`/hotel/${hotelId}/reviews?per_page=5`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data.length > 0) {
+                        let html = '';
+                        data.data.forEach(review => {
+                            html += `
+                                <div class="review-item">
+                                    <div class="review-header">
+                                        <div class="d-flex align-items-center">
+                                            <div class="review-avatar">
+                                                <i class="bi bi-person-circle"></i>
+                                            </div>
+                                            <div class="ms-3">
+                                                <h6 class="mb-0">${review.user ? review.user.full_name : 'Khách hàng'}</h6>
+                                                <div class="stars">
+                                                    ${'<i class="bi bi-star-fill text-warning"></i>'.repeat(review.rating)}
+                                                    ${'<i class="bi bi-star text-warning"></i>'.repeat(5 - review.rating)}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <small class="text-secondary">${new Date(review.created_at).toLocaleDateString('vi-VN')}</small>
+                                    </div>
+                                    <p class="review-text">${review.comment}</p>
+                                </div>
+                            `;
+                        });
+                        document.getElementById('reviews-list').innerHTML = html;
+                    } else {
+                        document.getElementById('reviews-list').innerHTML = '<p class="text-center text-secondary">Chưa có đánh giá nào.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading reviews:', error);
+                    document.getElementById('reviews-list').innerHTML = '<p class="text-center text-danger">Có lỗi khi tải đánh giá.</p>';
+                });
+        }
+        
+        // Load reviews when tab is shown
+        document.getElementById('reviews-tab').addEventListener('shown.bs.tab', function() {
+            if (document.getElementById('reviews-list').innerHTML.includes('Đang tải')) {
+                loadReviews();
+            }
+        });
+        
+        // Load rooms when tab is shown
+        document.getElementById('rooms-tab').addEventListener('shown.bs.tab', function() {
+            if (document.getElementById('rooms-list').innerHTML.includes('Đang tải')) {
+                loadRooms();
+            }
+        });
+    </script>
 </body>
 </html>

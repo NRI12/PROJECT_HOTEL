@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Booking khách sạn</title>
+</head>
+<body>
+    <h1>Booking của khách sạn</h1>
+
+    {% if error %}
+        <p class="flash-error">{{ error }}</p>
+    {% endif %}
+    {% if success %}
+        <p class="flash-success">{{ success }}</p>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="flash-{{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="GET">
+        <label>Trạng thái:</label>
+        <input type="text" name="status" value="{{ request.args.get('status', '') }}">
+        <button type="submit">Lọc</button>
+        <a href="{{ url_for('owner.owner_bookings') }}">Xóa lọc</a>
+    </form>
+
+    {% set payload = result[0].json if result and result[1] == 200 else None %}
+    {% set bookings = payload.data.bookings if payload and payload.data and payload.data.bookings else [] %}
+
+    {% if bookings %}
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Khách sạn</th>
+                    <th>Khách</th>
+                    <th>Check-in</th>
+                    <th>Check-out</th>
+                    <th>Trạng thái</th>
+                    <th>Số tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in bookings %}
+                <tr>
+                    <td>{{ booking.booking_id }}</td>
+                    <td>{{ booking.hotel.hotel_name if booking.hotel else booking.hotel_id }}</td>
+                    <td>{{ booking.user.full_name if booking.user else booking.user_id }}</td>
+                    <td>{{ booking.check_in_date }}</td>
+                    <td>{{ booking.check_out_date }}</td>
+                    <td>{{ booking.status }}</td>
+                    <td>{{ booking.final_amount }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Không có booking nào.</p>
+    {% endif %}
+
+    <p><a href="{{ url_for('owner.dashboard') }}">Quay lại dashboard</a></p>
+</body>
+</html>
+

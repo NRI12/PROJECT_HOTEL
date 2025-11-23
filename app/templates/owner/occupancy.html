@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tỷ lệ lấp đầy</title>
+</head>
+<body>
+    <h1>Tỷ lệ lấp đầy</h1>
+
+    {% if error %}
+        <p class="flash-error">{{ error }}</p>
+    {% endif %}
+    {% if success %}
+        <p class="flash-success">{{ success }}</p>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="flash-{{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% set payload = result[0].json if result and result[1] == 200 else None %}
+    {% set occupancy = payload.data.occupancy if payload and payload.data and payload.data.occupancy else [] %}
+
+    {% if occupancy %}
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Khách sạn</th>
+                    <th>Tổng phòng</th>
+                    <th>Booking hoàn tất</th>
+                    <th>Tỷ lệ lấp đầy (%)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in occupancy %}
+                <tr>
+                    <td>{{ item.hotel_name }} (#{{ item.hotel_id }})</td>
+                    <td>{{ item.room_total }}</td>
+                    <td>{{ item.occupied }}</td>
+                    <td>{{ item.occupancy_rate }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Không có dữ liệu.</p>
+    {% endif %}
+
+    <p><a href="{{ url_for('owner.statistics_report') }}">Xem thống kê</a></p>
+</body>
+</html>
+

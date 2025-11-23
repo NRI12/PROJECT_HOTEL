@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Xác thực{% endblock %} - Hotel Booking</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- Custom Styles -->
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --secondary-color: #6c757d;
+            --success-color: #198754;
+            --danger-color: #dc3545;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .auth-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 0;
+        }
+        
+        .auth-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            max-width: 1000px;
+            width: 100%;
+        }
+        
+        .auth-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 3rem 2rem;
+            color: white;
+            text-align: center;
+        }
+        
+        .auth-banner h2 {
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        
+        .banner-carousel {
+            margin-top: 2rem;
+        }
+        
+        .banner-carousel img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+        
+        .auth-body {
+            padding: 3rem 2.5rem;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .auth-footer {
+            background: #f8f9fa;
+            padding: 2rem 0;
+            text-align: center;
+            color: #6c757d;
+        }
+        
+        .auth-links {
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+        
+        .auth-links a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        .auth-links a:hover {
+            color: #0a58ca;
+            text-decoration: underline;
+        }
+        
+        .input-group-text {
+            background: transparent;
+            border-right: none;
+        }
+        
+        .form-control {
+            border-left: none;
+        }
+        
+        .form-control:focus {
+            border-left: none;
+        }
+        
+        .input-group:focus-within .input-group-text {
+            border-color: var(--primary-color);
+        }
+        
+        @media (max-width: 768px) {
+            .auth-banner {
+                padding: 2rem 1.5rem;
+            }
+            
+            .auth-body {
+                padding: 2rem 1.5rem;
+            }
+            
+            .banner-carousel img {
+                height: 180px;
+            }
+        }
+    </style>
+    
+    {% block extra_styles %}{% endblock %}
+</head>
+<body>
+    <!-- Main Content -->
+    <div class="auth-container">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-10 col-xl-9">
+                    <div class="auth-card">
+                        <div class="row g-0">
+                            <!-- Left Side - Banner -->
+                            <div class="col-lg-5 d-none d-lg-block">
+                                <div class="auth-banner">
+                                    <h2>{% block banner_title %}Chào mừng đến với Hotel Booking{% endblock %}</h2>
+                                    <p>{% block banner_subtitle %}Trải nghiệm đặt phòng khách sạn tốt nhất{% endblock %}</p>
+                                    
+                                    <!-- Banner Carousel -->
+                                    <div id="bannerCarousel" class="carousel slide banner-carousel" data-bs-ride="carousel">
+                                        <div class="carousel-indicators">
+                                            <button type="button" data-bs-target="#bannerCarousel" data-bs-slide-to="0" class="active"></button>
+                                            <button type="button" data-bs-target="#bannerCarousel" data-bs-slide-to="1"></button>
+                                            <button type="button" data-bs-target="#bannerCarousel" data-bs-slide-to="2"></button>
+                                        </div>
+                                        <div class="carousel-inner">
+                                            <div class="carousel-item active">
+                                                <img src="/static/images/banners/a.png" class="d-block w-100" alt="Banner 1" onerror="this.src='https://via.placeholder.com/400x250/667eea/ffffff?text=Hotel+Banner+A'">
+                                            </div>
+                                            <div class="carousel-item">
+                                                <img src="/static/images/banners/b.png" class="d-block w-100" alt="Banner 2" onerror="this.src='https://via.placeholder.com/400x250/764ba2/ffffff?text=Hotel+Banner+B'">
+                                            </div>
+                                            <div class="carousel-item">
+                                                <img src="/static/images/banners/c.png" class="d-block w-100" alt="Banner 3" onerror="this.src='https://via.placeholder.com/400x250/5a67d8/ffffff?text=Hotel+Banner+C'">
+                                            </div>
+                                        </div>
+                                        <button class="carousel-control-prev" type="button" data-bs-target="#bannerCarousel" data-bs-slide="prev">
+                                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                            <span class="visually-hidden">Previous</span>
+                                        </button>
+                                        <button class="carousel-control-next" type="button" data-bs-target="#bannerCarousel" data-bs-slide="next">
+                                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                            <span class="visually-hidden">Next</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Right Side - Form -->
+                            <div class="col-lg-7">
+                                <div class="auth-body">
+                                    <h3 class="mb-4 text-center">{% block heading %}Xác thực{% endblock %}</h3>
+                                    
+                                    <!-- Flash Messages -->
+                                    {% with messages = get_flashed_messages(with_categories=true) %}
+                                        {% if messages %}
+                                            {% for category, message in messages %}
+                                                <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+                                                    <i class="bi bi-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' }}-fill me-2"></i>
+                                                    {{ message }}
+                                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                                </div>
+                                            {% endfor %}
+                                        {% endif %}
+                                    {% endwith %}
+                                    
+                                    <!-- Error Message -->
+                                    {% if error %}
+                                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                            {{ error }}
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <!-- Success Message -->
+                                    {% if success %}
+                                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                            <i class="bi bi-check-circle-fill me-2"></i>
+                                            {{ success }}
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <!-- Form Content -->
+                                    {% block form_content %}{% endblock %}
+                                    
+                                    <!-- Additional Links -->
+                                    <div class="auth-links">
+                                        {% block auth_links %}{% endblock %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="auth-footer">
+        <div class="container">
+            <p class="mb-0">&copy; 2025 Hotel Booking System. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
+

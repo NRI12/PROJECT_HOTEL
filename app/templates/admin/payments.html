@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Danh sách thanh toán</title>
+</head>
+<body>
+    <h1>Tất cả thanh toán</h1>
+
+    {% if error %}
+        <p class="flash-error">{{ error }}</p>
+    {% endif %}
+    {% if success %}
+        <p class="flash-success">{{ success }}</p>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="flash-{{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% set payload = result[0].json if result and result[1] == 200 else None %}
+    {% set payments = payload.data.payments if payload and payload.data and payload.data.payments else [] %}
+
+    {% if payments %}
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Booking</th>
+                    <th>Phương thức</th>
+                    <th>Số tiền</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày thanh toán</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in payments %}
+                <tr>
+                    <td>{{ payment.payment_id }}</td>
+                    <td>{{ payment.booking_id }}</td>
+                    <td>{{ payment.payment_method }}</td>
+                    <td>{{ payment.amount }}</td>
+                    <td>{{ payment.payment_status }}</td>
+                    <td>{{ payment.payment_date or payment.created_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Không có thanh toán.</p>
+    {% endif %}
+
+    <p><a href="{{ url_for('admin.admin_dashboard') }}">Quay lại dashboard</a></p>
+</body>
+</html>
+

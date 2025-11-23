@@ -25,7 +25,7 @@ def login():
         result = AuthController.login()
         if result[1] == 200:
             flash('Đăng nhập thành công', 'success')
-            return redirect(url_for('user.profile'))
+            return redirect(url_for('main.index'))
         else:
             try:
                 error_data = result[0].get_json()
@@ -42,10 +42,12 @@ def logout():
         return redirect(url_for('auth.login'))
     return redirect(url_for('auth.login'))
 
-@auth_bp.route('/refresh', methods=['POST'])
+@auth_bp.route('/refresh', methods=['GET', 'POST'])
 def refresh():
-    result = AuthController.refresh()
-    return render_template('auth/refresh.html', result=result)
+    if request.method == 'POST':
+        result = AuthController.refresh()
+        return render_template('auth/refresh.html', result=result)
+    return render_template('auth/refresh.html')
 
 @auth_bp.route('/verify-token', methods=['GET'])
 def verify_token():

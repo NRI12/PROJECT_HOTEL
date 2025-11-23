@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cập nhật khuyến mãi</title>
+</head>
+<body>
+    <h1>Cập nhật khuyến mãi #{{ promotion_id }}</h1>
+    <p>Chỉ chỉnh sửa các trường cần thay đổi.</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="flash-{{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% set payload = result[0].json if result and result[1] == 200 else None %}
+    {% set promotion = payload.data.promotion if payload and payload.data and payload.data.promotion else None %}
+
+    {% if promotion %}
+        <form method="POST" action="{{ url_for('promotion.edit_promotion', promotion_id=promotion_id) }}">
+            <div>
+                <label>Hotel ID</label>
+                <input type="number" name="hotel_id" value="{{ request.form.get('hotel_id', promotion.hotel_id) }}">
+            </div>
+            <div>
+                <label>Room ID</label>
+                <input type="number" name="room_id" value="{{ request.form.get('room_id', promotion.room_id) }}">
+            </div>
+            <div>
+                <label>Tiêu đề</label>
+                <input type="text" name="title" value="{{ request.form.get('title', promotion.title) }}">
+            </div>
+            <div>
+                <label>Mô tả</label>
+                <textarea name="description">{{ request.form.get('description', promotion.description or '') }}</textarea>
+            </div>
+            <div>
+                <label>Loại giảm</label>
+                <select name="discount_type">
+                    <option value="">-- Không thay đổi --</option>
+                    <option value="percentage" {% if request.form.get('discount_type', promotion.discount_type) == 'percentage' %}selected{% endif %}>Phần trăm</option>
+                    <option value="fixed" {% if request.form.get('discount_type', promotion.discount_type) == 'fixed' %}selected{% endif %}>Cố định</option>
+                </select>
+            </div>
+            <div>
+                <label>Giá trị giảm</label>
+                <input type="number" name="discount_value" step="0.01" min="0" value="{{ request.form.get('discount_value', promotion.discount_value) }}">
+            </div>
+            <div>
+                <label>Ngày bắt đầu</label>
+                <input type="datetime-local" name="start_date" value="{{ request.form.get('start_date', promotion.start_date[:16] if promotion.start_date else '') }}">
+            </div>
+            <div>
+                <label>Ngày kết thúc</label>
+                <input type="datetime-local" name="end_date" value="{{ request.form.get('end_date', promotion.end_date[:16] if promotion.end_date else '') }}">
+            </div>
+            <div>
+                <label>Ngày áp dụng</label>
+                <input type="text" name="applicable_days" value="{{ request.form.get('applicable_days', promotion.applicable_days or '') }}">
+            </div>
+            <div>
+                <label>Số đêm tối thiểu</label>
+                <input type="number" min="1" name="min_nights" value="{{ request.form.get('min_nights', promotion.min_nights) }}">
+            </div>
+            <div>
+                <label>Trạng thái</label>
+                <select name="is_active">
+                    <option value="">-- Không thay đổi --</option>
+                    <option value="true" {% if request.form.get('is_active') == 'true' or (request.form.get('is_active') is none and promotion.is_active) %}selected{% endif %}>Kích hoạt</option>
+                    <option value="false" {% if request.form.get('is_active') == 'false' or (request.form.get('is_active') is none and promotion.is_active is sameas false) %}selected{% endif %}>Tắt</option>
+                </select>
+            </div>
+            <div>
+                <button type="submit">Lưu</button>
+                <a href="{{ url_for('promotion.promotion_detail', promotion_id=promotion_id) }}">Hủy</a>
+            </div>
+        </form>
+    {% else %}
+        <p>Không tìm thấy khuyến mãi.</p>
+    {% endif %}
+
+    <p><a href="{{ url_for('promotion.list_promotions') }}">Quay lại danh sách</a></p>
+</body>
+</html>
+

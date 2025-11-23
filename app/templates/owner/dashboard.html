@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Owner Dashboard</title>
+</head>
+<body>
+    <h1>Tổng quan chủ khách sạn</h1>
+
+    {% if error %}
+        <p class="flash-error">{{ error }}</p>
+    {% endif %}
+    {% if success %}
+        <p class="flash-success">{{ success }}</p>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="flash-{{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% set payload = result[0].json if result and result[1] == 200 else None %}
+    {% set summary = payload.data.summary if payload and payload.data and payload.data.summary else None %}
+    {% set bookings = payload.data.recent_bookings if payload and payload.data and payload.data.recent_bookings else [] %}
+
+    <h2>Thống kê</h2>
+    {% if summary %}
+        <ul>
+            <li>Số khách sạn: {{ summary.hotel_count }}</li>
+            <li>Số phòng: {{ summary.room_count }}</li>
+            <li>Tổng booking: {{ summary.booking_count }}</li>
+            <li>Booking chờ xác nhận: {{ summary.pending_booking_count }}</li>
+            <li>Doanh thu: {{ summary.total_revenue }}</li>
+        </ul>
+    {% else %}
+        <p>Không có dữ liệu thống kê.</p>
+    {% endif %}
+
+    <h2>Booking gần đây</h2>
+    {% if bookings %}
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Khách sạn</th>
+                    <th>Khách hàng</th>
+                    <th>Check-in</th>
+                    <th>Check-out</th>
+                    <th>Trạng thái</th>
+                    <th>Số tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in bookings %}
+                <tr>
+                    <td>{{ booking.booking_id }}</td>
+                    <td>{{ booking.hotel.hotel_name if booking.hotel else booking.hotel_id }}</td>
+                    <td>{{ booking.user.full_name if booking.user else booking.user_id }}</td>
+                    <td>{{ booking.check_in_date }}</td>
+                    <td>{{ booking.check_out_date }}</td>
+                    <td>{{ booking.status }}</td>
+                    <td>{{ booking.final_amount }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Không có booking nào.</p>
+    {% endif %}
+
+    <p>
+        <a href="{{ url_for('owner.my_hotels') }}">Khách sạn của tôi</a> |
+        <a href="{{ url_for('owner.owner_bookings') }}">Booking</a> |
+        <a href="{{ url_for('owner.revenue_summary') }}">Doanh thu</a>
+    </p>
+</body>
+</html>
+

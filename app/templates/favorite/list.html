@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quản lý yêu thích</title>
+</head>
+<body>
+    <h1>Danh sách yêu thích</h1>
+
+    {% if error %}
+        <p class="flash-error">{{ error }}</p>
+    {% endif %}
+    {% if success %}
+        <p class="flash-success">{{ success }}</p>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="flash-{{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <h2>Lọc danh sách</h2>
+    <form method="GET" action="{{ url_for('favorite.favorite_list') }}">
+        <label>Hotel ID:</label>
+        <input type="number" name="hotel_id" value="{{ request.args.get('hotel_id', '') }}">
+        <button type="submit">Lọc</button>
+        <a href="{{ url_for('favorite.favorite_list') }}">Xóa lọc</a>
+    </form>
+
+    <h2>Thêm khách sạn yêu thích</h2>
+    <form method="POST" action="">
+        <label>Hotel ID:</label>
+        <input type="number" name="hotel_id" required value="{{ request.args.get('hotel_id', '') }}">
+        <button type="submit">Thêm</button>
+    </form>
+
+    <h2>Danh sách</h2>
+    {% set payload = result[0].json if result and result[1] == 200 else None %}
+    {% set favorites = payload.data.favorites if payload and payload.data and payload.data.favorites else [] %}
+
+    {% if favorites %}
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Hotel</th>
+                    <th>Ngày thêm</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for favorite in favorites %}
+                <tr>
+                    <td>{{ favorite.favorite_id }}</td>
+                    <td>
+                        {% if favorite.hotel %}
+                            #{{ favorite.hotel.hotel_id }} - {{ favorite.hotel.hotel_name }}
+                        {% else %}
+                            Hotel ID {{ favorite.hotel_id }}
+                        {% endif %}
+                    </td>
+                    <td>{{ favorite.created_at }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('favorite.remove_favorite', hotel_id=favorite.hotel_id) }}" style="display:inline;">
+                            <button type="submit">Xóa</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('favorite.toggle_favorite') }}" style="display:inline;">
+                            <input type="hidden" name="hotel_id" value="{{ favorite.hotel_id }}">
+                            <button type="submit">Chuyển trạng thái</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Không có yêu thích nào.</p>
+    {% endif %}
+
+    <p><a href="{{ request.args.get('next') or '/' }}">Quay lại</a></p>
+</body>
+</html>
+

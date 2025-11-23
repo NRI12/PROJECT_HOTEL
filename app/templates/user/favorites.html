@@ -1,26 +1,139 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Danh sách yêu thích</title>
-</head>
-<body>
-    <h1>Danh sách yêu thích</h1>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Khách sạn</th>
-                <th>Ngày thêm</th>
-                <th>Chi tiết</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td colspan="4">Chưa có yêu thích nào</td>
-            </tr>
-        </tbody>
-    </table>
-    <p><a href="/user/profile">Quay lại hồ sơ</a></p>
-</body>
-</html>
+{% extends "user/base_user.html" %}
 
+{% block title %}Danh sách yêu thích{% endblock %}
+{% block page_icon %}heart-fill{% endblock %}
+{% block page_title %}Khách sạn yêu thích{% endblock %}
+
+{% block content %}
+<!-- Search and Filter -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" class="form-control" placeholder="Tìm kiếm khách sạn...">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select">
+                            <option selected>Tất cả địa điểm</option>
+                            <option>Hà Nội</option>
+                            <option>TP. Hồ Chí Minh</option>
+                            <option>Đà Nẵng</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select">
+                            <option selected>Sắp xếp</option>
+                            <option>Mới nhất</option>
+                            <option>Cũ nhất</option>
+                            <option>Giá tăng dần</option>
+                            <option>Giá giảm dần</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Favorites Grid -->
+{% if favorites and favorites|length > 0 %}
+<div class="row">
+    {% for favorite in favorites %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+            <img src="{{ favorite.hotel_image or 'https://via.placeholder.com/400x250/667eea/ffffff?text=Hotel+Image' }}" 
+                 class="card-img-top" alt="{{ favorite.hotel_name }}" style="height: 200px; object-fit: cover;">
+            <div class="card-body">
+                <h5 class="card-title">{{ favorite.hotel_name }}</h5>
+                <p class="card-text text-muted">
+                    <i class="bi bi-geo-alt-fill"></i> {{ favorite.hotel_location }}
+                </p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-warning">
+                            <i class="bi bi-star-fill"></i>
+                            {{ favorite.hotel_rating or '5.0' }}
+                        </span>
+                    </div>
+                    <div>
+                        <strong class="text-primary">
+                            {{ favorite.hotel_price or '1,000,000' }} VNĐ
+                        </strong>
+                    </div>
+                </div>
+                <small class="text-muted">
+                    <i class="bi bi-clock"></i> Đã thêm: {{ favorite.created_at }}
+                </small>
+            </div>
+            <div class="card-footer bg-white border-0">
+                <div class="row g-2">
+                    <div class="col-6">
+                        <a href="/hotel/detail/{{ favorite.hotel_id }}" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-eye"></i> Xem
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <form method="POST" action="/favorite/remove/{{ favorite.id }}" class="d-inline">
+                            <button type="submit" class="btn btn-outline-danger w-100">
+                                <i class="bi bi-heart-fill"></i> Bỏ thích
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card border-0 shadow-sm">
+    <div class="card-body text-center py-5">
+        <i class="bi bi-heart" style="font-size: 4rem; color: #ddd;"></i>
+        <h4 class="mt-3">Chưa có khách sạn yêu thích</h4>
+        <p class="text-muted">Hãy thêm các khách sạn bạn thích để dễ dàng theo dõi và đặt phòng</p>
+        <a href="/hotel/list" class="btn btn-primary mt-3">
+            <i class="bi bi-search me-2"></i>
+            Khám phá khách sạn
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Favorites Stats -->
+<div class="row mt-4">
+    <div class="col-md-4 mb-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body">
+                <i class="bi bi-heart-fill text-danger" style="font-size: 2rem;"></i>
+                <h3 class="mt-2 mb-0">{{ favorites|length if favorites else 0 }}</h3>
+                <p class="text-muted mb-0">Khách sạn yêu thích</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body">
+                <i class="bi bi-tag-fill text-warning" style="font-size: 2rem;"></i>
+                <h3 class="mt-2 mb-0">0</h3>
+                <p class="text-muted mb-0">Đang giảm giá</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body">
+                <i class="bi bi-check-circle-fill text-success" style="font-size: 2rem;"></i>
+                <h3 class="mt-2 mb-0">0</h3>
+                <p class="text-muted mb-0">Còn phòng trống</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

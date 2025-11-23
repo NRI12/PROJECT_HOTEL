@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chi tiết người dùng</title>
+</head>
+<body>
+    <h1>Chi tiết người dùng #{{ user_id }}</h1>
+
+    {% if error %}
+        <p class="flash-error">{{ error }}</p>
+    {% endif %}
+    {% if success %}
+        <p class="flash-success">{{ success }}</p>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="flash-{{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% set payload = result[0].json if result and result[1] == 200 else None %}
+    {% set user = payload.data.user if payload and payload.data and payload.data.user else None %}
+
+    {% if user %}
+        <ul>
+            <li>Email: {{ user.email }}</li>
+            <li>Họ tên: {{ user.full_name }}</li>
+            <li>Số điện thoại: {{ user.phone or 'N/A' }}</li>
+            <li>Địa chỉ: {{ user.address or 'N/A' }}</li>
+            <li>Role: {{ user.role.role_name if user.role else '' }}</li>
+            <li>Trạng thái: {{ 'Hoạt động' if user.is_active else 'Bị khóa' }}</li>
+        </ul>
+
+        <h2>Cập nhật trạng thái</h2>
+        <form method="POST" action="{{ url_for('admin.admin_user_status', user_id=user_id) }}">
+            <select name="is_active">
+                <option value="true" {% if user.is_active %}selected{% endif %}>Kích hoạt</option>
+                <option value="false" {% if not user.is_active %}selected{% endif %}>Khóa</option>
+            </select>
+            <button type="submit">Lưu</button>
+        </form>
+
+        <h2>Đổi role</h2>
+        <form method="POST" action="{{ url_for('admin.admin_user_role', user_id=user_id) }}">
+            <label>Role ID:</label>
+            <input type="number" name="role_id" required>
+            <button type="submit">Cập nhật</button>
+        </form>
+
+        <h2>Xóa người dùng</h2>
+        <form method="POST" action="{{ url_for('admin.admin_user_delete', user_id=user_id) }}">
+            <button type="submit" onclick="return confirm('Xóa người dùng này?')">Xóa</button>
+        </form>
+    {% else %}
+        <p>Không tìm thấy người dùng.</p>
+    {% endif %}
+
+    <p><a href="{{ url_for('admin.admin_users') }}">Quay lại danh sách</a></p>
+</body>
+</html>
+

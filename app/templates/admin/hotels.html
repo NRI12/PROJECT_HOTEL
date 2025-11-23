@@ -5,24 +5,70 @@
 </head>
 <body>
     <h1>Quản lý khách sạn</h1>
-    <p><a href="/admin">Quay lại trang quản trị</a></p>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Tên khách sạn</th>
-                <th>Địa chỉ</th>
-                <th>Đánh giá</th>
-                <th>Trạng thái</th>
-                <th>Thao tác</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td colspan="6">Chưa có khách sạn nào</td>
-            </tr>
-        </tbody>
-    </table>
+
+    {% if error %}
+        <p class="flash-error">{{ error }}</p>
+    {% endif %}
+    {% if success %}
+        <p class="flash-success">{{ success }}</p>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="flash-{{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="GET">
+        <label>Trạng thái:</label>
+        <input type="text" name="status" value="{{ request.args.get('status', '') }}">
+        <button type="submit">Lọc</button>
+        <a href="{{ url_for('admin.admin_hotels') }}">Xóa lọc</a>
+    </form>
+
+    {% set payload = result[0].json if result and result[1] == 200 else None %}
+    {% set hotels = payload.data.hotels if payload and payload.data and payload.data.hotels else [] %}
+
+    {% if hotels %}
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tên</th>
+                    <th>Chủ sở hữu</th>
+                    <th>Trạng thái</th>
+                    <th>Nổi bật</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for hotel in hotels %}
+                <tr>
+                    <td>{{ hotel.hotel_id }}</td>
+                    <td>{{ hotel.hotel_name }}</td>
+                    <td>{{ hotel.owner_id }}</td>
+                    <td>{{ hotel.status }}</td>
+                    <td>{{ 'Có' if hotel.is_featured else 'Không' }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('admin.admin_hotels_featured', hotel_id=hotel.hotel_id) }}" style="display:inline;">
+                            <input type="hidden" name="is_featured" value="{{ 'false' if hotel.is_featured else 'true' }}">
+                            <button type="submit">{{ 'Bỏ nổi bật' if hotel.is_featured else 'Đặt nổi bật' }}</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('admin.admin_hotels_suspend', hotel_id=hotel.hotel_id) }}" style="display:inline;">
+                            <button type="submit">Đình chỉ</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Không có khách sạn.</p>
+    {% endif %}
+
+    <p><a href="{{ url_for('admin.admin_hotels_pending') }}">Xem khách sạn chờ duyệt</a></p>
 </body>
 </html>
 
