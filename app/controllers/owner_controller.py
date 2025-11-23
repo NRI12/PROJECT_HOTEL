@@ -1,10 +1,8 @@
 from datetime import datetime
 from collections import defaultdict
-
 from flask import request, session
 from marshmallow import ValidationError
 from sqlalchemy import func
-
 from app import db
 from app.models.booking import Booking
 from app.models.hotel import Hotel
@@ -134,17 +132,18 @@ class OwnerDashboardController:
         except Exception as exc:
             return error_response(f'Lỗi khi lấy booking: {str(exc)}', 500)
 
-    @staticmethod
-    def pending_bookings():
-        user, error = OwnerDashboardController._require_owner()
-        if error:
-            return error
-        try:
-            booking_query = OwnerDashboardController._booking_query_for_owner(user).filter_by(status='pending')
-            bookings = booking_query.order_by(Booking.created_at.asc()).all()
-            return success_response(data={'bookings': [booking.to_dict() for booking in bookings]})
-        except Exception as exc:
-            return error_response(f'Lỗi khi lấy booking chờ xác nhận: {str(exc)}', 500)
+    # INSTANT CONFIRM - No longer need pending bookings function
+    # @staticmethod
+    # def pending_bookings():
+    #     user, error = OwnerDashboardController._require_owner()
+    #     if error:
+    #         return error
+    #     try:
+    #         booking_query = OwnerDashboardController._booking_query_for_owner(user).filter_by(status='pending')
+    #         bookings = booking_query.order_by(Booking.created_at.asc()).all()
+    #         return success_response(data={'bookings': [booking.to_dict() for booking in bookings]})
+    #     except Exception as exc:
+    #         return error_response(f'Lỗi khi lấy booking chờ xác nhận: {str(exc)}', 500)
 
     @staticmethod
     def revenue_summary():

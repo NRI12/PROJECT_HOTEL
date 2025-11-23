@@ -4,6 +4,10 @@ class RoomBookingSchema(Schema):
     room_id = fields.Integer(required=True)
     quantity = fields.Integer(required=True, validate=validate.Range(min=1))
 
+class GuestInfoSchema(Schema):
+    name = fields.String(allow_none=True)
+    id_number = fields.String(allow_none=True)
+
 class BookingCreateSchema(Schema):
     hotel_id = fields.Integer(required=True)
     check_in_date = fields.Date(required=True)
@@ -11,6 +15,12 @@ class BookingCreateSchema(Schema):
     num_guests = fields.Integer(required=True, validate=validate.Range(min=1))
     rooms = fields.List(fields.Nested(RoomBookingSchema), required=True)
     special_requests = fields.String(allow_none=True)
+    contact_name = fields.String(allow_none=True)
+    contact_phone = fields.String(allow_none=True)
+    contact_email = fields.Email(allow_none=True)
+    payment_method = fields.String(allow_none=True)
+    discount_code = fields.String(allow_none=True)
+    guests = fields.List(fields.Nested(GuestInfoSchema), allow_none=True)
 
 class BookingUpdateSchema(Schema):
     check_in_date = fields.Date(allow_none=True)

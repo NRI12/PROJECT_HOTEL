@@ -42,10 +42,11 @@ def owner_bookings():
     return _render_template(result, 'owner/bookings.html')
 
 
-@owner_bp.route('/bookings/pending', methods=['GET'])
-def pending_bookings():
-    result = OwnerDashboardController.pending_bookings()
-    return _render_template(result, 'owner/bookings_pending.html')
+# INSTANT CONFIRM - No longer need pending bookings page
+# @owner_bp.route('/bookings/pending', methods=['GET'])
+# def pending_bookings():
+#     result = OwnerDashboardController.pending_bookings()
+#     return _render_template(result, 'owner/bookings_pending.html')
 
 
 @owner_bp.route('/revenue', methods=['GET'])

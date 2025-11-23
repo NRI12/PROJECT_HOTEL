@@ -19,29 +19,11 @@ def booking_detail(booking_id):
 @booking_bp.route('/create', methods=['GET', 'POST'])
 @login_required
 def create_booking():
-    hotel_id = request.args.get('hotel_id', type=int)
-    room_id = request.args.get('room_id', type=int)
-    
-    hotel_data = None
-    room_data = None
-    
-    if hotel_id:
-        from app.models.hotel import Hotel
-        hotel = Hotel.query.get(hotel_id)
-        if hotel:
-            hotel_data = hotel.to_dict()
-            # Thêm images
-            hotel_data['images'] = [img.to_dict() for img in hotel.images]
-    
-    if room_id:
-        from app.models.room import Room
-        room = Room.query.get(room_id)
-        if room:
-            room_data = room.to_dict()
-            room_data['images'] = [img.to_dict() for img in room.images]
-            room_data['amenities'] = [a.to_dict() for a in room.amenities]
-    
     if request.method == 'POST':
+        if request.is_json or request.headers.get('Content-Type') == 'application/json':
+            result = BookingController.create_booking()
+            return result
+        
         result = BookingController.create_booking()
         if result[1] == 201:
             flash('Tạo booking thành công', 'success')
@@ -53,12 +35,56 @@ def create_booking():
                 error_message = error_data.get('message', 'Tạo booking thất bại')
             except:
                 error_message = 'Tạo booking thất bại'
+            
+            # GET hotel và room data lại để render
+            hotel_id = request.args.get('hotel_id', type=int)
+            room_id = request.args.get('room_id', type=int)
+            
+            hotel_data = None
+            room_data = None
+            
+            if hotel_id:
+                from app.models.hotel import Hotel
+                hotel = Hotel.query.get(hotel_id)
+                if hotel:
+                    hotel_data = hotel.to_dict()
+                    hotel_data['images'] = [img.to_dict() for img in hotel.images]
+            
+            if room_id:
+                from app.models.room import Room
+                room = Room.query.get(room_id)
+                if room:
+                    room_data = room.to_dict()
+                    room_data['images'] = [img.to_dict() for img in room.images]
+                    room_data['amenities'] = [a.to_dict() for a in room.amenities]
+            
             return render_template('booking/create.html', 
                                  hotel=hotel_data, 
                                  room=room_data,
                                  error=error_message)
     
-    # Truyền data vào template
+    # GET request - render form
+    hotel_id = request.args.get('hotel_id', type=int)
+    room_id = request.args.get('room_id', type=int)
+    
+    hotel_data = None
+    room_data = None
+    
+    if hotel_id:
+        from app.models.hotel import Hotel
+        hotel = Hotel.query.get(hotel_id)
+        if hotel:
+            hotel_data = hotel.to_dict()
+            hotel_data['images'] = [img.to_dict() for img in hotel.images]
+    
+    if room_id:
+        from app.models.room import Room
+        room = Room.query.get(room_id)
+        if room:
+            room_data = room.to_dict()
+            room_data['images'] = [img.to_dict() for img in room.images]
+            room_data['amenities'] = [a.to_dict() for a in room.amenities]
+    
     return render_template('booking/create.html', 
                          hotel=hotel_data, 
                          room=room_data)
@@ -98,15 +124,16 @@ def cancel_booking(booking_id):
         flash('Hủy booking thất bại', 'error')
     return redirect(url_for('booking.booking_detail', booking_id=booking_id))
 
-@booking_bp.route('/<int:booking_id>/confirm', methods=['POST'])
-@role_required('admin', 'hotel_owner')
-def confirm_booking(booking_id):
-    result = BookingController.confirm_booking(booking_id)
-    if result[1] == 200:
-        flash('Xác nhận booking thành công', 'success')
-    else:
-        flash('Xác nhận booking thất bại', 'error')
-    return redirect(url_for('booking.booking_detail', booking_id=booking_id))
+# INSTANT CONFIRM - No longer need confirm route
+# @booking_bp.route('/<int:booking_id>/confirm', methods=['POST'])
+# @role_required('admin', 'hotel_owner')
+# def confirm_booking(booking_id):
+#     result = BookingController.confirm_booking(booking_id)
+#     if result[1] == 200:
+#         flash('Xác nhận booking thành công', 'success')
+#     else:
+#         flash('Xác nhận booking thất bại', 'error')
+#     return redirect(url_for('booking.booking_detail', booking_id=booking_id))
 
 @booking_bp.route('/<int:booking_id>/check-in', methods=['POST'])
 @role_required('admin', 'hotel_owner')

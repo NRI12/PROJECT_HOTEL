@@ -6,6 +6,8 @@ from app.models.hotel import Hotel
 from app.models.room import Room
 from app.models.user import User
 from app.models.payment import Payment
+from app.models.discount_code import DiscountCode
+from app.models.discount_usage import DiscountUsage
 from app.schemas.booking_schema import (
     BookingCreateSchema, BookingUpdateSchema, CheckPriceSchema, 
     BookingValidateSchema, BookingCancelSchema
@@ -153,6 +155,33 @@ class BookingController:
                     'subtotal': subtotal
                 })
             
+            # Xử lý discount code nếu có
+            discount_amount = 0
+            discount_code_obj = None
+            
+            if validated_data.get('discount_code'):
+                discount_code_str = validated_data['discount_code']
+                discount_code_obj = DiscountCode.query.filter_by(code=discount_code_str, is_active=True).first()
+                
+                if discount_code_obj:
+                    # Kiểm tra validity
+                    now = datetime.utcnow()
+                    if discount_code_obj.start_date <= now <= discount_code_obj.end_date:
+                        # Kiểm tra minimum order amount
+                        if total_amount >= (discount_code_obj.min_order_amount or 0):
+                            # Kiểm tra usage limit
+                            if not discount_code_obj.usage_limit or discount_code_obj.used_count < discount_code_obj.usage_limit:
+                                # Tính discount
+                                if discount_code_obj.discount_type == 'percentage':
+                                    discount_amount = total_amount * (discount_code_obj.discount_value / 100)
+                                else:  # fixed
+                                    discount_amount = discount_code_obj.discount_value
+                                
+                                # Áp dụng max discount nếu có
+                                if discount_code_obj.max_discount_amount:
+                                    discount_amount = min(discount_amount, discount_code_obj.max_discount_amount)
+            
+            final_amount = total_amount - discount_amount
             booking_code = BookingController._generate_booking_code()
             
             booking = Booking(
@@ -163,10 +192,10 @@ class BookingController:
                 check_out_date=check_out,
                 num_guests=validated_data['num_guests'],
                 total_amount=total_amount,
-                discount_amount=0,
-                final_amount=total_amount,
+                discount_amount=discount_amount,
+                final_amount=final_amount,
                 special_requests=validated_data.get('special_requests'),
-                status='pending'
+                status='confirmed'  # INSTANT CONFIRM - Changed from 'pending'
             )
             
             db.session.add(booking)
@@ -178,6 +207,19 @@ class BookingController:
                     **detail_data
                 )
                 db.session.add(detail)
+            
+            # Lưu discount usage nếu có
+            if discount_code_obj and discount_amount > 0:
+                discount_usage = DiscountUsage(
+                    code_id=discount_code_obj.code_id,
+                    user_id=session['user_id'],
+                    booking_id=booking.booking_id,
+                    discount_amount=discount_amount
+                )
+                db.session.add(discount_usage)
+                
+                # Tăng used_count
+                discount_code_obj.used_count += 1
             
             db.session.commit()
             
@@ -308,33 +350,34 @@ class BookingController:
             db.session.rollback()
             return error_response(f'Hủy booking thất bại: {str(e)}', 500)
     
-    @staticmethod
-    def confirm_booking(booking_id):
-        if 'user_id' not in session:
-            return error_response('Chưa đăng nhập', 401)
-        
-        try:
-            booking = Booking.query.get(booking_id)
-            if not booking:
-                return error_response('Không tìm thấy booking', 404)
-            
-            hotel = Hotel.query.get(booking.hotel_id)
-            if hotel.owner_id != session['user_id']:
-                user = User.query.get(session['user_id'])
-                if not user or user.role.role_name != 'admin':
-                    return error_response('Không có quyền xác nhận booking này', 403)
-            
-            if booking.status != 'pending':
-                return error_response('Chỉ có thể xác nhận booking đang ở trạng thái pending', 400)
-            
-            booking.status = 'confirmed'
-            db.session.commit()
-            
-            return success_response(message='Xác nhận booking thành công')
-            
-        except Exception as e:
-            db.session.rollback()
-            return error_response(f'Xác nhận booking thất bại: {str(e)}', 500)
+    # INSTANT CONFIRM - No longer need this function
+    # @staticmethod
+    # def confirm_booking(booking_id):
+    #     if 'user_id' not in session:
+    #         return error_response('Chưa đăng nhập', 401)
+    #     
+    #     try:
+    #         booking = Booking.query.get(booking_id)
+    #         if not booking:
+    #             return error_response('Không tìm thấy booking', 404)
+    #         
+    #         hotel = Hotel.query.get(booking.hotel_id)
+    #         if hotel.owner_id != session['user_id']:
+    #             user = User.query.get(session['user_id'])
+    #             if not user or user.role.role_name != 'admin':
+    #                 return error_response('Không có quyền xác nhận booking này', 403)
+    #         
+    #         if booking.status != 'pending':
+    #             return error_response('Chỉ có thể xác nhận booking đang ở trạng thái pending', 400)
+    #         
+    #         booking.status = 'confirmed'
+    #         db.session.commit()
+    #         
+    #         return success_response(message='Xác nhận booking thành công')
+    #         
+    #     except Exception as e:
+    #         db.session.rollback()
+    #         return error_response(f'Xác nhận booking thất bại: {str(e)}', 500)
     
     @staticmethod
     def check_in(booking_id):

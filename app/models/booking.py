@@ -15,7 +15,7 @@ class Booking(db.Model):
     total_amount = db.Column(db.Numeric(12, 2), nullable=False)
     discount_amount = db.Column(db.Numeric(10, 2), default=0)
     final_amount = db.Column(db.Numeric(12, 2), nullable=False)
-    status = db.Column(db.Enum('pending', 'confirmed', 'checked_in', 'checked_out', 'cancelled', 'refunded'), default='pending', index=True)
+    status = db.Column(db.Enum('pending', 'confirmed', 'checked_in', 'checked_out', 'cancelled', 'refunded'), default='confirmed', index=True)
     payment_status = db.Column(db.Enum('unpaid', 'partial', 'paid', 'refunded'), default='unpaid')
     special_requests = db.Column(db.Text)
     cancellation_reason = db.Column(db.Text)

@@ -2270,3 +2270,623 @@ footer {
         padding: 2rem 1.5rem;
     }
 }
+
+/* ============================================
+   BOOKING DETAIL PAGE STYLES
+   ============================================ */
+
+/* === BOOKING HEADER === */
+.booking-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 3rem 0;
+    margin-bottom: 2rem;
+}
+
+.booking-code {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+/* === STATUS BADGES === */
+.status-badge {
+    padding: 0.5rem 1.5rem;
+    border-radius: 50px;
+    font-weight: 600;
+    display: inline-block;
+    margin: 0.5rem;
+}
+
+.status-pending { background: #ffc107; color: #000; }
+.status-confirmed { background: #17a2b8; color: #fff; }
+.status-checked_in { background: #28a745; color: #fff; }
+.status-checked_out { background: #6c757d; color: #fff; }
+.status-cancelled { background: #dc3545; color: #fff; }
+.status-refunded { background: #e83e8c; color: #fff; }
+
+.payment-unpaid { background: #ffc107; color: #000; }
+.payment-partial { background: #ff9800; color: #fff; }
+.payment-paid { background: #28a745; color: #fff; }
+.payment-refunded { background: #dc3545; color: #fff; }
+
+/* === INFO CARD === */
+.info-card {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+    transition: transform 0.3s ease;
+}
+
+.info-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+}
+
+.info-card h3 {
+    color: #667eea;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+/* === INFO ROWS === */
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    color: #666;
+    font-weight: 500;
+}
+
+.info-value {
+    color: #333;
+    font-weight: 600;
+    text-align: right;
+}
+
+/* === ROOM TABLE === */
+.room-table {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.room-table thead {
+    background: #f8f9fa;
+}
+
+.room-table th {
+    padding: 1rem;
+    font-weight: 600;
+    color: #667eea;
+    text-align: left;
+}
+
+.room-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+/* === PRICE SUMMARY === */
+.price-summary {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+}
+
+.price-total {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #667eea;
+    border-top: 2px solid #667eea;
+    padding-top: 1rem;
+    margin-top: 1rem;
+}
+
+/* === ACTION BUTTONS === */
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+}
+
+.action-buttons .btn {
+    padding: 0.75rem 2rem;
+    border-radius: 50px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.action-buttons .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* === TIMELINE === */
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline-item {
+    position: relative;
+    padding: 1rem 0;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -2rem;
+    top: 0.5rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #667eea;
+}
+
+.timeline-item::after {
+    content: '';
+    position: absolute;
+    left: -1.7rem;
+    top: 1.5rem;
+    width: 2px;
+    height: calc(100% - 0.5rem);
+    background: #e0e0e0;
+}
+
+.timeline-item:last-child::after {
+    display: none;
+}
+
+/* === HOTEL PREVIEW === */
+.hotel-preview {
+    display: flex;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+    margin-top: 1rem;
+}
+
+.hotel-preview img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.hotel-preview-info h4 {
+    color: #333;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.hotel-preview-info p {
+    color: #666;
+    margin-bottom: 0.25rem;
+}
+
+/* === BOOKING LIST PAGE === */
+.booking-list-section {
+    background-color: var(--light-color);
+    min-height: 100vh;
+    padding: 3rem 0;
+}
+
+.booking-list-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 3rem 0;
+    margin-bottom: 2rem;
+}
+
+.booking-list-item {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.booking-list-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+}
+
+.booking-list-content {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.booking-list-image {
+    width: 120px;
+    height: 120px;
+    border-radius: 10px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.booking-list-info {
+    flex: 1;
+}
+
+.booking-list-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.booking-list-meta {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.booking-list-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+/* === BOOKING FILTER === */
+.booking-filter {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 0.5rem 1.5rem;
+    border-radius: 50px;
+    border: 2px solid #e0e0e0;
+    background: white;
+    color: #666;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.filter-btn:hover {
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.filter-btn.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+/* === RESPONSIVE BOOKING PAGES === */
+@media (max-width: 768px) {
+    .booking-code {
+        font-size: 1.5rem;
+    }
+    
+    .hotel-preview {
+        flex-direction: column;
+    }
+    
+    .hotel-preview img {
+        width: 100%;
+        height: 200px;
+    }
+    
+    .booking-list-content {
+        flex-direction: column;
+    }
+    
+    .booking-list-image {
+        width: 100%;
+        height: 200px;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .action-buttons .btn {
+        width: 100%;
+    }
+}
+
+/* ============================================
+   INVOICE PAGE STYLES
+   ============================================ */
+
+/* === PRINT STYLES === */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    body {
+        background: white !important;
+    }
+    
+    .invoice-container {
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+}
+
+/* === INVOICE CONTAINER === */
+.invoice-container {
+    max-width: 900px;
+    margin: 2rem auto;
+    background: white;
+    padding: 3rem;
+    box-shadow: 0 0 30px rgba(0,0,0,0.1);
+}
+
+.invoice-header {
+    border-bottom: 3px solid #333;
+    padding-bottom: 2rem;
+    margin-bottom: 3rem;
+}
+
+.invoice-logo {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #333;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.invoice-title {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #333;
+    letter-spacing: 2px;
+}
+
+.invoice-meta {
+    color: #666;
+    font-size: 0.95rem;
+}
+
+/* === INVOICE SECTIONS === */
+.invoice-section {
+    margin-bottom: 2.5rem;
+}
+
+.invoice-section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e0e0e0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* === INFO BOXES === */
+.invoice-info-box {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-left: 4px solid #333;
+    height: 100%;
+}
+
+.invoice-info-box h5 {
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.invoice-info-box p {
+    margin-bottom: 0.5rem;
+    color: #666;
+    line-height: 1.6;
+}
+
+.invoice-info-label {
+    font-weight: 600;
+    color: #333;
+    min-width: 100px;
+    display: inline-block;
+}
+
+/* === INVOICE TABLE === */
+.invoice-table {
+    width: 100%;
+    margin-top: 1rem;
+    border-collapse: collapse;
+}
+
+.invoice-table thead {
+    background: #333;
+    color: white;
+}
+
+.invoice-table th {
+    padding: 1rem;
+    font-weight: 600;
+    text-align: left;
+}
+
+.invoice-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #e0e0e0;
+    color: #666;
+}
+
+.invoice-table tbody tr:last-child td {
+    border-bottom: 2px solid #333;
+}
+
+.invoice-table .text-end {
+    text-align: right;
+}
+
+.invoice-table .text-center {
+    text-align: center;
+}
+
+/* === INVOICE TOTAL === */
+.invoice-total {
+    background: #f8f9fa;
+    padding: 2rem;
+    border: 2px solid #333;
+    margin-top: 2rem;
+}
+
+.invoice-total-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.invoice-total-row.discount {
+    color: #28a745;
+}
+
+.invoice-total-final {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #333;
+    border-top: 3px solid #333;
+    padding-top: 1.5rem;
+    margin-top: 1rem;
+}
+
+/* === BOOKING DETAILS === */
+.invoice-booking-details {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    margin-top: 1.5rem;
+}
+
+.invoice-detail-item {
+    text-align: center;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-left: 4px solid #333;
+}
+
+.invoice-detail-label {
+    font-weight: 600;
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.invoice-detail-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #333;
+}
+
+/* === STAMP === */
+.invoice-stamp {
+    border: 3px solid #28a745;
+    color: #28a745;
+    font-weight: 700;
+    font-size: 1.5rem;
+    padding: 0.75rem 2rem;
+    border-radius: 5px;
+    display: inline-block;
+    transform: rotate(-15deg);
+    opacity: 0.7;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+/* === FOOTER === */
+.invoice-footer {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 2px solid #e0e0e0;
+}
+
+.invoice-footer-section {
+    margin-bottom: 2rem;
+}
+
+.invoice-footer-title {
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 0.75rem;
+}
+
+.invoice-footer-text {
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.invoice-footer-note {
+    text-align: center;
+    padding-top: 2rem;
+    border-top: 1px solid #e0e0e0;
+    color: #999;
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+/* === RESPONSIVE INVOICE === */
+@media (max-width: 768px) {
+    .invoice-container {
+        padding: 2rem 1.5rem;
+        margin: 1rem;
+    }
+    
+    .invoice-title {
+        font-size: 2rem;
+    }
+    
+    .invoice-booking-details {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .invoice-table {
+        font-size: 0.85rem;
+    }
+    
+    .invoice-table th,
+    .invoice-table td {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .invoice-total-final {
+        font-size: 1.5rem;
+    }
+}
+
+

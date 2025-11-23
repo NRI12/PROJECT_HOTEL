@@ -245,17 +245,17 @@
                                 <div class="row g-3 mb-4">
                                     <div class="col-md-6">
                                         <label class="form-label">Họ tên <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="contact_name" required>
+                                        <input type="text" class="form-control" name="contact_name">
                                     </div>
                                     
                                     <div class="col-md-6">
                                         <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
-                                        <input type="tel" class="form-control" name="contact_phone" required>
+                                        <input type="tel" class="form-control" name="contact_phone">
                                     </div>
                                     
                                     <div class="col-12">
                                         <label class="form-label">Email <span class="text-danger">*</span></label>
-                                        <input type="email" class="form-control" name="contact_email" required>
+                                        <input type="email" class="form-control" name="contact_email">
                                     </div>
                                     
                                     <div class="col-12">
@@ -483,6 +483,24 @@
         }
 
         function nextStep(step) {
+            // Validate step hiện tại trước khi next
+            if (currentStep === 1) {
+                const contactName = document.querySelector('[name="contact_name"]').value.trim();
+                const contactPhone = document.querySelector('[name="contact_phone"]').value.trim();
+                const contactEmail = document.querySelector('[name="contact_email"]').value.trim();
+                
+                if (!contactName || !contactPhone || !contactEmail) {
+                    alert('Vui lòng điền đầy đủ thông tin liên hệ!');
+                    return;
+                }
+                
+                if (!contactEmail.includes('@')) {
+                    alert('Email không hợp lệ!');
+                    document.querySelector('[name="contact_email"]').focus();
+                    return;
+                }
+            }
+            
             // Hide current step
             document.getElementById('step' + currentStep).style.display = 'none';
             
@@ -600,6 +618,136 @@
             checkInDate.setDate(checkInDate.getDate() + 1);
             const minCheckOut = checkInDate.toISOString().split('T')[0];
             document.getElementById('checkOutDate').setAttribute('min', minCheckOut);
+        });
+
+        // Auto-fill room_id từ URL khi trang load
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const roomId = urlParams.get('room_id');
+            
+            if (roomId) {
+                const roomInput = document.querySelector('[name="rooms[0][room_id]"]');
+                if (roomInput && roomInput.type !== 'hidden') {
+                    roomInput.value = roomId;
+                }
+            }
+        });
+
+        // Submit form bằng JSON thay vì HTML form data
+        document.getElementById('bookingForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Thu thập rooms data
+            const roomsData = [];
+            const roomInputs = {};
+            
+            document.querySelectorAll('[name^="rooms["]').forEach(input => {
+                const match = input.name.match(/rooms\[(\d+)\]\[(\w+)\]/);
+                if (match) {
+                    const index = parseInt(match[1]);
+                    const field = match[2];
+                    
+                    if (!roomsData[index]) {
+                        roomsData[index] = {};
+                    }
+                    
+                    const value = (field === 'room_id' || field === 'quantity') 
+                        ? parseInt(input.value) 
+                        : input.value;
+                    
+                    roomsData[index][field] = value;
+                }
+            });
+            
+            // Lọc bỏ các phần tử null/undefined
+            const filteredRooms = roomsData.filter(room => room && room.room_id);
+            
+            // Thu thập guests data (nếu có)
+            const guestsData = [];
+            document.querySelectorAll('[name^="guests["]').forEach(input => {
+                const match = input.name.match(/guests\[(\d+)\]\[(\w+)\]/);
+                if (match && input.value.trim()) {
+                    const index = parseInt(match[1]);
+                    const field = match[2];
+                    
+                    if (!guestsData[index]) {
+                        guestsData[index] = {};
+                    }
+                    guestsData[index][field] = input.value.trim();
+                }
+            });
+            
+            const filteredGuests = guestsData.filter(guest => guest && (guest.name || guest.id_number));
+            
+            // Tạo form data object
+            const formData = {
+                hotel_id: parseInt(document.querySelector('[name="hotel_id"]').value),
+                check_in_date: document.getElementById('checkInDate').value,
+                check_out_date: document.getElementById('checkOutDate').value,
+                num_guests: parseInt(document.querySelector('[name="num_guests"]').value),
+                rooms: filteredRooms,
+                contact_name: document.querySelector('[name="contact_name"]').value.trim(),
+                contact_phone: document.querySelector('[name="contact_phone"]').value.trim(),
+                contact_email: document.querySelector('[name="contact_email"]').value.trim(),
+                special_requests: document.querySelector('[name="special_requests"]').value.trim() || null,
+                payment_method: document.querySelector('[name="payment_method"]:checked').value,
+                discount_code: document.querySelector('[name="discount_code"]').value.trim() || null
+            };
+            
+            // Thêm guests nếu có
+            if (filteredGuests.length > 0) {
+                formData.guests = filteredGuests;
+            }
+            
+            // Validate rooms
+            if (!filteredRooms || filteredRooms.length === 0) {
+                alert('Vui lòng chọn ít nhất một phòng!');
+                return;
+            }
+            
+            // Show loading
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang xử lý...';
+            
+            // Submit JSON
+            fetch('{{ url_for("booking.create_booking") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(async response => {
+                // Kiểm tra content-type
+                const contentType = response.headers.get('content-type');
+                
+                if (contentType && contentType.includes('application/json')) {
+                    // Response là JSON
+                    const data = await response.json();
+                    
+                    if (response.ok && (data.success || data.status === 'success')) {
+                        // Success
+                        const bookingId = data.data.booking.booking_id;
+                        window.location.href = `/booking/${bookingId}`;
+                    } else {
+                        // Error với JSON response
+                        throw new Error(data.message || 'Có lỗi xảy ra khi đặt phòng!');
+                    }
+                } else {
+                    // Response không phải JSON (có thể là HTML error page)
+                    const text = await response.text();
+                    console.error('Non-JSON response:', text);
+                    throw new Error('Server trả về response không hợp lệ. Vui lòng kiểm tra console.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(error.message || 'Có lỗi xảy ra khi đặt phòng! Vui lòng thử lại.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            });
         });
     </script>
 </body>
