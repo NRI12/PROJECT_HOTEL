@@ -1,8 +1,9 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 
 from app.controllers.owner_controller import OwnerDashboardController
+from app.utils.decorators import role_required
 
-owner_bp = Blueprint('owner', __name__, url_prefix='/api/owner')
+owner_bp = Blueprint('owner', __name__, url_prefix='/owner')
 
 
 def _extract_payload(result):
@@ -25,18 +26,21 @@ def _redirect_with_params(endpoint='owner.dashboard'):
 
 
 @owner_bp.route('/dashboard', methods=['GET'])
+@role_required('hotel_owner', 'admin')
 def dashboard():
     result = OwnerDashboardController.dashboard_overview()
     return _render_template(result, 'owner/dashboard.html')
 
 
 @owner_bp.route('/hotels', methods=['GET'])
+@role_required('hotel_owner', 'admin')
 def my_hotels():
     result = OwnerDashboardController.my_hotels()
     return _render_template(result, 'owner/hotels.html')
 
 
 @owner_bp.route('/bookings', methods=['GET'])
+@role_required('hotel_owner', 'admin')
 def owner_bookings():
     result = OwnerDashboardController.hotel_bookings()
     return _render_template(result, 'owner/bookings.html')
@@ -50,42 +54,49 @@ def owner_bookings():
 
 
 @owner_bp.route('/revenue', methods=['GET'])
+@role_required('hotel_owner', 'admin')
 def revenue_summary():
     result = OwnerDashboardController.revenue_summary()
     return _render_template(result, 'owner/revenue.html')
 
 
 @owner_bp.route('/revenue/detail', methods=['GET'])
+@role_required('hotel_owner', 'admin')
 def revenue_detail():
     result = OwnerDashboardController.revenue_detail()
     return _render_template(result, 'owner/revenue_detail.html')
 
 
 @owner_bp.route('/rooms/status', methods=['GET'])
+@role_required('hotel_owner', 'admin')
 def rooms_status():
     result = OwnerDashboardController.room_status()
     return _render_template(result, 'owner/rooms_status.html')
 
 
 @owner_bp.route('/reviews', methods=['GET'])
+@role_required('hotel_owner', 'admin')
 def owner_reviews():
     result = OwnerDashboardController.hotel_reviews()
     return _render_template(result, 'owner/reviews.html')
 
 
 @owner_bp.route('/statistics', methods=['GET'])
+@role_required('hotel_owner', 'admin')
 def statistics_report():
     result = OwnerDashboardController.statistics_report()
     return _render_template(result, 'owner/statistics.html')
 
 
 @owner_bp.route('/occupancy', methods=['GET'])
+@role_required('hotel_owner', 'admin')
 def occupancy_report():
     result = OwnerDashboardController.occupancy_report()
     return _render_template(result, 'owner/occupancy.html')
 
 
 @owner_bp.route('/reports/export', methods=['POST'])
+@role_required('hotel_owner', 'admin')
 def export_report():
     result = OwnerDashboardController.export_report()
     payload = _extract_payload(result)

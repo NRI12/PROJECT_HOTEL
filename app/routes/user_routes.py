@@ -1,9 +1,11 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.controllers.user_controller import UserController
+from app.utils.decorators import login_required
 
 user_bp = Blueprint('user', __name__, url_prefix='/user')
 
 @user_bp.route('/dashboard', methods=['GET'])
+@login_required
 def dashboard():
     """Trang tổng quan dashboard của user"""
     # Lấy thông tin bookings
@@ -27,6 +29,7 @@ def dashboard():
                          notifications=notifications)
 
 @user_bp.route('/profile', methods=['GET', 'POST'])
+@login_required
 def profile():
     if request.method == 'POST':
         result = UserController.update_profile()
@@ -53,6 +56,7 @@ def profile():
     return render_template('user/profile.html', user=user, result=result)
 
 @user_bp.route('/change-password', methods=['GET', 'POST'])
+@login_required
 def change_password():
     if request.method == 'POST':
         result = UserController.change_password()
@@ -69,6 +73,7 @@ def change_password():
     return render_template('user/change_password.html')
 
 @user_bp.route('/upload-avatar', methods=['GET', 'POST'])
+@login_required
 def upload_avatar():
     if request.method == 'POST':
         result = UserController.upload_avatar()
@@ -95,6 +100,7 @@ def upload_avatar():
     return render_template('user/upload_avatar.html', user=user)
 
 @user_bp.route('/bookings', methods=['GET'])
+@login_required
 def bookings():
     result = UserController.get_bookings()
     result_data = result[0].get_json() if result and result[0] else {}
@@ -102,6 +108,7 @@ def bookings():
     return render_template('user/bookings.html', bookings=bookings_data, result=result)
 
 @user_bp.route('/favorites', methods=['GET'])
+@login_required
 def favorites():
     result = UserController.get_favorites()
     result_data = result[0].get_json() if result and result[0] else {}
@@ -109,6 +116,7 @@ def favorites():
     return render_template('user/favorites.html', favorites=favorites_data, result=result)
 
 @user_bp.route('/notifications', methods=['GET'])
+@login_required
 def notifications():
     result = UserController.get_notifications()
     result_data = result[0].get_json() if result and result[0] else {}
@@ -116,6 +124,7 @@ def notifications():
     return render_template('user/notifications.html', notifications=notifications_data, result=result)
 
 @user_bp.route('/notifications/<int:notification_id>/read', methods=['POST'])
+@login_required
 def mark_notification_read(notification_id):
     result = UserController.mark_notification_read(notification_id)
     if result[1] == 200:
@@ -125,6 +134,7 @@ def mark_notification_read(notification_id):
     return redirect(url_for('user.notifications'))
 
 @user_bp.route('/notifications/<int:notification_id>', methods=['POST'])
+@login_required
 def delete_notification(notification_id):
     result = UserController.delete_notification(notification_id)
     if result[1] == 200:
@@ -134,6 +144,7 @@ def delete_notification(notification_id):
     return redirect(url_for('user.notifications'))
 
 @user_bp.route('/search-history', methods=['GET'])
+@login_required
 def search_history():
     """Xem lịch sử tìm kiếm của user"""
     from app.controllers.search_controller import SearchController
@@ -143,6 +154,7 @@ def search_history():
     return render_template('user/search_history.html', history=history_data, result=result)
 
 @user_bp.route('/search-history/<int:search_id>/delete', methods=['POST'])
+@login_required
 def delete_search_history(search_id):
     """Xóa một lịch sử tìm kiếm"""
     from app.controllers.search_controller import SearchController

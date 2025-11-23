@@ -1,0 +1,739 @@
+/* ============================================
+   OWNER DASHBOARD CSS - Bootstrap Enhanced
+   ============================================ */
+
+:root {
+    --owner-primary: #0d6efd;
+    --owner-secondary: #6c757d;
+    --owner-success: #198754;
+    --owner-danger: #dc3545;
+    --owner-warning: #ffc107;
+    --owner-info: #0dcaf0;
+    --owner-light: #f8f9fa;
+    --owner-dark: #212529;
+    --owner-sidebar-bg: #1a1d20;
+    --owner-sidebar-hover: #2d3238;
+    --owner-card-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+/* ============================================
+   GLOBAL OWNER LAYOUT
+   ============================================ */
+
+.owner-wrapper {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--owner-light);
+}
+
+/* Sidebar Navigation */
+.owner-sidebar {
+    width: 260px;
+    background: linear-gradient(180deg, #1a1d20 0%, #2d3238 100%);
+    color: white;
+    position: fixed;
+    height: 100vh;
+    overflow-y: auto;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.owner-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.owner-sidebar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.owner-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.owner-sidebar-header {
+    padding: 1.5rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+}
+
+.owner-sidebar-logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--owner-info);
+    text-decoration: none;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.owner-sidebar-subtitle {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.owner-nav {
+    padding: 1rem 0;
+}
+
+.owner-nav-item {
+    list-style: none;
+}
+
+.owner-nav-link {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1.25rem;
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+}
+
+.owner-nav-link:hover {
+    background-color: var(--owner-sidebar-hover);
+    color: white;
+    border-left-color: var(--owner-info);
+    padding-left: 1.5rem;
+}
+
+.owner-nav-link.active {
+    background-color: var(--owner-sidebar-hover);
+    color: white;
+    border-left-color: var(--owner-info);
+}
+
+.owner-nav-icon {
+    margin-right: 0.75rem;
+    font-size: 1.1rem;
+    width: 20px;
+    text-align: center;
+}
+
+/* Main Content Area */
+.owner-content {
+    margin-left: 260px;
+    flex: 1;
+    padding: 2rem;
+    width: calc(100% - 260px);
+}
+
+/* Header */
+.owner-header {
+    background: white;
+    padding: 1.5rem 2rem;
+    border-radius: 0.5rem;
+    box-shadow: var(--owner-card-shadow);
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.owner-header-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--owner-dark);
+    margin: 0;
+}
+
+.owner-header-subtitle {
+    font-size: 0.9rem;
+    color: var(--owner-secondary);
+    margin-top: 0.25rem;
+}
+
+.owner-header-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+/* ============================================
+   DASHBOARD CARDS
+   ============================================ */
+
+.owner-stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.owner-stat-card {
+    background: white;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    box-shadow: var(--owner-card-shadow);
+    border-left: 4px solid var(--owner-primary);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.owner-stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.owner-stat-card.success {
+    border-left-color: var(--owner-success);
+}
+
+.owner-stat-card.warning {
+    border-left-color: var(--owner-warning);
+}
+
+.owner-stat-card.danger {
+    border-left-color: var(--owner-danger);
+}
+
+.owner-stat-card.info {
+    border-left-color: var(--owner-info);
+}
+
+.owner-stat-content h6 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--owner-secondary);
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.owner-stat-content .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--owner-dark);
+    margin: 0;
+}
+
+.owner-stat-content .stat-label {
+    font-size: 0.85rem;
+    color: var(--owner-secondary);
+    margin-top: 0.25rem;
+}
+
+.owner-stat-icon {
+    font-size: 3rem;
+    opacity: 0.2;
+    color: var(--owner-dark);
+}
+
+/* ============================================
+   TABLES
+   ============================================ */
+
+.owner-table-wrapper {
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: var(--owner-card-shadow);
+    overflow: hidden;
+}
+
+.owner-table-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.owner-table-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--owner-dark);
+    margin: 0;
+}
+
+.owner-table {
+    width: 100%;
+    margin: 0;
+}
+
+.owner-table thead {
+    background-color: var(--owner-light);
+}
+
+.owner-table th {
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--owner-secondary);
+    border-bottom: 2px solid #dee2e6;
+}
+
+.owner-table td {
+    padding: 1rem 1.5rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.owner-table tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+.owner-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* ============================================
+   BADGES & STATUS
+   ============================================ */
+
+.owner-badge {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 0.25rem;
+    letter-spacing: 0.5px;
+}
+
+.owner-badge.status-active {
+    background-color: #d1e7dd;
+    color: #0a3622;
+}
+
+.owner-badge.status-inactive {
+    background-color: #f8d7da;
+    color: #58151c;
+}
+
+.owner-badge.status-confirmed {
+    background-color: #d1e7dd;
+    color: #0a3622;
+}
+
+.owner-badge.status-pending {
+    background-color: #fff3cd;
+    color: #664d03;
+}
+
+.owner-badge.status-cancelled {
+    background-color: #f8d7da;
+    color: #58151c;
+}
+
+.owner-badge.status-checked_in {
+    background-color: #cfe2ff;
+    color: #052c65;
+}
+
+.owner-badge.status-checked_out {
+    background-color: #e2e3e5;
+    color: #41464b;
+}
+
+/* ============================================
+   FILTERS & FORMS
+   ============================================ */
+
+.owner-filter-bar {
+    background: white;
+    padding: 1.25rem 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: var(--owner-card-shadow);
+    margin-bottom: 1.5rem;
+}
+
+.owner-filter-row {
+    display: flex;
+    gap: 1rem;
+    align-items: end;
+    flex-wrap: wrap;
+}
+
+.owner-filter-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.owner-filter-group label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--owner-dark);
+    margin-bottom: 0.5rem;
+}
+
+.owner-filter-group input,
+.owner-filter-group select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    font-size: 0.9rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.owner-filter-group input:focus,
+.owner-filter-group select:focus {
+    border-color: var(--owner-primary);
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+
+.owner-btn {
+    padding: 0.5rem 1.25rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 0.375rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.owner-btn-primary {
+    background-color: var(--owner-primary);
+    color: white;
+}
+
+.owner-btn-primary:hover {
+    background-color: #0b5ed7;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
+}
+
+.owner-btn-secondary {
+    background-color: var(--owner-secondary);
+    color: white;
+}
+
+.owner-btn-secondary:hover {
+    background-color: #5c636a;
+}
+
+.owner-btn-success {
+    background-color: var(--owner-success);
+    color: white;
+}
+
+.owner-btn-success:hover {
+    background-color: #157347;
+}
+
+.owner-btn-outline {
+    background-color: transparent;
+    border: 1px solid var(--owner-primary);
+    color: var(--owner-primary);
+}
+
+.owner-btn-outline:hover {
+    background-color: var(--owner-primary);
+    color: white;
+}
+
+/* ============================================
+   CHARTS & METRICS
+   ============================================ */
+
+.owner-chart-card {
+    background: white;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    box-shadow: var(--owner-card-shadow);
+    margin-bottom: 2rem;
+}
+
+.owner-chart-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--owner-light);
+}
+
+.owner-chart-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--owner-dark);
+    margin: 0;
+}
+
+.owner-metric-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.owner-metric-item {
+    padding: 1rem;
+    background-color: var(--owner-light);
+    border-radius: 0.375rem;
+    border-left: 3px solid var(--owner-primary);
+}
+
+.owner-metric-label {
+    font-size: 0.8rem;
+    color: var(--owner-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.owner-metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--owner-dark);
+}
+
+/* ============================================
+   PROGRESS BARS
+   ============================================ */
+
+.owner-progress {
+    height: 1.5rem;
+    background-color: #e9ecef;
+    border-radius: 0.375rem;
+    overflow: hidden;
+    margin-top: 0.5rem;
+}
+
+.owner-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--owner-success), #20c997);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: width 0.6s ease;
+}
+
+.owner-progress-bar.warning {
+    background: linear-gradient(90deg, var(--owner-warning), #ffcd39);
+}
+
+.owner-progress-bar.danger {
+    background: linear-gradient(90deg, var(--owner-danger), #ea868f);
+}
+
+/* ============================================
+   ALERTS & MESSAGES
+   ============================================ */
+
+.owner-alert {
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    border-radius: 0.375rem;
+    border-left: 4px solid;
+}
+
+.owner-alert-success {
+    background-color: #d1e7dd;
+    border-color: var(--owner-success);
+    color: #0a3622;
+}
+
+.owner-alert-error {
+    background-color: #f8d7da;
+    border-color: var(--owner-danger);
+    color: #58151c;
+}
+
+.owner-alert-warning {
+    background-color: #fff3cd;
+    border-color: var(--owner-warning);
+    color: #664d03;
+}
+
+.owner-alert-info {
+    background-color: #cff4fc;
+    border-color: var(--owner-info);
+    color: #055160;
+}
+
+/* ============================================
+   REVIEW CARDS
+   ============================================ */
+
+.owner-review-card {
+    background: white;
+    border-radius: 0.5rem;
+    padding: 1.25rem;
+    box-shadow: var(--owner-card-shadow);
+    margin-bottom: 1rem;
+    border-left: 4px solid var(--owner-info);
+}
+
+.owner-review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.owner-review-user {
+    font-weight: 600;
+    color: var(--owner-dark);
+}
+
+.owner-review-rating {
+    color: #ffc107;
+    font-size: 1.1rem;
+}
+
+.owner-review-content {
+    color: var(--owner-secondary);
+    line-height: 1.6;
+    margin-bottom: 0.75rem;
+}
+
+.owner-review-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--owner-secondary);
+}
+
+/* ============================================
+   EMPTY STATES
+   ============================================ */
+
+.owner-empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: var(--owner-card-shadow);
+}
+
+.owner-empty-icon {
+    font-size: 4rem;
+    color: var(--owner-secondary);
+    opacity: 0.3;
+    margin-bottom: 1rem;
+}
+
+.owner-empty-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--owner-dark);
+    margin-bottom: 0.5rem;
+}
+
+.owner-empty-text {
+    color: var(--owner-secondary);
+    margin-bottom: 1.5rem;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 992px) {
+    .owner-sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+
+    .owner-sidebar.show {
+        transform: translateX(0);
+    }
+
+    .owner-content {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .owner-stats-row {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    .owner-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .owner-content {
+        padding: 1rem;
+    }
+
+    .owner-header {
+        padding: 1rem;
+    }
+
+    .owner-header-title {
+        font-size: 1.5rem;
+    }
+
+    .owner-stats-row {
+        grid-template-columns: 1fr;
+    }
+
+    .owner-stat-card {
+        padding: 1.25rem;
+    }
+
+    .owner-table th,
+    .owner-table td {
+        padding: 0.75rem;
+        font-size: 0.85rem;
+    }
+
+    .owner-filter-row {
+        flex-direction: column;
+    }
+
+    .owner-filter-group {
+        width: 100%;
+    }
+}
+
+/* ============================================
+   UTILITIES
+   ============================================ */
+
+.owner-text-muted {
+    color: var(--owner-secondary) !important;
+}
+
+.owner-text-primary {
+    color: var(--owner-primary) !important;
+}
+
+.owner-text-success {
+    color: var(--owner-success) !important;
+}
+
+.owner-text-danger {
+    color: var(--owner-danger) !important;
+}
+
+.owner-text-warning {
+    color: var(--owner-warning) !important;
+}
+
+.owner-mb-2 {
+    margin-bottom: 1rem;
+}
+
+.owner-mb-3 {
+    margin-bottom: 1.5rem;
+}
+
+.owner-mt-2 {
+    margin-top: 1rem;
+}
+
+.owner-mt-3 {
+    margin-top: 1.5rem;
+}
+

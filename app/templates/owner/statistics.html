@@ -1,52 +1,346 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-    <title>Báo cáo thống kê</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo cáo Thống kê - Owner Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/owner.css') }}">
 </head>
 <body>
-    <h1>Báo cáo thống kê</h1>
+    <div class="owner-wrapper">
+        <!-- Sidebar -->
+        <aside class="owner-sidebar">
+            <div class="owner-sidebar-header">
+                <a href="{{ url_for('owner.dashboard') }}" class="owner-sidebar-logo">
+                    <i class="fas fa-hotel"></i> OWNER
+                </a>
+                <div class="owner-sidebar-subtitle">Dashboard Quản lý</div>
+            </div>
+            <nav class="owner-nav">
+                <ul class="list-unstyled">
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('owner.dashboard') }}" class="owner-nav-link">
+                            <i class="owner-nav-icon fas fa-tachometer-alt"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('owner.my_hotels') }}" class="owner-nav-link">
+                            <i class="owner-nav-icon fas fa-building"></i>
+                            Khách sạn
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('owner.owner_bookings') }}" class="owner-nav-link">
+                            <i class="owner-nav-icon fas fa-calendar-check"></i>
+                            Đặt phòng
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('owner.rooms_status') }}" class="owner-nav-link">
+                            <i class="owner-nav-icon fas fa-door-open"></i>
+                            Trạng thái phòng
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('owner.revenue_summary') }}" class="owner-nav-link">
+                            <i class="owner-nav-icon fas fa-chart-line"></i>
+                            Doanh thu
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('owner.owner_reviews') }}" class="owner-nav-link">
+                            <i class="owner-nav-icon fas fa-star"></i>
+                            Đánh giá
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('owner.statistics_report') }}" class="owner-nav-link active">
+                            <i class="owner-nav-icon fas fa-chart-bar"></i>
+                            Thống kê
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('owner.occupancy_report') }}" class="owner-nav-link">
+                            <i class="owner-nav-icon fas fa-percentage"></i>
+                            Tỷ lệ lấp đầy
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
 
-    {% if error %}
-        <p class="flash-error">{{ error }}</p>
-    {% endif %}
-    {% if success %}
-        <p class="flash-success">{{ success }}</p>
-    {% endif %}
+        <!-- Main Content -->
+        <main class="owner-content">
+            <!-- Header -->
+            <div class="owner-header">
+                <div>
+                    <h1 class="owner-header-title">
+                        <i class="fas fa-chart-bar me-2"></i> Báo cáo Thống kê
+                    </h1>
+                    <p class="owner-header-subtitle">Tổng hợp các chỉ số kinh doanh quan trọng</p>
+                </div>
+                <div class="owner-header-actions">
+                    <a href="{{ url_for('owner.occupancy_report') }}" class="owner-btn owner-btn-primary">
+                        <i class="fas fa-percentage"></i> Tỷ lệ lấp đầy
+                    </a>
+                </div>
+            </div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <p class="flash-{{ category }}">{{ message }}</p>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+            <!-- Flash Messages -->
+            {% if error %}
+                <div class="owner-alert owner-alert-error">
+                    <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+                </div>
+            {% endif %}
+            {% if success %}
+                <div class="owner-alert owner-alert-success">
+                    <i class="fas fa-check-circle me-2"></i>{{ success }}
+                </div>
+            {% endif %}
 
-    {% set payload = result[0].json if result and result[1] == 200 else None %}
-    {% set data = payload.data if payload and payload.data else None %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="owner-alert owner-alert-{{ category }}">
+                            <i class="fas fa-info-circle me-2"></i>{{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
 
-    {% if data %}
-        <ul>
-            <li>Tổng khách sạn: {{ data.total_hotels }}</li>
-            <li>Tổng phòng: {{ data.total_rooms }}</li>
-            <li>Booking hoàn tất: {{ data.completed_bookings }}</li>
-            <li>Tổng đánh giá: {{ data.total_reviews }}</li>
-            <li>Điểm trung bình: {{ data.average_rating }}</li>
-            <li>Tỷ lệ lấp đầy: {{ data.occupancy_rate }}%</li>
-        </ul>
-    {% else %}
-        <p>Không có dữ liệu thống kê.</p>
-    {% endif %}
+            {% set payload = result[0].json if result and result[1] == 200 else None %}
+            {% set data = payload.data if payload and payload.data else None %}
 
-    <h2>Xuất báo cáo</h2>
-    <form method="POST" action="{{ url_for('owner.export_report') }}">
-        <label>Từ ngày:</label>
-        <input type="date" name="start_date" value="{{ request.args.get('start_date', '') }}">
-        <label>Đến ngày:</label>
-        <input type="date" name="end_date" value="{{ request.args.get('end_date', '') }}">
-        <button type="submit">Xuất</button>
-    </form>
+            {% if data %}
+                <!-- Main Statistics Cards -->
+                <div class="owner-stats-row mb-4">
+                    <div class="owner-stat-card">
+                        <div class="owner-stat-content">
+                            <h6>Tổng khách sạn</h6>
+                            <div class="stat-value">{{ data.total_hotels }}</div>
+                            <div class="stat-label">Khách sạn đang quản lý</div>
+                        </div>
+                        <div class="owner-stat-icon">
+                            <i class="fas fa-hotel"></i>
+                        </div>
+                    </div>
 
-    <p><a href="{{ url_for('owner.dashboard') }}">Quay lại dashboard</a></p>
+                    <div class="owner-stat-card success">
+                        <div class="owner-stat-content">
+                            <h6>Tổng phòng</h6>
+                            <div class="stat-value">{{ data.total_rooms }}</div>
+                            <div class="stat-label">Phòng có sẵn</div>
+                        </div>
+                        <div class="owner-stat-icon">
+                            <i class="fas fa-door-open"></i>
+                        </div>
+                    </div>
+
+                    <div class="owner-stat-card info">
+                        <div class="owner-stat-content">
+                            <h6>Booking hoàn tất</h6>
+                            <div class="stat-value">{{ data.completed_bookings }}</div>
+                            <div class="stat-label">Đã hoàn thành</div>
+                        </div>
+                        <div class="owner-stat-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+
+                    <div class="owner-stat-card warning">
+                        <div class="owner-stat-content">
+                            <h6>Tỷ lệ lấp đầy</h6>
+                            <div class="stat-value">{{ data.occupancy_rate }}%</div>
+                            <div class="stat-label">Hiện tại</div>
+                        </div>
+                        <div class="owner-stat-icon">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Metrics -->
+                <div class="owner-chart-card">
+                    <div class="owner-chart-header">
+                        <h3 class="owner-chart-title">
+                            <i class="fas fa-analytics me-2"></i> Chỉ số chi tiết
+                        </h3>
+                    </div>
+                    <div class="owner-metric-row">
+                        <div class="owner-metric-item">
+                            <div class="owner-metric-label">
+                                <i class="fas fa-building me-1"></i> Tổng khách sạn
+                            </div>
+                            <div class="owner-metric-value">{{ data.total_hotels }}</div>
+                        </div>
+
+                        <div class="owner-metric-item" style="border-left-color: #198754;">
+                            <div class="owner-metric-label">
+                                <i class="fas fa-bed me-1"></i> Tổng phòng
+                            </div>
+                            <div class="owner-metric-value">{{ data.total_rooms }}</div>
+                        </div>
+
+                        <div class="owner-metric-item" style="border-left-color: #0dcaf0;">
+                            <div class="owner-metric-label">
+                                <i class="fas fa-calendar-check me-1"></i> Booking hoàn tất
+                            </div>
+                            <div class="owner-metric-value">{{ data.completed_bookings }}</div>
+                        </div>
+
+                        <div class="owner-metric-item" style="border-left-color: #ffc107;">
+                            <div class="owner-metric-label">
+                                <i class="fas fa-star me-1"></i> Tổng đánh giá
+                            </div>
+                            <div class="owner-metric-value">{{ data.total_reviews }}</div>
+                        </div>
+
+                        <div class="owner-metric-item" style="border-left-color: #dc3545;">
+                            <div class="owner-metric-label">
+                                <i class="fas fa-star-half-alt me-1"></i> Điểm trung bình
+                            </div>
+                            <div class="owner-metric-value text-warning">
+                                {{ "{:.1f}".format(data.average_rating) }}
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+
+                        <div class="owner-metric-item" style="border-left-color: #6c757d;">
+                            <div class="owner-metric-label">
+                                <i class="fas fa-percentage me-1"></i> Tỷ lệ lấp đầy
+                            </div>
+                            <div class="owner-metric-value">{{ data.occupancy_rate }}%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Indicators -->
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body">
+                                <h5 class="card-title mb-4">
+                                    <i class="fas fa-chart-pie text-primary me-2"></i>
+                                    Tỷ lệ hoàn thành
+                                </h5>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Booking hoàn tất</span>
+                                        <strong>{{ data.completed_bookings }}</strong>
+                                    </div>
+                                    <div class="owner-progress">
+                                        <div class="owner-progress-bar" style="width: 100%;">
+                                            100%
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Tỷ lệ lấp đầy</span>
+                                        <strong>{{ data.occupancy_rate }}%</strong>
+                                    </div>
+                                    <div class="owner-progress">
+                                        <div class="owner-progress-bar {% if data.occupancy_rate < 30 %}danger{% elif data.occupancy_rate < 70 %}warning{% endif %}" style="width: {{ data.occupancy_rate }}%;">
+                                            {{ data.occupancy_rate }}%
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body">
+                                <h5 class="card-title mb-4">
+                                    <i class="fas fa-star text-warning me-2"></i>
+                                    Đánh giá khách hàng
+                                </h5>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Điểm trung bình</span>
+                                        <strong class="text-warning">
+                                            {{ "{:.1f}".format(data.average_rating) }} <i class="fas fa-star"></i>
+                                        </strong>
+                                    </div>
+                                    <div class="owner-progress">
+                                        <div class="owner-progress-bar" style="width: {{ (data.average_rating / 5 * 100) }}%; background: linear-gradient(90deg, #ffc107, #ffcd39);">
+                                            {{ "{:.0f}".format(data.average_rating / 5 * 100) }}%
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Tổng đánh giá</span>
+                                        <strong>{{ data.total_reviews }}</strong>
+                                    </div>
+                                    <div class="text-muted small">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Từ tất cả khách sạn
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Export Report Section -->
+                <div class="owner-chart-card mt-4">
+                    <div class="owner-chart-header">
+                        <h3 class="owner-chart-title">
+                            <i class="fas fa-file-export me-2"></i> Xuất báo cáo
+                        </h3>
+                    </div>
+                    <form method="POST" action="{{ url_for('owner.export_report') }}">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="start_date" class="form-label">
+                                        <i class="fas fa-calendar-alt me-1"></i> Từ ngày
+                                    </label>
+                                    <input type="date" class="form-control" id="start_date" name="start_date" value="{{ request.args.get('start_date', '') }}">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="end_date" class="form-label">
+                                        <i class="fas fa-calendar-alt me-1"></i> Đến ngày
+                                    </label>
+                                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ request.args.get('end_date', '') }}">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label d-block">&nbsp;</label>
+                                <button type="submit" class="owner-btn owner-btn-success w-100">
+                                    <i class="fas fa-download me-2"></i> Xuất báo cáo
+                                </button>
+                            </div>
+                        </div>
+                        <div class="alert alert-info mt-3 mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Báo cáo sẽ được gửi tới email của bạn sau khi xử lý xong.
+                        </div>
+                    </form>
+                </div>
+
+            {% else %}
+                <div class="owner-empty-state">
+                    <div class="owner-empty-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h4 class="owner-empty-title">Không có dữ liệu thống kê</h4>
+                    <p class="owner-empty-text">Chưa có đủ dữ liệu để tạo báo cáo thống kê.</p>
+                    <a href="{{ url_for('owner.dashboard') }}" class="owner-btn owner-btn-primary">
+                        <i class="fas fa-arrow-left"></i> Quay lại Dashboard
+                    </a>
+                </div>
+            {% endif %}
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-

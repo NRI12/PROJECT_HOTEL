@@ -1,8 +1,9 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 
 from app.controllers.admin_controller import AdminPanelController
+from app.utils.decorators import role_required
 
-admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
+admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
 
 def _extract_payload(result):
@@ -35,24 +36,28 @@ def _redirect(endpoint, **extra):
 
 
 @admin_bp.route('/dashboard', methods=['GET'])
+@role_required('admin')
 def admin_dashboard():
     result = AdminPanelController.dashboard_overview()
     return _render_template(result, 'admin/dashboard.html')
 
 
 @admin_bp.route('/users', methods=['GET'])
+@role_required('admin')
 def admin_users():
     result = AdminPanelController.list_users()
     return _render_template(result, 'admin/users.html')
 
 
 @admin_bp.route('/users/<int:user_id>', methods=['GET'])
+@role_required('admin')
 def admin_user_detail(user_id):
     result = AdminPanelController.user_detail(user_id)
     return _render_template(result, 'admin/user_detail.html', user_id=user_id)
 
 
 @admin_bp.route('/users/<int:user_id>/status', methods=['POST', 'PUT'])
+@role_required('admin')
 def admin_user_status(user_id):
     result = AdminPanelController.update_user_status(user_id)
     _flash_from_result(result, 'Đã cập nhật trạng thái người dùng', 'Cập nhật trạng thái thất bại')
@@ -60,6 +65,7 @@ def admin_user_status(user_id):
 
 
 @admin_bp.route('/users/<int:user_id>/role', methods=['POST', 'PUT'])
+@role_required('admin')
 def admin_user_role(user_id):
     result = AdminPanelController.update_user_role(user_id)
     _flash_from_result(result, 'Đã cập nhật role người dùng', 'Cập nhật role thất bại')
@@ -67,6 +73,7 @@ def admin_user_role(user_id):
 
 
 @admin_bp.route('/users/<int:user_id>', methods=['DELETE', 'POST'])
+@role_required('admin')
 def admin_user_delete(user_id):
     result = AdminPanelController.delete_user(user_id)
     _flash_from_result(result, 'Đã xóa người dùng', 'Xóa người dùng thất bại')
@@ -74,18 +81,21 @@ def admin_user_delete(user_id):
 
 
 @admin_bp.route('/hotels', methods=['GET'])
+@role_required('admin')
 def admin_hotels():
     result = AdminPanelController.list_hotels()
     return _render_template(result, 'admin/hotels.html')
 
 
 @admin_bp.route('/hotels/pending', methods=['GET'])
+@role_required('admin')
 def admin_hotels_pending():
     result = AdminPanelController.pending_hotels()
     return _render_template(result, 'admin/hotels_pending.html')
 
 
 @admin_bp.route('/hotels/<int:hotel_id>/approve', methods=['POST', 'PUT'])
+@role_required('admin')
 def admin_hotels_approve(hotel_id):
     result = AdminPanelController.approve_hotel(hotel_id)
     _flash_from_result(result, 'Đã duyệt khách sạn', 'Duyệt khách sạn thất bại')
@@ -93,6 +103,7 @@ def admin_hotels_approve(hotel_id):
 
 
 @admin_bp.route('/hotels/<int:hotel_id>/reject', methods=['POST', 'PUT'])
+@role_required('admin')
 def admin_hotels_reject(hotel_id):
     result = AdminPanelController.reject_hotel(hotel_id)
     _flash_from_result(result, 'Đã từ chối khách sạn', 'Từ chối khách sạn thất bại')
@@ -100,6 +111,7 @@ def admin_hotels_reject(hotel_id):
 
 
 @admin_bp.route('/hotels/<int:hotel_id>/suspend', methods=['POST', 'PUT'])
+@role_required('admin')
 def admin_hotels_suspend(hotel_id):
     result = AdminPanelController.suspend_hotel(hotel_id)
     _flash_from_result(result, 'Đã đình chỉ khách sạn', 'Đình chỉ khách sạn thất bại')
@@ -107,6 +119,7 @@ def admin_hotels_suspend(hotel_id):
 
 
 @admin_bp.route('/hotels/<int:hotel_id>/featured', methods=['POST', 'PUT'])
+@role_required('admin')
 def admin_hotels_featured(hotel_id):
     result = AdminPanelController.feature_hotel(hotel_id)
     _flash_from_result(result, 'Đã cập nhật nổi bật', 'Không thể cập nhật nổi bật')
@@ -114,30 +127,35 @@ def admin_hotels_featured(hotel_id):
 
 
 @admin_bp.route('/bookings', methods=['GET'])
+@role_required('admin')
 def admin_bookings():
     result = AdminPanelController.list_bookings()
     return _render_template(result, 'admin/bookings.html')
 
 
 @admin_bp.route('/bookings/statistics', methods=['GET'])
+@role_required('admin')
 def admin_booking_statistics():
     result = AdminPanelController.booking_statistics()
     return _render_template(result, 'admin/bookings_statistics.html')
 
 
 @admin_bp.route('/payments', methods=['GET'])
+@role_required('admin')
 def admin_payments():
     result = AdminPanelController.list_payments()
     return _render_template(result, 'admin/payments.html')
 
 
 @admin_bp.route('/reviews', methods=['GET'])
+@role_required('admin')
 def admin_reviews():
     result = AdminPanelController.list_reviews()
     return _render_template(result, 'admin/reviews.html')
 
 
 @admin_bp.route('/reviews/<int:review_id>/hide', methods=['POST', 'PUT'])
+@role_required('admin')
 def admin_review_hide(review_id):
     result = AdminPanelController.hide_review(review_id)
     _flash_from_result(result, 'Đã ẩn đánh giá', 'Ẩn đánh giá thất bại')
@@ -145,6 +163,7 @@ def admin_review_hide(review_id):
 
 
 @admin_bp.route('/reviews/<int:review_id>', methods=['DELETE', 'POST'])
+@role_required('admin')
 def admin_review_delete(review_id):
     result = AdminPanelController.delete_review(review_id)
     _flash_from_result(result, 'Đã xóa đánh giá', 'Xóa đánh giá thất bại')
@@ -152,30 +171,35 @@ def admin_review_delete(review_id):
 
 
 @admin_bp.route('/statistics', methods=['GET'])
+@role_required('admin')
 def admin_statistics():
     result = AdminPanelController.system_statistics()
     return _render_template(result, 'admin/statistics.html')
 
 
 @admin_bp.route('/statistics/revenue', methods=['GET'])
+@role_required('admin')
 def admin_statistics_revenue():
     result = AdminPanelController.revenue_statistics()
     return _render_template(result, 'admin/statistics_revenue.html')
 
 
 @admin_bp.route('/statistics/users', methods=['GET'])
+@role_required('admin')
 def admin_statistics_users():
     result = AdminPanelController.user_statistics()
     return _render_template(result, 'admin/statistics_users.html')
 
 
 @admin_bp.route('/statistics/bookings', methods=['GET'])
+@role_required('admin')
 def admin_statistics_bookings():
     result = AdminPanelController.booking_statistics_detail()
     return _render_template(result, 'admin/statistics_bookings.html')
 
 
 @admin_bp.route('/reports/export', methods=['POST'])
+@role_required('admin')
 def admin_export_report():
     result = AdminPanelController.export_report()
     _flash_from_result(result, 'Đã tạo báo cáo hệ thống', 'Xuất báo cáo thất bại')
@@ -183,12 +207,14 @@ def admin_export_report():
 
 
 @admin_bp.route('/roles', methods=['GET'])
+@role_required('admin')
 def admin_roles():
     result = AdminPanelController.list_roles()
     return _render_template(result, 'admin/roles.html')
 
 
 @admin_bp.route('/roles', methods=['POST'])
+@role_required('admin')
 def admin_roles_create():
     result = AdminPanelController.create_role()
     _flash_from_result(result, 'Đã tạo role', 'Tạo role thất bại')
@@ -196,6 +222,7 @@ def admin_roles_create():
 
 
 @admin_bp.route('/roles/<int:role_id>', methods=['PUT', 'POST'])
+@role_required('admin')
 def admin_roles_update(role_id):
     result = AdminPanelController.update_role(role_id)
     _flash_from_result(result, 'Đã cập nhật role', 'Cập nhật role thất bại')
@@ -203,6 +230,7 @@ def admin_roles_update(role_id):
 
 
 @admin_bp.route('/roles/<int:role_id>', methods=['DELETE', 'POST'])
+@role_required('admin')
 def admin_roles_delete(role_id):
     result = AdminPanelController.delete_role(role_id)
     _flash_from_result(result, 'Đã xóa role', 'Xóa role thất bại')

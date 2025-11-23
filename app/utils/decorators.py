@@ -25,8 +25,19 @@ def role_required(*allowed_roles):
                 session.clear()
                 return redirect(url_for('auth.login'))
             
+            # Kiểm tra quyền truy cập
             if user.role.role_name not in allowed_roles:
-                return error_response('Insufficient permissions', 403)
+                # Redirect user về trang dashboard của họ thay vì trả error
+                user_role = user.role.role_name
+                
+                if user_role == 'admin':
+                    return redirect(url_for('admin.dashboard'))
+                elif user_role == 'hotel_owner':
+                    return redirect(url_for('owner.dashboard'))
+                elif user_role == 'customer':
+                    return redirect(url_for('user.dashboard'))
+                else:
+                    return redirect(url_for('main.index'))
             
             return fn(*args, **kwargs)
         return wrapper

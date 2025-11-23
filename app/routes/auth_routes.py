@@ -1,7 +1,31 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from app.controllers.auth_controller import AuthController
+from app.models.user import User
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
+
+def _get_redirect_by_role(user):
+    """Điều hướng user đến trang phù hợp theo role"""
+    if not user or not user.role:
+        return url_for('main.index')
+    
+    role_name = user.role.role_name
+    
+    # Admin -> Admin Dashboard
+    if role_name == 'admin':
+        return url_for('admin.dashboard')
+    
+    # Hotel Owner -> Owner Dashboard
+    elif role_name == 'hotel_owner':
+        return url_for('owner.dashboard')
+    
+    # Customer -> User Dashboard (hoặc main index)
+    elif role_name == 'customer':
+        return url_for('user.dashboard')
+    
+    # Default -> Main Index
+    else:
+        return url_for('main.index')
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
@@ -24,8 +48,16 @@ def login():
     if request.method == 'POST':
         result = AuthController.login()
         if result[1] == 200:
-            flash('Đăng nhập thành công', 'success')
-            return redirect(url_for('main.index'))
+            # Lấy thông tin user từ session để điều hướng đúng
+            user_id = session.get('user_id')
+            if user_id:
+                user = User.query.get(user_id)
+                redirect_url = _get_redirect_by_role(user)
+                flash('Đăng nhập thành công', 'success')
+                return redirect(redirect_url)
+            else:
+                flash('Đăng nhập thành công', 'success')
+                return redirect(url_for('main.index'))
         else:
             try:
                 error_data = result[0].get_json()

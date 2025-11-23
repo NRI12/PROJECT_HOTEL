@@ -1,68 +1,308 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-    <title>Chi tiết doanh thu</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết Doanh thu - Owner Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/owner.css') }}">
 </head>
 <body>
-    <h1>Chi tiết doanh thu</h1>
+    <div class="owner-wrapper">
+        <!-- Sidebar -->
+        <aside class="owner-sidebar">
+            <div class="owner-sidebar-header">
+                <a href="{{ url_for('owner.dashboard') }}" class="owner-sidebar-logo">
+                    <i class="fas fa-hotel"></i> OWNER
+                </a>
+                <div class="owner-sidebar-subtitle">Dashboard Quản lý</div>
+            </div>
+            <nav class="owner-nav">
+                <ul class="list-unstyled">
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('owner.dashboard') }}" class="owner-nav-link">
+                            <i class="owner-nav-icon fas fa-tachometer-alt"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('owner.my_hotels') }}" class="owner-nav-link">
+                            <i class="owner-nav-icon fas fa-building"></i>
+                            Khách sạn
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('owner.owner_bookings') }}" class="owner-nav-link">
+                            <i class="owner-nav-icon fas fa-calendar-check"></i>
+                            Đặt phòng
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('owner.rooms_status') }}" class="owner-nav-link">
+                            <i class="owner-nav-icon fas fa-door-open"></i>
+                            Trạng thái phòng
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('owner.revenue_summary') }}" class="owner-nav-link active">
+                            <i class="owner-nav-icon fas fa-chart-line"></i>
+                            Doanh thu
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('owner.owner_reviews') }}" class="owner-nav-link">
+                            <i class="owner-nav-icon fas fa-star"></i>
+                            Đánh giá
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('owner.statistics_report') }}" class="owner-nav-link">
+                            <i class="owner-nav-icon fas fa-chart-bar"></i>
+                            Thống kê
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('owner.occupancy_report') }}" class="owner-nav-link">
+                            <i class="owner-nav-icon fas fa-percentage"></i>
+                            Tỷ lệ lấp đầy
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
 
-    {% if error %}
-        <p class="flash-error">{{ error }}</p>
-    {% endif %}
-    {% if success %}
-        <p class="flash-success">{{ success }}</p>
-    {% endif %}
+        <!-- Main Content -->
+        <main class="owner-content">
+            <!-- Header -->
+            <div class="owner-header">
+                <div>
+                    <h1 class="owner-header-title">
+                        <i class="fas fa-file-invoice-dollar me-2"></i> Chi tiết Doanh thu
+                    </h1>
+                    <p class="owner-header-subtitle">Xem chi tiết từng booking đóng góp doanh thu</p>
+                </div>
+                <div class="owner-header-actions">
+                    <a href="{{ url_for('owner.revenue_summary') }}" class="owner-btn owner-btn-outline">
+                        <i class="fas fa-arrow-left"></i> Quay lại
+                    </a>
+                </div>
+            </div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <p class="flash-{{ category }}">{{ message }}</p>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+            <!-- Flash Messages -->
+            {% if error %}
+                <div class="owner-alert owner-alert-error">
+                    <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+                </div>
+            {% endif %}
+            {% if success %}
+                <div class="owner-alert owner-alert-success">
+                    <i class="fas fa-check-circle me-2"></i>{{ success }}
+                </div>
+            {% endif %}
 
-    <form method="GET">
-        <label>Trạng thái booking:</label>
-        <input type="text" name="status" value="{{ request.args.get('status', '') }}">
-        <button type="submit">Lọc</button>
-        <a href="{{ url_for('owner.revenue_detail') }}">Xóa lọc</a>
-    </form>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="owner-alert owner-alert-{{ category }}">
+                            <i class="fas fa-info-circle me-2"></i>{{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
 
-    {% set payload = result[0].json if result and result[1] == 200 else None %}
-    {% set bookings = payload.data.bookings if payload and payload.data and payload.data.bookings else [] %}
+            <!-- Filter Bar -->
+            <div class="owner-filter-bar">
+                <form method="GET" action="{{ url_for('owner.revenue_detail') }}">
+                    <div class="owner-filter-row">
+                        <div class="owner-filter-group">
+                            <label for="status">
+                                <i class="fas fa-filter me-1"></i> Lọc theo trạng thái booking
+                            </label>
+                            <select name="status" id="status" class="form-select">
+                                <option value="">-- Tất cả trạng thái --</option>
+                                <option value="confirmed" {% if request.args.get('status') == 'confirmed' %}selected{% endif %}>Đã xác nhận</option>
+                                <option value="checked_in" {% if request.args.get('status') == 'checked_in' %}selected{% endif %}>Đã check-in</option>
+                                <option value="checked_out" {% if request.args.get('status') == 'checked_out' %}selected{% endif %}>Đã check-out</option>
+                            </select>
+                        </div>
+                        <div class="owner-filter-group" style="flex: 0;">
+                            <button type="submit" class="owner-btn owner-btn-primary">
+                                <i class="fas fa-search"></i> Lọc
+                            </button>
+                        </div>
+                        <div class="owner-filter-group" style="flex: 0;">
+                            <a href="{{ url_for('owner.revenue_detail') }}" class="owner-btn owner-btn-secondary">
+                                <i class="fas fa-redo"></i> Xóa lọc
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
 
-    {% if bookings %}
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Khách sạn</th>
-                    <th>Khách</th>
-                    <th>Trạng thái</th>
-                    <th>Check-in</th>
-                    <th>Check-out</th>
-                    <th>Doanh thu</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for booking in bookings %}
-                <tr>
-                    <td>{{ booking.booking_id }}</td>
-                    <td>{{ booking.hotel.hotel_name if booking.hotel else booking.hotel_id }}</td>
-                    <td>{{ booking.user.full_name if booking.user else booking.user_id }}</td>
-                    <td>{{ booking.status }}</td>
-                    <td>{{ booking.check_in_date }}</td>
-                    <td>{{ booking.check_out_date }}</td>
-                    <td>{{ booking.final_amount }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>Không có dữ liệu.</p>
-    {% endif %}
+            {% set payload = result[0].json if result and result[1] == 200 else None %}
+            {% set bookings = payload.data.bookings if payload and payload.data and payload.data.bookings else [] %}
 
-    <p><a href="{{ url_for('owner.revenue_summary') }}">Quay lại thống kê</a></p>
+            <!-- Revenue Details Table -->
+            <div class="owner-table-wrapper">
+                <div class="owner-table-header">
+                    <h3 class="owner-table-title">
+                        <i class="fas fa-list me-2"></i> Chi tiết booking
+                    </h3>
+                    {% if bookings %}
+                        {% set total_revenue = namespace(value=0) %}
+                        {% for booking in bookings %}
+                            {% set total_revenue.value = total_revenue.value + booking.final_amount %}
+                        {% endfor %}
+                        <div>
+                            <span class="badge bg-info me-2" style="font-size: 1rem; padding: 0.5rem 1rem;">
+                                {{ bookings|length }} booking
+                            </span>
+                            <span class="badge bg-success" style="font-size: 1rem; padding: 0.5rem 1rem;">
+                                Tổng: {{ "{:,.0f}".format(total_revenue.value) }} VNĐ
+                            </span>
+                        </div>
+                    {% endif %}
+                </div>
+                {% if bookings %}
+                    <div class="table-responsive">
+                        <table class="owner-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Khách sạn</th>
+                                    <th>Khách hàng</th>
+                                    <th class="text-center">Trạng thái</th>
+                                    <th>Check-in</th>
+                                    <th>Check-out</th>
+                                    <th class="text-end">Doanh thu</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in bookings %}
+                                <tr>
+                                    <td><strong>#{{ booking.booking_id }}</strong></td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-hotel text-primary me-2"></i>
+                                            <div>
+                                                <strong>{{ booking.hotel.hotel_name if booking.hotel else 'N/A' }}</strong>
+                                                <div class="text-muted small">ID: {{ booking.hotel_id }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-user-circle text-info me-2" style="font-size: 1.5rem;"></i>
+                                            <div>
+                                                <strong>{{ booking.user.full_name if booking.user else 'N/A' }}</strong>
+                                                <div class="text-muted small">ID: {{ booking.user_id }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="owner-badge status-{{ booking.status }}">
+                                            {{ booking.status }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-sign-in-alt text-success me-1"></i>
+                                        {{ booking.check_in_date }}
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-sign-out-alt text-danger me-1"></i>
+                                        {{ booking.check_out_date }}
+                                    </td>
+                                    <td class="text-end">
+                                        <strong class="text-success" style="font-size: 1.1rem;">
+                                            {{ "{:,.0f}".format(booking.final_amount) }} VNĐ
+                                        </strong>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr style="background-color: #f8f9fa; font-weight: bold;">
+                                    <td colspan="6" class="text-end" style="font-size: 1.1rem;">
+                                        <i class="fas fa-calculator me-2"></i> TỔNG DOANH THU:
+                                    </td>
+                                    <td class="text-end" style="font-size: 1.3rem; color: #198754;">
+                                        {% set total = namespace(value=0) %}
+                                        {% for booking in bookings %}
+                                            {% set total.value = total.value + booking.final_amount %}
+                                        {% endfor %}
+                                        {{ "{:,.0f}".format(total.value) }} VNĐ
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="owner-empty-state">
+                        <div class="owner-empty-icon">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        </div>
+                        <h4 class="owner-empty-title">Không có dữ liệu</h4>
+                        <p class="owner-empty-text">
+                            {% if request.args.get('status') %}
+                                Không tìm thấy booking với trạng thái này.
+                            {% else %}
+                                Chưa có booking nào đóng góp doanh thu.
+                            {% endif %}
+                        </p>
+                        {% if request.args.get('status') %}
+                            <a href="{{ url_for('owner.revenue_detail') }}" class="owner-btn owner-btn-primary">
+                                <i class="fas fa-redo"></i> Xem tất cả
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Revenue Breakdown Cards -->
+            {% if bookings %}
+                <div class="row mt-4">
+                    <div class="col-md-4">
+                        <div class="owner-metric-item">
+                            <div class="owner-metric-label">
+                                <i class="fas fa-ticket-alt me-1"></i> Số booking
+                            </div>
+                            <div class="owner-metric-value">{{ bookings|length }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="owner-metric-item" style="border-left-color: #198754;">
+                            <div class="owner-metric-label">
+                                <i class="fas fa-dollar-sign me-1"></i> Trung bình/booking
+                            </div>
+                            <div class="owner-metric-value">
+                                {% set total = namespace(value=0) %}
+                                {% for booking in bookings %}
+                                    {% set total.value = total.value + booking.final_amount %}
+                                {% endfor %}
+                                {{ "{:,.0f}".format(total.value / bookings|length) }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="owner-metric-item" style="border-left-color: #ffc107;">
+                            <div class="owner-metric-label">
+                                <i class="fas fa-wallet me-1"></i> Tổng doanh thu
+                            </div>
+                            <div class="owner-metric-value text-success">
+                                {% set total = namespace(value=0) %}
+                                {% for booking in bookings %}
+                                    {% set total.value = total.value + booking.final_amount %}
+                                {% endfor %}
+                                {{ "{:,.0f}".format(total.value) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-

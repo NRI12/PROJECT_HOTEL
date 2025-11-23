@@ -1,66 +1,362 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-    <title>Đánh giá khách sạn</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đánh giá - Owner Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/owner.css') }}">
 </head>
 <body>
-    <h1>Đánh giá khách sạn</h1>
+    <div class="owner-wrapper">
+        <!-- Sidebar -->
+        <aside class="owner-sidebar">
+            <div class="owner-sidebar-header">
+                <a href="{{ url_for('owner.dashboard') }}" class="owner-sidebar-logo">
+                    <i class="fas fa-hotel"></i> OWNER
+                </a>
+                <div class="owner-sidebar-subtitle">Dashboard Quản lý</div>
+            </div>
+            <nav class="owner-nav">
+                <ul class="list-unstyled">
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('owner.dashboard') }}" class="owner-nav-link">
+                            <i class="owner-nav-icon fas fa-tachometer-alt"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('owner.my_hotels') }}" class="owner-nav-link">
+                            <i class="owner-nav-icon fas fa-building"></i>
+                            Khách sạn
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('owner.owner_bookings') }}" class="owner-nav-link">
+                            <i class="owner-nav-icon fas fa-calendar-check"></i>
+                            Đặt phòng
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('owner.rooms_status') }}" class="owner-nav-link">
+                            <i class="owner-nav-icon fas fa-door-open"></i>
+                            Trạng thái phòng
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('owner.revenue_summary') }}" class="owner-nav-link">
+                            <i class="owner-nav-icon fas fa-chart-line"></i>
+                            Doanh thu
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('owner.owner_reviews') }}" class="owner-nav-link active">
+                            <i class="owner-nav-icon fas fa-star"></i>
+                            Đánh giá
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('owner.statistics_report') }}" class="owner-nav-link">
+                            <i class="owner-nav-icon fas fa-chart-bar"></i>
+                            Thống kê
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('owner.occupancy_report') }}" class="owner-nav-link">
+                            <i class="owner-nav-icon fas fa-percentage"></i>
+                            Tỷ lệ lấp đầy
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
 
-    {% if error %}
-        <p class="flash-error">{{ error }}</p>
-    {% endif %}
-    {% if success %}
-        <p class="flash-success">{{ success }}</p>
-    {% endif %}
+        <!-- Main Content -->
+        <main class="owner-content">
+            <!-- Header -->
+            <div class="owner-header">
+                <div>
+                    <h1 class="owner-header-title">
+                        <i class="fas fa-star me-2"></i> Đánh giá Khách sạn
+                    </h1>
+                    <p class="owner-header-subtitle">Xem và quản lý đánh giá từ khách hàng</p>
+                </div>
+                <div class="owner-header-actions">
+                    <a href="{{ url_for('owner.dashboard') }}" class="owner-btn owner-btn-outline">
+                        <i class="fas fa-arrow-left"></i> Quay lại
+                    </a>
+                </div>
+            </div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <p class="flash-{{ category }}">{{ message }}</p>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+            <!-- Flash Messages -->
+            {% if error %}
+                <div class="owner-alert owner-alert-error">
+                    <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+                </div>
+            {% endif %}
+            {% if success %}
+                <div class="owner-alert owner-alert-success">
+                    <i class="fas fa-check-circle me-2"></i>{{ success }}
+                </div>
+            {% endif %}
 
-    <form method="GET">
-        <label>Trạng thái:</label>
-        <input type="text" name="status" value="{{ request.args.get('status', '') }}">
-        <button type="submit">Lọc</button>
-        <a href="{{ url_for('owner.owner_reviews') }}">Xóa lọc</a>
-    </form>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="owner-alert owner-alert-{{ category }}">
+                            <i class="fas fa-info-circle me-2"></i>{{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
 
-    {% set payload = result[0].json if result and result[1] == 200 else None %}
-    {% set reviews = payload.data.reviews if payload and payload.data and payload.data.reviews else [] %}
+            <!-- Filter Bar -->
+            <div class="owner-filter-bar">
+                <form method="GET" action="{{ url_for('owner.owner_reviews') }}">
+                    <div class="owner-filter-row">
+                        <div class="owner-filter-group">
+                            <label for="status">
+                                <i class="fas fa-filter me-1"></i> Lọc theo trạng thái
+                            </label>
+                            <select name="status" id="status" class="form-select">
+                                <option value="">-- Tất cả trạng thái --</option>
+                                <option value="active" {% if request.args.get('status') == 'active' %}selected{% endif %}>Active</option>
+                                <option value="pending" {% if request.args.get('status') == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="hidden" {% if request.args.get('status') == 'hidden' %}selected{% endif %}>Hidden</option>
+                            </select>
+                        </div>
+                        <div class="owner-filter-group" style="flex: 0;">
+                            <button type="submit" class="owner-btn owner-btn-primary">
+                                <i class="fas fa-search"></i> Lọc
+                            </button>
+                        </div>
+                        <div class="owner-filter-group" style="flex: 0;">
+                            <a href="{{ url_for('owner.owner_reviews') }}" class="owner-btn owner-btn-secondary">
+                                <i class="fas fa-redo"></i> Xóa lọc
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
 
-    {% if reviews %}
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Khách sạn</th>
-                    <th>Người đánh giá</th>
-                    <th>Điểm</th>
-                    <th>Trạng thái</th>
-                    <th>Nội dung</th>
-                </tr>
-            </thead>
-            <tbody>
+            {% set payload = result[0].json if result and result[1] == 200 else None %}
+            {% set reviews = payload.data.reviews if payload and payload.data and payload.data.reviews else [] %}
+
+            <!-- Summary Stats -->
+            {% if reviews %}
+                {% set total_rating = namespace(value=0) %}
+                {% set rating_counts = {5: 0, 4: 0, 3: 0, 2: 0, 1: 0} %}
                 {% for review in reviews %}
-                <tr>
-                    <td>{{ review.review_id }}</td>
-                    <td>{{ review.hotel_id }}</td>
-                    <td>{{ review.user_id }}</td>
-                    <td>{{ review.rating }}</td>
-                    <td>{{ review.status }}</td>
-                    <td>{{ review.comment }}</td>
-                </tr>
+                    {% set total_rating.value = total_rating.value + review.rating %}
+                    {% set _ = rating_counts.update({review.rating: rating_counts.get(review.rating, 0) + 1}) %}
                 {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>Không có đánh giá nào.</p>
-    {% endif %}
+                {% set avg_rating = total_rating.value / reviews|length %}
 
-    <p><a href="{{ url_for('owner.dashboard') }}">Quay lại dashboard</a></p>
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="owner-stat-card" style="padding: 2rem;">
+                            <div class="owner-stat-content">
+                                <h6>Điểm trung bình</h6>
+                                <div class="stat-value" style="color: #ffc107;">
+                                    <i class="fas fa-star"></i> {{ "{:.1f}".format(avg_rating) }}
+                                </div>
+                                <div class="stat-label">Trên 5.0 sao</div>
+                            </div>
+                            <div class="owner-stat-icon" style="color: #ffc107;">
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="owner-stat-card success" style="padding: 2rem;">
+                            <div class="owner-stat-content">
+                                <h6>Tổng đánh giá</h6>
+                                <div class="stat-value">{{ reviews|length }}</div>
+                                <div class="stat-label">Đánh giá từ khách hàng</div>
+                            </div>
+                            <div class="owner-stat-icon">
+                                <i class="fas fa-comments"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-body">
+                                <h6 class="text-muted mb-3">Phân bố đánh giá</h6>
+                                {% for rating in [5, 4, 3, 2, 1] %}
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span style="width: 60px;">{{ rating }} <i class="fas fa-star text-warning"></i></span>
+                                        <div class="owner-progress flex-grow-1 mx-2" style="height: 1rem;">
+                                            <div class="owner-progress-bar" style="width: {{ (rating_counts.get(rating, 0) / reviews|length * 100) if reviews|length > 0 else 0 }}%;">
+                                                {{ rating_counts.get(rating, 0) }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Reviews List -->
+            <div class="owner-table-wrapper">
+                <div class="owner-table-header">
+                    <h3 class="owner-table-title">
+                        <i class="fas fa-list me-2"></i> Danh sách đánh giá
+                    </h3>
+                    <span class="badge bg-primary" style="font-size: 1rem; padding: 0.5rem 1rem;">
+                        {{ reviews|length }} đánh giá
+                    </span>
+                </div>
+                {% if reviews %}
+                    <div class="p-3">
+                        {% for review in reviews %}
+                            <div class="owner-review-card">
+                                <div class="owner-review-header">
+                                    <div>
+                                        <div class="owner-review-user">
+                                            <i class="fas fa-user-circle me-2"></i>
+                                            User ID: {{ review.user_id }}
+                                        </div>
+                                        <div class="text-muted small">
+                                            <i class="fas fa-hotel me-1"></i>
+                                            Hotel ID: {{ review.hotel_id }}
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="owner-review-rating mb-2">
+                                            {% for i in range(5) %}
+                                                {% if i < review.rating %}
+                                                    <i class="fas fa-star"></i>
+                                                {% else %}
+                                                    <i class="far fa-star"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                            <strong class="ms-2">{{ review.rating }}/5</strong>
+                                        </div>
+                                        <span class="owner-badge status-{{ review.status }}">
+                                            {{ review.status }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="owner-review-content">
+                                    {% if review.comment %}
+                                        <i class="fas fa-quote-left me-2 text-muted"></i>
+                                        {{ review.comment }}
+                                        <i class="fas fa-quote-right ms-2 text-muted"></i>
+                                    {% else %}
+                                        <em class="text-muted">Không có nhận xét</em>
+                                    {% endif %}
+                                </div>
+                                <div class="owner-review-footer">
+                                    <div>
+                                        <i class="fas fa-hashtag me-1"></i>
+                                        Review ID: <strong>#{{ review.review_id }}</strong>
+                                    </div>
+                                    <div>
+                                        <i class="far fa-clock me-1"></i>
+                                        {% if review.created_at %}
+                                            {{ review.created_at }}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="owner-empty-state">
+                        <div class="owner-empty-icon">
+                            <i class="fas fa-star-half-alt"></i>
+                        </div>
+                        <h4 class="owner-empty-title">Không có đánh giá nào</h4>
+                        <p class="owner-empty-text">
+                            {% if request.args.get('status') %}
+                                Không tìm thấy đánh giá với trạng thái này.
+                            {% else %}
+                                Chưa có khách hàng nào đánh giá khách sạn của bạn.
+                            {% endif %}
+                        </p>
+                        {% if request.args.get('status') %}
+                            <a href="{{ url_for('owner.owner_reviews') }}" class="owner-btn owner-btn-primary">
+                                <i class="fas fa-redo"></i> Xem tất cả
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Reviews Table View (Alternative) -->
+            {% if reviews %}
+                <div class="owner-table-wrapper mt-4">
+                    <div class="owner-table-header">
+                        <h3 class="owner-table-title">
+                            <i class="fas fa-table me-2"></i> Dạng bảng
+                        </h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="owner-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Khách sạn</th>
+                                    <th>Người đánh giá</th>
+                                    <th class="text-center">Điểm</th>
+                                    <th class="text-center">Trạng thái</th>
+                                    <th>Nội dung</th>
+                                    <th class="text-center">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for review in reviews %}
+                                <tr>
+                                    <td><strong>#{{ review.review_id }}</strong></td>
+                                    <td>
+                                        <i class="fas fa-hotel text-primary me-1"></i>
+                                        Hotel #{{ review.hotel_id }}
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-user text-info me-1"></i>
+                                        User #{{ review.user_id }}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="text-warning">
+                                            {% for i in range(review.rating) %}
+                                                <i class="fas fa-star"></i>
+                                            {% endfor %}
+                                        </div>
+                                        <strong>{{ review.rating }}/5</strong>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="owner-badge status-{{ review.status }}">
+                                            {{ review.status }}
+                                        </span>
+                                    </td>
+                                    <td style="max-width: 300px;">
+                                        {% if review.comment %}
+                                            {{ review.comment[:100] }}{% if review.comment|length > 100 %}...{% endif %}
+                                        {% else %}
+                                            <em class="text-muted">Không có nhận xét</em>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <a href="#" class="btn btn-sm btn-info text-white" title="Xem chi tiết">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endif %}
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-
