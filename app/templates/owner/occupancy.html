@@ -1,421 +1,156 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tỷ lệ lấp đầy - Owner Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/owner.css') }}">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
-    <div class="owner-wrapper">
-        <!-- Sidebar -->
-        <aside class="owner-sidebar">
-            <div class="owner-sidebar-header">
-                <a href="{{ url_for('owner.dashboard') }}" class="owner-sidebar-logo">
-                    <i class="fas fa-hotel"></i> OWNER
-                </a>
-                <div class="owner-sidebar-subtitle">Dashboard Quản lý</div>
-            </div>
-            <nav class="owner-nav">
-                <ul class="list-unstyled">
-                    <li class="owner-nav-item">
-                        <a href="{{ url_for('owner.dashboard') }}" class="owner-nav-link">
-                            <i class="owner-nav-icon fas fa-tachometer-alt"></i>
-                            Dashboard
-                        </a>
-                    </li>
-                    <li class="owner-nav-item">
-                        <a href="{{ url_for('owner.my_hotels') }}" class="owner-nav-link">
-                            <i class="owner-nav-icon fas fa-building"></i>
-                            Khách sạn
-                        </a>
-                    </li>
-                    <li class="owner-nav-item">
-                        <a href="{{ url_for('owner.owner_bookings') }}" class="owner-nav-link">
-                            <i class="owner-nav-icon fas fa-calendar-check"></i>
-                            Đặt phòng
-                        </a>
-                    </li>
-                    <li class="owner-nav-item">
-                        <a href="{{ url_for('owner.rooms_status') }}" class="owner-nav-link">
-                            <i class="owner-nav-icon fas fa-door-open"></i>
-                            Trạng thái phòng
-                        </a>
-                    </li>
-                    <li class="owner-nav-item">
-                        <a href="{{ url_for('owner.revenue_summary') }}" class="owner-nav-link">
-                            <i class="owner-nav-icon fas fa-chart-line"></i>
-                            Doanh thu
-                        </a>
-                    </li>
-                    <li class="owner-nav-item">
-                        <a href="{{ url_for('owner.owner_reviews') }}" class="owner-nav-link">
-                            <i class="owner-nav-icon fas fa-star"></i>
-                            Đánh giá
-                        </a>
-                    </li>
-                    <li class="owner-nav-item">
-                        <a href="{{ url_for('owner.statistics_report') }}" class="owner-nav-link">
-                            <i class="owner-nav-icon fas fa-chart-bar"></i>
-                            Thống kê
-                        </a>
-                    </li>
-                    <li class="owner-nav-item">
-                        <a href="{{ url_for('owner.occupancy_report') }}" class="owner-nav-link active">
-                            <i class="owner-nav-icon fas fa-percentage"></i>
-                            Tỷ lệ lấp đầy
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        </aside>
+{% extends "owner/base.html" %}
 
-        <!-- Main Content -->
-        <main class="owner-content">
-            <!-- Header -->
-            <div class="owner-header">
-                <div>
-                    <h1 class="owner-header-title">
-                        <i class="fas fa-percentage me-2"></i> Tỷ lệ lấp đầy
-                    </h1>
-                    <p class="owner-header-subtitle">Theo dõi tỷ lệ lấp đầy của từng khách sạn</p>
+{% block title %}Tỷ lệ lấp đầy{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+
+<div class="owner-header">
+    <div>
+        <h1 class="owner-header-title">
+            <i class="fas fa-percentage me-2"></i> Tỷ lệ lấp đầy
+        </h1>
+        <p class="owner-header-subtitle">Theo dõi tỷ lệ lấp đầy của từng khách sạn</p>
+    </div>
+    <div class="owner-header-actions">
+        <a href="{{ url_for('owner.dashboard') }}" class="owner-btn owner-btn-outline">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+    </div>
+</div>
+
+{% set payload = result[0].json if result and result[1] == 200 else None %}
+{% set data = payload.data if payload and payload.data else None %}
+{% set occupancy = data.occupancy if data and data.occupancy else [] %}
+
+{% if occupancy %}
+    <!-- Summary Card -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="owner-stat-card" style="padding: 2rem;">
+                <div class="owner-stat-content">
+                    <h6>Tỷ lệ lấp đầy trung bình</h6>
+                    <div class="stat-value" style="font-size: 3rem; color: #0d6efd;">
+                        {{ "{:.1f}".format(data.avg_occupancy) if data and data.avg_occupancy else 0 }}%
+                    </div>
+                    <div class="stat-label">Tất cả khách sạn</div>
                 </div>
-                <div class="owner-header-actions">
-                    <a href="{{ url_for('owner.statistics_report') }}" class="owner-btn owner-btn-outline">
-                        <i class="fas fa-chart-bar"></i> Thống kê
-                    </a>
+                <div class="owner-stat-icon">
+                    <i class="fas fa-chart-pie"></i>
                 </div>
             </div>
-
-            <!-- Flash Messages -->
-            {% if error %}
-                <div class="owner-alert owner-alert-error">
-                    <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
-                </div>
-            {% endif %}
-            {% if success %}
-                <div class="owner-alert owner-alert-success">
-                    <i class="fas fa-check-circle me-2"></i>{{ success }}
-                </div>
-            {% endif %}
-
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="owner-alert owner-alert-{{ category }}">
-                            <i class="fas fa-info-circle me-2"></i>{{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-
-            {% set payload = result[0].json if result and result[1] == 200 else None %}
-            {% set occupancy = payload.data.occupancy if payload and payload.data and payload.data.occupancy else [] %}
-
-            {% if occupancy %}
-                <!-- Summary Stats -->
-                {% set total_rooms = namespace(value=0) %}
-                {% set total_occupied = namespace(value=0) %}
-                {% for item in occupancy %}
-                    {% set total_rooms.value = total_rooms.value + item.room_total %}
-                    {% set total_occupied.value = total_occupied.value + item.occupied %}
-                {% endfor %}
-                {% set avg_occupancy = (total_occupied.value / total_rooms.value * 100) if total_rooms.value > 0 else 0 %}
-
-                <div class="owner-stats-row mb-4">
-                    <div class="owner-stat-card">
-                        <div class="owner-stat-content">
-                            <h6>Số khách sạn</h6>
-                            <div class="stat-value">{{ occupancy|length }}</div>
-                            <div class="stat-label">Đang theo dõi</div>
-                        </div>
-                        <div class="owner-stat-icon">
-                            <i class="fas fa-hotel"></i>
-                        </div>
-                    </div>
-
-                    <div class="owner-stat-card success">
-                        <div class="owner-stat-content">
-                            <h6>Tổng phòng</h6>
-                            <div class="stat-value">{{ total_rooms.value }}</div>
-                            <div class="stat-label">Tất cả khách sạn</div>
-                        </div>
-                        <div class="owner-stat-icon">
-                            <i class="fas fa-door-open"></i>
-                        </div>
-                    </div>
-
-                    <div class="owner-stat-card info">
-                        <div class="owner-stat-content">
-                            <h6>Phòng đã đặt</h6>
-                            <div class="stat-value">{{ total_occupied.value }}</div>
-                            <div class="stat-label">Booking hoàn tất</div>
-                        </div>
-                        <div class="owner-stat-icon">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                    </div>
-
-                    <div class="owner-stat-card {% if avg_occupancy < 30 %}danger{% elif avg_occupancy < 70 %}warning{% else %}success{% endif %}">
-                        <div class="owner-stat-content">
-                            <h6>Trung bình lấp đầy</h6>
-                            <div class="stat-value">{{ "{:.1f}".format(avg_occupancy) }}%</div>
-                            <div class="stat-label">Toàn hệ thống</div>
-                        </div>
-                        <div class="owner-stat-icon">
-                            <i class="fas fa-percentage"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Occupancy Chart -->
-                <div class="owner-chart-card mb-4">
-                    <div class="owner-chart-header">
-                        <h3 class="owner-chart-title">
-                            <i class="fas fa-chart-bar me-2"></i> Biểu đồ tỷ lệ lấp đầy
-                        </h3>
-                    </div>
-                    <div style="position: relative; height: 400px;">
-                        <canvas id="occupancyChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Occupancy Table -->
-                <div class="owner-table-wrapper">
-                    <div class="owner-table-header">
-                        <h3 class="owner-table-title">
-                            <i class="fas fa-list me-2"></i> Chi tiết từng khách sạn
-                        </h3>
-                        <span class="badge bg-primary" style="font-size: 1rem; padding: 0.5rem 1rem;">
-                            {{ occupancy|length }} khách sạn
-                        </span>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="owner-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Khách sạn</th>
-                                    <th class="text-center">Tổng phòng</th>
-                                    <th class="text-center">Đã đặt</th>
-                                    <th class="text-center">Còn trống</th>
-                                    <th>Tỷ lệ lấp đầy</th>
-                                    <th class="text-center">Đánh giá</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for item in occupancy %}
-                                <tr>
-                                    <td><strong>#{{ item.hotel_id }}</strong></td>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <i class="fas fa-hotel text-primary me-2" style="font-size: 1.5rem;"></i>
-                                            <strong>{{ item.hotel_name }}</strong>
-                                        </div>
-                                    </td>
-                                    <td class="text-center">
-                                        <span class="badge bg-secondary" style="font-size: 0.9rem; padding: 0.5rem 0.75rem;">
-                                            <i class="fas fa-door-open"></i> {{ item.room_total }}
-                                        </span>
-                                    </td>
-                                    <td class="text-center">
-                                        <span class="badge bg-success" style="font-size: 0.9rem; padding: 0.5rem 0.75rem;">
-                                            <i class="fas fa-check"></i> {{ item.occupied }}
-                                        </span>
-                                    </td>
-                                    <td class="text-center">
-                                        <span class="badge bg-info" style="font-size: 0.9rem; padding: 0.5rem 0.75rem;">
-                                            <i class="fas fa-bed"></i> {{ item.room_total - item.occupied }}
-                                        </span>
-                                    </td>
-                                    <td style="width: 300px;">
-                                        <div class="d-flex align-items-center">
-                                            <div class="owner-progress flex-grow-1 me-2">
-                                                <div class="owner-progress-bar {% if item.occupancy_rate < 30 %}danger{% elif item.occupancy_rate < 70 %}warning{% endif %}" 
-                                                     style="width: {{ item.occupancy_rate }}%;">
-                                                    {{ "{:.1f}".format(item.occupancy_rate) }}%
-                                                </div>
-                                            </div>
-                                            <strong style="min-width: 50px;">{{ "{:.1f}".format(item.occupancy_rate) }}%</strong>
-                                        </div>
-                                    </td>
-                                    <td class="text-center">
-                                        {% if item.occupancy_rate >= 80 %}
-                                            <span class="badge bg-success">Xuất sắc</span>
-                                        {% elif item.occupancy_rate >= 60 %}
-                                            <span class="badge bg-primary">Tốt</span>
-                                        {% elif item.occupancy_rate >= 40 %}
-                                            <span class="badge bg-warning">Trung bình</span>
-                                        {% else %}
-                                            <span class="badge bg-danger">Cần cải thiện</span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Occupancy Cards View -->
-                <div class="row mt-4">
-                    {% for item in occupancy %}
-                    <div class="col-md-6 col-lg-4 mb-4">
-                        <div class="card h-100 shadow-sm border-0">
-                            <div class="card-body">
-                                <h5 class="card-title mb-3">
-                                    <i class="fas fa-hotel text-primary me-2"></i>
-                                    {{ item.hotel_name }}
-                                </h5>
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span class="text-muted">ID:</span>
-                                        <strong>#{{ item.hotel_id }}</strong>
-                                    </div>
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span class="text-muted">
-                                            <i class="fas fa-door-open me-1"></i> Tổng phòng:
-                                        </span>
-                                        <strong>{{ item.room_total }}</strong>
-                                    </div>
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span class="text-muted">
-                                            <i class="fas fa-check-circle me-1"></i> Đã đặt:
-                                        </span>
-                                        <strong class="text-success">{{ item.occupied }}</strong>
-                                    </div>
-                                    <div class="d-flex justify-content-between mb-3">
-                                        <span class="text-muted">
-                                            <i class="fas fa-bed me-1"></i> Còn trống:
-                                        </span>
-                                        <strong class="text-info">{{ item.room_total - item.occupied }}</strong>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span class="text-muted">Tỷ lệ lấp đầy:</span>
-                                        <strong>{{ "{:.1f}".format(item.occupancy_rate) }}%</strong>
-                                    </div>
-                                    <div class="owner-progress">
-                                        <div class="owner-progress-bar {% if item.occupancy_rate < 30 %}danger{% elif item.occupancy_rate < 70 %}warning{% endif %}" 
-                                             style="width: {{ item.occupancy_rate }}%;">
-                                            {{ "{:.1f}".format(item.occupancy_rate) }}%
-                                        </div>
-                                    </div>
-                                    <div class="text-center mt-3">
-                                        {% if item.occupancy_rate >= 80 %}
-                                            <span class="badge bg-success" style="font-size: 0.9rem; padding: 0.5rem 1rem;">
-                                                <i class="fas fa-trophy"></i> Xuất sắc
-                                            </span>
-                                        {% elif item.occupancy_rate >= 60 %}
-                                            <span class="badge bg-primary" style="font-size: 0.9rem; padding: 0.5rem 1rem;">
-                                                <i class="fas fa-thumbs-up"></i> Tốt
-                                            </span>
-                                        {% elif item.occupancy_rate >= 40 %}
-                                            <span class="badge bg-warning" style="font-size: 0.9rem; padding: 0.5rem 1rem;">
-                                                <i class="fas fa-minus-circle"></i> Trung bình
-                                            </span>
-                                        {% else %}
-                                            <span class="badge bg-danger" style="font-size: 0.9rem; padding: 0.5rem 1rem;">
-                                                <i class="fas fa-arrow-up"></i> Cần cải thiện
-                                            </span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-
-                <script>
-                    const ctx = document.getElementById('occupancyChart').getContext('2d');
-                    const occupancyChart = new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: [{% for item in occupancy %}'{{ item.hotel_name[:20] }}...'{% if not loop.last %}, {% endif %}{% endfor %}],
-                            datasets: [{
-                                label: 'Tỷ lệ lấp đầy (%)',
-                                data: [{% for item in occupancy %}{{ item.occupancy_rate }}{% if not loop.last %}, {% endif %}{% endfor %}],
-                                backgroundColor: [
-                                    {% for item in occupancy %}
-                                        {% if item.occupancy_rate >= 80 %}
-                                            'rgba(25, 135, 84, 0.7)'
-                                        {% elif item.occupancy_rate >= 60 %}
-                                            'rgba(13, 110, 253, 0.7)'
-                                        {% elif item.occupancy_rate >= 40 %}
-                                            'rgba(255, 193, 7, 0.7)'
-                                        {% else %}
-                                            'rgba(220, 53, 69, 0.7)'
-                                        {% endif %}
-                                        {% if not loop.last %}, {% endif %}
-                                    {% endfor %}
-                                ],
-                                borderColor: [
-                                    {% for item in occupancy %}
-                                        {% if item.occupancy_rate >= 80 %}
-                                            'rgba(25, 135, 84, 1)'
-                                        {% elif item.occupancy_rate >= 60 %}
-                                            'rgba(13, 110, 253, 1)'
-                                        {% elif item.occupancy_rate >= 40 %}
-                                            'rgba(255, 193, 7, 1)'
-                                        {% else %}
-                                            'rgba(220, 53, 69, 1)'
-                                        {% endif %}
-                                        {% if not loop.last %}, {% endif %}
-                                    {% endfor %}
-                                ],
-                                borderWidth: 2
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    display: false
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            return 'Tỷ lệ lấp đầy: ' + context.parsed.y.toFixed(1) + '%';
-                                        }
-                                    }
-                                }
-                            },
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    max: 100,
-                                    ticks: {
-                                        callback: function(value) {
-                                            return value + '%';
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                </script>
-
-            {% else %}
-                <div class="owner-empty-state">
-                    <div class="owner-empty-icon">
-                        <i class="fas fa-percentage"></i>
-                    </div>
-                    <h4 class="owner-empty-title">Không có dữ liệu</h4>
-                    <p class="owner-empty-text">Chưa có dữ liệu tỷ lệ lấp đầy để hiển thị.</p>
-                    <a href="{{ url_for('owner.statistics_report') }}" class="owner-btn owner-btn-primary">
-                        <i class="fas fa-chart-bar"></i> Xem thống kê
-                    </a>
-                </div>
-            {% endif %}
-        </main>
+        </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    <!-- Occupancy Chart -->
+    <div class="owner-chart-card">
+        <div class="owner-chart-header">
+            <h3 class="owner-chart-title">
+                <i class="fas fa-chart-bar me-2"></i> Biểu đồ tỷ lệ lấp đầy
+            </h3>
+        </div>
+        <div style="position: relative; height: 400px;">
+            <canvas id="occupancyChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Occupancy Table -->
+    <div class="owner-table-wrapper">
+        <div class="owner-table-header">
+            <h3 class="owner-table-title">
+                <i class="fas fa-table me-2"></i> Chi tiết theo khách sạn
+            </h3>
+            <span class="badge bg-info" style="font-size: 1rem; padding: 0.5rem 1rem;">
+                {{ occupancy|length }} khách sạn
+            </span>
+        </div>
+        <div class="table-responsive">
+            <table class="owner-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tên khách sạn</th>
+                        <th class="text-center">Tổng phòng</th>
+                        <th class="text-center">Phòng đã đặt</th>
+                        <th class="text-end">Tỷ lệ lấp đầy</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in occupancy %}
+                    <tr>
+                        <td><strong>#{{ item.hotel_id }}</strong></td>
+                        <td>
+                            <i class="fas fa-hotel text-primary me-2"></i>
+                            <strong>{{ item.hotel_name }}</strong>
+                        </td>
+                        <td class="text-center">{{ item.total_rooms }}</td>
+                        <td class="text-center">{{ item.occupied_rooms }}</td>
+                        <td class="text-end">
+                            <div class="progress" style="height: 25px;">
+                                <div class="progress-bar" role="progressbar" 
+                                     style="width: {{ item.occupancy_rate }}%;" 
+                                     aria-valuenow="{{ item.occupancy_rate }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                    <strong>{{ "{:.1f}".format(item.occupancy_rate) }}%</strong>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('occupancyChart').getContext('2d');
+        const occupancyChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [{% for item in occupancy %}'{{ item.hotel_name }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+                datasets: [{
+                    label: 'Tỷ lệ lấp đầy (%)',
+                    data: [{% for item in occupancy %}{{ item.occupancy_rate }}{% if not loop.last %}, {% endif %}{% endfor %}],
+                    backgroundColor: 'rgba(13, 110, 253, 0.5)',
+                    borderColor: 'rgba(13, 110, 253, 1)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+{% else %}
+    <div class="owner-empty-state">
+        <div class="owner-empty-icon">
+            <i class="fas fa-percentage"></i>
+        </div>
+        <h4 class="owner-empty-title">Không có dữ liệu</h4>
+        <p class="owner-empty-text">Chưa có dữ liệu tỷ lệ lấp đầy để hiển thị.</p>
+    </div>
+{% endif %}
+
+{% endblock %}

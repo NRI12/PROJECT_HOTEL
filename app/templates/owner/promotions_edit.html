@@ -1,0 +1,120 @@
+{% extends "owner/base.html" %}
+
+{% block title %}Sửa khuyến mãi{% endblock %}
+
+{% block content %}
+
+<div class="owner-header">
+
+    <h1 class="owner-header-title">Sửa khuyến mãi</h1>
+
+</div>
+
+{% if result[1] == 200 %}
+
+    {% set promo = result[0].get_json()['data']['promotion'] %}
+
+    <div class="owner-card">
+
+        <form method="POST">
+
+            <div class="row g-3">
+
+                <div class="col-12">
+
+                    <label class="form-label">Tiêu đề *</label>
+
+                    <input type="text" name="title" class="form-control" value="{{ promo.title }}" required>
+
+                </div>
+
+                <div class="col-12">
+
+                    <label class="form-label">Mô tả</label>
+
+                    <textarea name="description" class="form-control" rows="3">{{ promo.description or '' }}</textarea>
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <label class="form-label">Loại giảm giá *</label>
+
+                    <select name="discount_type" class="form-control">
+
+                        <option value="percentage" {{ 'selected' if promo.discount_type == 'percentage' }}>Phần trăm (%)</option>
+
+                        <option value="fixed" {{ 'selected' if promo.discount_type == 'fixed' }}>Số tiền cố định (VNĐ)</option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <label class="form-label">Giá trị giảm *</label>
+
+                    <input type="number" name="discount_value" class="form-control" value="{{ promo.discount_value }}" step="0.01" required>
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <label class="form-label">Số lượng</label>
+
+                    <input type="number" name="quantity" class="form-control" value="{{ promo.quantity or '' }}">
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <label class="form-label">Ngày bắt đầu *</label>
+
+                    <input type="date" name="start_date" class="form-control" value="{{ promo.start_date }}" required>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <label class="form-label">Ngày kết thúc *</label>
+
+                    <input type="date" name="end_date" class="form-control" value="{{ promo.end_date }}" required>
+
+                </div>
+
+                <div class="col-12">
+
+                    <label class="form-label">Trạng thái</label>
+
+                    <select name="status" class="form-control">
+
+                        <option value="active" {{ 'selected' if promo.status == 'active' }}>Kích hoạt</option>
+
+                        <option value="inactive" {{ 'selected' if promo.status == 'inactive' }}>Tạm dừng</option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-12">
+
+                    <button type="submit" class="owner-btn owner-btn-primary">Cập nhật</button>
+
+                    <a href="{{ url_for('owner.owner_promotions') }}" class="owner-btn owner-btn-outline-secondary">Hủy</a>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+{% else %}
+
+    <div class="alert alert-danger">{{ error }}</div>
+
+{% endif %}
+
+{% endblock %}
+

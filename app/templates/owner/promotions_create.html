@@ -1,0 +1,76 @@
+{% extends "owner/base.html" %}
+
+{% block title %}Thêm khuyến mãi mới{% endblock %}
+
+{% block content %}
+
+<div class="owner-header">
+    <div>
+        <h1 class="owner-header-title">Thêm khuyến mãi mới</h1>
+        <p class="owner-header-subtitle">Tạo chương trình khuyến mãi mới</p>
+    </div>
+</div>
+
+<div class="owner-card">
+    <form method="POST">
+        <div class="row g-3">
+            <div class="col-12">
+                <label class="form-label">Tiêu đề *</label>
+                <input type="text" name="title" class="form-control" placeholder="VD: Giảm giá mùa hè" required>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label">Mô tả</label>
+                <textarea name="description" class="form-control" rows="3" placeholder="Mô tả chi tiết về chương trình..."></textarea>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Loại giảm giá *</label>
+                <select name="discount_type" class="form-control">
+                    <option value="percentage">Phần trăm (%)</option>
+                    <option value="fixed">Số tiền cố định (VNĐ)</option>
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Giá trị giảm *</label>
+                <input type="number" name="discount_value" class="form-control" placeholder="10" step="0.01" required>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Số lượng</label>
+                <input type="number" name="quantity" class="form-control" placeholder="Để trống = không giới hạn">
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Ngày bắt đầu *</label>
+                <input type="date" name="start_date" class="form-control" required>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Ngày kết thúc *</label>
+                <input type="date" name="end_date" class="form-control" required>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label">Trạng thái</label>
+                <select name="status" class="form-control">
+                    <option value="active">Kích hoạt</option>
+                    <option value="inactive">Tạm dừng</option>
+                </select>
+            </div>
+
+            <div class="col-12">
+                <button type="submit" class="owner-btn owner-btn-primary">
+                    <i class="fas fa-save"></i> Tạo khuyến mãi
+                </button>
+                <a href="{{ url_for('owner.owner_promotions') }}" class="owner-btn owner-btn-outline-secondary">
+                    <i class="fas fa-times"></i> Hủy
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+

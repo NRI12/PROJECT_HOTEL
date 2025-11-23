@@ -333,3 +333,8 @@ class ReviewController:
             
         except Exception as e:
             return error_response(f'Lỗi: {str(e)}', 500)
+    
+    @staticmethod
+    def reply_review(review_id):
+        """Alias for add_response - for owner routes compatibility"""
+        return ReviewController.add_response(review_id)

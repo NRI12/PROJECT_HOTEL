@@ -1,0 +1,82 @@
+{% extends "owner/base.html" %}
+
+{% block title %}Thêm mã giảm giá mới{% endblock %}
+
+{% block content %}
+
+<div class="owner-header">
+    <div>
+        <h1 class="owner-header-title">Thêm mã giảm giá mới</h1>
+        <p class="owner-header-subtitle">Tạo mã giảm giá mới</p>
+    </div>
+</div>
+
+<div class="owner-card">
+    <form method="POST">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Mã code *</label>
+                <input type="text" name="code" class="form-control" placeholder="SUMMER2024" style="text-transform: uppercase;" required>
+                <small class="text-muted">Mã phải là duy nhất và không có dấu cách</small>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Loại giảm giá *</label>
+                <select name="discount_type" class="form-control" required>
+                    <option value="">-- Chọn loại giảm --</option>
+                    <option value="percentage">Phần trăm (%)</option>
+                    <option value="fixed">Số tiền cố định (VNĐ)</option>
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Giá trị giảm *</label>
+                <input type="number" name="discount_value" class="form-control" placeholder="10" step="0.01" required>
+                <small class="text-muted">Nhập % hoặc số tiền tùy loại giảm</small>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Số lần dùng tối đa</label>
+                <input type="number" name="max_uses" class="form-control" placeholder="Để trống = không giới hạn">
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Ngày bắt đầu *</label>
+                <input type="date" name="start_date" class="form-control" required>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Ngày kết thúc *</label>
+                <input type="date" name="end_date" class="form-control" required>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Giá trị đơn hàng tối thiểu (VNĐ)</label>
+                <input type="number" name="min_order_value" class="form-control" placeholder="500000">
+            </div>
+
+            <div class="col-12">
+                <label class="form-label">Mô tả</label>
+                <textarea name="description" class="form-control" rows="3" placeholder="Mô tả chi tiết về mã giảm giá..."></textarea>
+            </div>
+
+            <div class="col-12">
+                <div class="form-check">
+                    <input type="checkbox" name="is_active" class="form-check-input" value="1" checked>
+                    <label class="form-check-label">Kích hoạt ngay</label>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <button type="submit" class="owner-btn owner-btn-primary">
+                    <i class="fas fa-save"></i> Tạo mã giảm giá
+                </button>
+                <a href="{{ url_for('owner.owner_discounts') }}" class="owner-btn owner-btn-outline-secondary">
+                    <i class="fas fa-times"></i> Hủy
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

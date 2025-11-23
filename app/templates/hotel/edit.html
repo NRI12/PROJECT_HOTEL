@@ -1,85 +1,182 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Chỉnh sửa khách sạn</title>
-</head>
-<body>
-    <h1>Chỉnh sửa khách sạn</h1>
-    
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div>{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-    
-    {% if error %}
-        <div>{{ error }}</div>
-    {% endif %}
-    
-    {% if result and result[0].get_json() and result[0].get_json().success %}
-        {% set hotel = result[0].get_json().data.hotel %}
-    {% endif %}
-    
-    <form method="POST" action="/hotel/{{ hotel_id }}/edit">
-        <div>
-            <label>Tên khách sạn:</label>
-            <input type="text" name="hotel_name" value="{{ request.form.hotel_name or request.args.hotel_name or hotel.hotel_name or '' }}">
-        </div>
-        <div>
-            <label>Mô tả:</label>
-            <textarea name="description">{{ request.form.description or request.args.description or hotel.description or '' }}</textarea>
-        </div>
-        <div>
-            <label>Địa chỉ:</label>
-            <input type="text" name="address" value="{{ request.form.address or request.args.address or hotel.address or '' }}">
-        </div>
-        <div>
-            <label>Thành phố:</label>
-            <input type="text" name="city" value="{{ request.form.city or request.args.city or hotel.city or '' }}">
-        </div>
-        <div>
-            <label>Quận/Huyện:</label>
-            <input type="text" name="district" value="{{ request.form.district or request.args.district or hotel.district or '' }}">
-        </div>
-        <div>
-            <label>Phường/Xã:</label>
-            <input type="text" name="ward" value="{{ request.form.ward or request.args.ward or hotel.ward or '' }}">
-        </div>
-        <div>
-            <label>Vĩ độ (latitude):</label>
-            <input type="number" name="latitude" step="0.00000001" value="{{ request.form.latitude or request.args.latitude or hotel.latitude or '' }}">
-        </div>
-        <div>
-            <label>Kinh độ (longitude):</label>
-            <input type="number" name="longitude" step="0.00000001" value="{{ request.form.longitude or request.args.longitude or hotel.longitude or '' }}">
-        </div>
-        <div>
-            <label>Số sao (1-5):</label>
-            <input type="number" name="star_rating" min="1" max="5" value="{{ request.form.star_rating or request.args.star_rating or hotel.star_rating or '' }}">
-        </div>
-        <div>
-            <label>Số điện thoại:</label>
-            <input type="text" name="phone" value="{{ request.form.phone or request.args.phone or hotel.phone or '' }}">
-        </div>
-        <div>
-            <label>Email:</label>
-            <input type="email" name="email" value="{{ request.form.email or request.args.email or hotel.email or '' }}">
-        </div>
-        <div>
-            <label>Giờ nhận phòng (HH:MM):</label>
-            <input type="time" name="check_in_time" value="{{ request.form.check_in_time or request.args.check_in_time or (hotel.check_in_time[:5] if hotel.check_in_time else '14:00') }}">
-        </div>
-        <div>
-            <label>Giờ trả phòng (HH:MM):</label>
-            <input type="time" name="check_out_time" value="{{ request.form.check_out_time or request.args.check_out_time or (hotel.check_out_time[:5] if hotel.check_out_time else '12:00') }}">
-        </div>
-        <div>
-            <button type="submit">Cập nhật</button>
-        </div>
-    </form>
-    <p><a href="/hotel/{{ hotel_id }}">Quay lại chi tiết</a></p>
-    <p><a href="/hotel">Quay lại danh sách</a></p>
-</body>
-</html>
+{% extends "owner/base.html" %}
+
+{% block title %}Chỉnh sửa khách sạn{% endblock %}
+
+{% block content %}
+
+<div class="owner-header">
+    <div>
+        <h1 class="owner-header-title">
+            <i class="fas fa-hotel me-2"></i> Chỉnh sửa khách sạn
+        </h1>
+        <p class="owner-header-subtitle">Cập nhật thông tin khách sạn của bạn</p>
+    </div>
+    <div class="owner-header-actions">
+        <a href="{{ url_for('hotel.hotel_detail', hotel_id=hotel_id) }}" class="owner-btn owner-btn-outline">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+    </div>
+</div>
+
+{% if result and result[0].get_json() and result[0].get_json().success %}
+    {% set hotel = result[0].get_json().data.hotel %}
+
+    <div class="owner-card">
+        <form method="POST" action="{{ url_for('hotel.edit_hotel', hotel_id=hotel_id) }}">
+            <div class="row g-3">
+                <!-- Thông tin cơ bản -->
+                <div class="col-12">
+                    <h5 class="mb-3">
+                        <i class="fas fa-info-circle me-2 text-primary"></i>
+                        Thông tin cơ bản
+                    </h5>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Tên khách sạn *</label>
+                    <input type="text" name="hotel_name" class="form-control" 
+                           value="{{ request.form.hotel_name or hotel.hotel_name or '' }}" 
+                           placeholder="VD: Khách sạn ABC" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Số sao (1-5) *</label>
+                    <select name="star_rating" class="form-control" required>
+                        <option value="">-- Chọn số sao --</option>
+                        {% for star in range(1, 6) %}
+                        <option value="{{ star }}" {{ 'selected' if (request.form.star_rating or hotel.star_rating)|int == star }}>
+                            {{ star }} <i class="fas fa-star"></i>
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label">Mô tả</label>
+                    <textarea name="description" class="form-control" rows="4" 
+                              placeholder="Mô tả chi tiết về khách sạn...">{{ request.form.description or hotel.description or '' }}</textarea>
+                </div>
+
+                <!-- Địa chỉ -->
+                <div class="col-12 mt-4">
+                    <h5 class="mb-3">
+                        <i class="fas fa-map-marker-alt me-2 text-danger"></i>
+                        Địa chỉ
+                    </h5>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Địa chỉ *</label>
+                    <input type="text" name="address" class="form-control" 
+                           value="{{ request.form.address or hotel.address or '' }}" 
+                           placeholder="Số nhà, đường..." required>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Phường/Xã</label>
+                    <input type="text" name="ward" class="form-control" 
+                           value="{{ request.form.ward or hotel.ward or '' }}" 
+                           placeholder="VD: Phường 1">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Quận/Huyện</label>
+                    <input type="text" name="district" class="form-control" 
+                           value="{{ request.form.district or hotel.district or '' }}" 
+                           placeholder="VD: Quận 1">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Thành phố *</label>
+                    <input type="text" name="city" class="form-control" 
+                           value="{{ request.form.city or hotel.city or '' }}" 
+                           placeholder="VD: Hồ Chí Minh" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Vĩ độ (Latitude)</label>
+                    <input type="number" name="latitude" class="form-control" step="0.00000001"
+                           value="{{ request.form.latitude or hotel.latitude or '' }}" 
+                           placeholder="VD: 10.762622">
+                    <small class="text-muted">Dùng để hiển thị bản đồ</small>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Kinh độ (Longitude)</label>
+                    <input type="number" name="longitude" class="form-control" step="0.00000001"
+                           value="{{ request.form.longitude or hotel.longitude or '' }}" 
+                           placeholder="VD: 106.660172">
+                    <small class="text-muted">Dùng để hiển thị bản đồ</small>
+                </div>
+
+                <!-- Liên hệ -->
+                <div class="col-12 mt-4">
+                    <h5 class="mb-3">
+                        <i class="fas fa-phone me-2 text-success"></i>
+                        Thông tin liên hệ
+                    </h5>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Số điện thoại</label>
+                    <input type="text" name="phone" class="form-control" 
+                           value="{{ request.form.phone or hotel.phone or '' }}" 
+                           placeholder="VD: 0912345678">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Email</label>
+                    <input type="email" name="email" class="form-control" 
+                           value="{{ request.form.email or hotel.email or '' }}" 
+                           placeholder="VD: hotel@example.com">
+                </div>
+
+                <!-- Chính sách -->
+                <div class="col-12 mt-4">
+                    <h5 class="mb-3">
+                        <i class="fas fa-clock me-2 text-warning"></i>
+                        Chính sách nhận/trả phòng
+                    </h5>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Giờ nhận phòng (Check-in)</label>
+                    <input type="time" name="check_in_time" class="form-control" 
+                           value="{{ request.form.check_in_time or (hotel.check_in_time[:5] if hotel.check_in_time else '14:00') }}">
+                    <small class="text-muted">Mặc định: 14:00</small>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Giờ trả phòng (Check-out)</label>
+                    <input type="time" name="check_out_time" class="form-control" 
+                           value="{{ request.form.check_out_time or (hotel.check_out_time[:5] if hotel.check_out_time else '12:00') }}">
+                    <small class="text-muted">Mặc định: 12:00</small>
+                </div>
+
+                <!-- Buttons -->
+                <div class="col-12 mt-4">
+                    <button type="submit" class="owner-btn owner-btn-primary">
+                        <i class="fas fa-save"></i> Cập nhật khách sạn
+                    </button>
+                    <a href="{{ url_for('hotel.hotel_detail', hotel_id=hotel_id) }}" class="owner-btn owner-btn-outline-secondary">
+                        <i class="fas fa-times"></i> Hủy
+                    </a>
+                    <a href="{{ url_for('owner.my_hotels') }}" class="owner-btn owner-btn-outline">
+                        <i class="fas fa-list"></i> Danh sách khách sạn
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+{% else %}
+    <div class="alert alert-danger">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        {{ error or 'Không thể tải thông tin khách sạn' }}
+    </div>
+    <a href="{{ url_for('owner.my_hotels') }}" class="owner-btn owner-btn-primary">
+        <i class="fas fa-arrow-left"></i> Quay lại danh sách
+    </a>
+{% endif %}
+
+{% endblock %}

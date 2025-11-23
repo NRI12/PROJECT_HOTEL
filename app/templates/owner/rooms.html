@@ -1,0 +1,100 @@
+{% extends "owner/base.html" %}
+
+{% block title %}Quản lý phòng{% endblock %}
+
+{% block content %}
+
+<div class="owner-header">
+    <div>
+        <h1 class="owner-header-title">Quản lý phòng</h1>
+        <p class="owner-header-subtitle">Danh sách tất cả phòng của khách sạn</p>
+    </div>
+    <div class="owner-header-actions">
+        <a href="{{ url_for('owner.owner_rooms_create') }}" class="owner-btn owner-btn-primary">
+            <i class="fas fa-plus"></i> Thêm phòng mới
+        </a>
+    </div>
+</div>
+
+{% if result[1] == 200 %}
+    {% set rooms = result[0].get_json()['data']['rooms'] %}
+    
+    {% if rooms %}
+        <div class="owner-table-wrapper">
+            <div class="table-responsive">
+                <table class="owner-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tên phòng</th>
+                            <th>Khách sạn</th>
+                            <th>Giá/đêm</th>
+                            <th>Sức chứa</th>
+                            <th>Diện tích</th>
+                            <th>Trạng thái</th>
+                            <th class="text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for room in rooms %}
+                        <tr>
+                            <td><strong>#{{ room.room_id }}</strong></td>
+                            <td>
+                                <i class="fas fa-bed text-primary me-1"></i>
+                                <strong>{{ room.room_name }}</strong>
+                            </td>
+                            <td>{{ room.hotel.hotel_name if room.hotel else 'N/A' }}</td>
+                            <td><strong class="text-success">{{ "{:,.0f}".format(room.price) }} VNĐ</strong></td>
+                            <td>
+                                <i class="fas fa-user me-1"></i>
+                                {{ room.capacity }} người
+                            </td>
+                            <td>{{ room.size or 'N/A' }} m²</td>
+                            <td>
+                                <span class="owner-badge status-{{ room.status }}">
+                                    {% if room.status == 'available' %}Có sẵn
+                                    {% elif room.status == 'occupied' %}Đã đặt
+                                    {% elif room.status == 'maintenance' %}Bảo trì
+                                    {% else %}{{ room.status }}{% endif %}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <a href="{{ url_for('owner.owner_rooms_edit', room_id=room.room_id) }}" 
+                                   class="owner-btn owner-btn-sm owner-btn-outline-primary" 
+                                   title="Sửa">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form method="POST" action="{{ url_for('owner.owner_rooms_delete', room_id=room.room_id) }}" 
+                                      style="display:inline;" 
+                                      onsubmit="return confirm('Bạn có chắc muốn xóa phòng này?');">
+                                    <button type="submit" class="owner-btn owner-btn-sm owner-btn-outline-danger" title="Xóa">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="owner-card">
+            <div class="owner-empty-state">
+                <div class="owner-empty-icon">
+                    <i class="fas fa-bed"></i>
+                </div>
+                <h4 class="owner-empty-title">Chưa có phòng nào</h4>
+                <p class="owner-empty-text">Thêm phòng mới để bắt đầu quản lý.</p>
+                <a href="{{ url_for('owner.owner_rooms_create') }}" class="owner-btn owner-btn-primary">
+                    <i class="fas fa-plus"></i> Thêm phòng đầu tiên
+                </a>
+            </div>
+        </div>
+    {% endif %}
+{% else %}
+    <div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+{% endblock %}
+

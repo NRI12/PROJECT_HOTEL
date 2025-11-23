@@ -1,0 +1,97 @@
+{% extends "owner/base.html" %}
+
+{% block title %}Quản lý tiện nghi{% endblock %}
+
+{% block content %}
+
+<div class="owner-header">
+    <div>
+        <h1 class="owner-header-title">Quản lý tiện nghi</h1>
+        <p class="owner-header-subtitle">Danh sách tất cả tiện nghi</p>
+    </div>
+    <div class="owner-header-actions">
+        <a href="{{ url_for('owner.owner_amenities_create') }}" class="owner-btn owner-btn-primary">
+            <i class="fas fa-plus"></i> Thêm tiện nghi mới
+        </a>
+    </div>
+</div>
+
+{% if result[1] == 200 %}
+    {% set amenities = result[0].get_json()['data']['amenities'] %}
+    
+    {% if amenities %}
+        <div class="owner-table-wrapper">
+            <div class="table-responsive">
+                <table class="owner-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Icon</th>
+                            <th>Tên tiện nghi</th>
+                            <th>Danh mục</th>
+                            <th class="text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for amenity in amenities %}
+                        <tr>
+                            <td><strong>#{{ amenity.amenity_id }}</strong></td>
+                            <td>
+                                {% if amenity.icon %}
+                                    <i class="{{ amenity.icon }} fa-lg text-primary"></i>
+                                {% else %}
+                                    <i class="fas fa-star text-muted"></i>
+                                {% endif %}
+                            </td>
+                            <td><strong>{{ amenity.amenity_name }}</strong></td>
+                            <td>
+                                {% if amenity.category == 'both' %}
+                                    <span class="owner-badge status-pending">Cả hai</span>
+                                {% elif amenity.category == 'hotel' %}
+                                    <span class="owner-badge status-confirmed">Khách sạn</span>
+                                {% elif amenity.category == 'room' %}
+                                    <span class="owner-badge status-checked-in">Phòng</span>
+                                {% else %}
+                                    {{ amenity.category }}
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <a href="{{ url_for('owner.owner_amenities_edit', amenity_id=amenity.amenity_id) }}" 
+                                   class="owner-btn owner-btn-sm owner-btn-outline-primary" 
+                                   title="Sửa">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form method="POST" action="{{ url_for('owner.owner_amenities_delete', amenity_id=amenity.amenity_id) }}" 
+                                      style="display:inline;" 
+                                      onsubmit="return confirm('Bạn có chắc muốn xóa tiện nghi này?');">
+                                    <button type="submit" class="owner-btn owner-btn-sm owner-btn-outline-danger" title="Xóa">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="owner-card">
+            <div class="owner-empty-state">
+                <div class="owner-empty-icon">
+                    <i class="fas fa-concierge-bell"></i>
+                </div>
+                <h4 class="owner-empty-title">Chưa có tiện nghi nào</h4>
+                <p class="owner-empty-text">Thêm tiện nghi mới để bắt đầu quản lý.</p>
+                <a href="{{ url_for('owner.owner_amenities_create') }}" class="owner-btn owner-btn-primary">
+                    <i class="fas fa-plus"></i> Thêm tiện nghi đầu tiên
+                </a>
+            </div>
+        </div>
+    {% endif %}
+{% else %}
+    <div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+{% endblock %}
+

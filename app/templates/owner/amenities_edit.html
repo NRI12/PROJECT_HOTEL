@@ -1,0 +1,76 @@
+{% extends "owner/base.html" %}
+
+{% block title %}Sửa tiện nghi{% endblock %}
+
+{% block content %}
+
+<div class="owner-header">
+
+    <h1 class="owner-header-title">Sửa tiện nghi</h1>
+
+</div>
+
+{% if result[1] == 200 %}
+
+    {% set amenity = result[0].get_json()['data']['amenity'] %}
+
+    <div class="owner-card">
+
+        <form method="POST">
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+
+                    <label class="form-label">Tên tiện nghi *</label>
+
+                    <input type="text" name="amenity_name" class="form-control" value="{{ amenity.amenity_name }}" required>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <label class="form-label">Icon (FontAwesome class)</label>
+
+                    <input type="text" name="icon" class="form-control" value="{{ amenity.icon or '' }}" placeholder="fas fa-wifi">
+
+                </div>
+
+                <div class="col-12">
+
+                    <label class="form-label">Danh mục *</label>
+
+                    <select name="category" class="form-control">
+
+                        <option value="both" {{ 'selected' if amenity.category == 'both' }}>Cả khách sạn & phòng</option>
+
+                        <option value="hotel" {{ 'selected' if amenity.category == 'hotel' }}>Chỉ khách sạn</option>
+
+                        <option value="room" {{ 'selected' if amenity.category == 'room' }}>Chỉ phòng</option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-12">
+
+                    <button type="submit" class="owner-btn owner-btn-primary">Cập nhật</button>
+
+                    <a href="{{ url_for('owner.owner_amenities') }}" class="owner-btn owner-btn-outline-secondary">Hủy</a>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+{% else %}
+
+    <div class="alert alert-danger">{{ error }}</div>
+
+{% endif %}
+
+{% endblock %}
+

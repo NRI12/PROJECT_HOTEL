@@ -1,0 +1,112 @@
+{% extends "owner/base.html" %}
+
+{% block title %}Quản lý khuyến mãi{% endblock %}
+
+{% block content %}
+
+<div class="owner-header">
+    <div>
+        <h1 class="owner-header-title">Quản lý khuyến mãi</h1>
+        <p class="owner-header-subtitle">Danh sách tất cả khuyến mãi</p>
+    </div>
+    <div class="owner-header-actions">
+        <a href="{{ url_for('owner.owner_promotions_create') }}" class="owner-btn owner-btn-primary">
+            <i class="fas fa-plus"></i> Thêm khuyến mãi mới
+        </a>
+    </div>
+</div>
+
+{% if result[1] == 200 %}
+    {% set promotions = result[0].get_json()['data']['promotions'] %}
+    
+    {% if promotions %}
+        <div class="owner-table-wrapper">
+            <div class="table-responsive">
+                <table class="owner-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tiêu đề</th>
+                            <th>Loại giảm</th>
+                            <th>Giá trị</th>
+                            <th>Số lượng</th>
+                            <th>Ngày bắt đầu</th>
+                            <th>Ngày kết thúc</th>
+                            <th>Trạng thái</th>
+                            <th class="text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for promo in promotions %}
+                        <tr>
+                            <td><strong>#{{ promo.promotion_id }}</strong></td>
+                            <td>
+                                <i class="fas fa-tags text-primary me-1"></i>
+                                <strong>{{ promo.title }}</strong>
+                            </td>
+                            <td>
+                                {% if promo.discount_type == 'percentage' %}
+                                    <span class="badge bg-info">Phần trăm</span>
+                                {% else %}
+                                    <span class="badge bg-success">Cố định</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong class="text-danger">
+                                    {% if promo.discount_type == 'percentage' %}
+                                        {{ promo.discount_value }}%
+                                    {% else %}
+                                        {{ "{:,.0f}".format(promo.discount_value) }} VNĐ
+                                    {% endif %}
+                                </strong>
+                            </td>
+                            <td>{{ promo.quantity or 'Không giới hạn' }}</td>
+                            <td>{{ promo.start_date }}</td>
+                            <td>{{ promo.end_date }}</td>
+                            <td>
+                                <span class="owner-badge status-{{ promo.status }}">
+                                    {% if promo.status == 'active' %}Kích hoạt
+                                    {% elif promo.status == 'inactive' %}Tạm dừng
+                                    {% else %}{{ promo.status }}{% endif %}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <a href="{{ url_for('owner.owner_promotions_edit', promotion_id=promo.promotion_id) }}" 
+                                   class="owner-btn owner-btn-sm owner-btn-outline-primary" 
+                                   title="Sửa">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form method="POST" action="{{ url_for('owner.owner_promotions_delete', promotion_id=promo.promotion_id) }}" 
+                                      style="display:inline;" 
+                                      onsubmit="return confirm('Bạn có chắc muốn xóa khuyến mãi này?');">
+                                    <button type="submit" class="owner-btn owner-btn-sm owner-btn-outline-danger" title="Xóa">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="owner-card">
+            <div class="owner-empty-state">
+                <div class="owner-empty-icon">
+                    <i class="fas fa-tags"></i>
+                </div>
+                <h4 class="owner-empty-title">Chưa có khuyến mãi nào</h4>
+                <p class="owner-empty-text">Thêm khuyến mãi mới để thu hút khách hàng.</p>
+                <a href="{{ url_for('owner.owner_promotions_create') }}" class="owner-btn owner-btn-primary">
+                    <i class="fas fa-plus"></i> Thêm khuyến mãi đầu tiên
+                </a>
+            </div>
+        </div>
+    {% endif %}
+{% else %}
+    <div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+{% endblock %}
+

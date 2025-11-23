@@ -1,0 +1,79 @@
+{% extends "owner/base.html" %}
+
+{% block title %}Sửa mã giảm giá{% endblock %}
+
+{% block content %}
+
+<div class="owner-header">
+    <h1 class="owner-header-title">Sửa mã giảm giá</h1>
+</div>
+
+{% if result[1] == 200 %}
+    {% set discount = result[0].get_json()['data']['discount'] %}
+
+    <div class="owner-card">
+        <form method="POST">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Mã code *</label>
+                    <input type="text" name="code" class="form-control" value="{{ discount.code }}" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Loại giảm giá *</label>
+                    <select name="discount_type" class="form-control" required>
+                        <option value="percentage" {{ 'selected' if discount.discount_type == 'percentage' }}>Phần trăm (%)</option>
+                        <option value="fixed" {{ 'selected' if discount.discount_type == 'fixed' }}>Số tiền cố định (VNĐ)</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Giá trị giảm *</label>
+                    <input type="number" name="discount_value" class="form-control" value="{{ discount.discount_value }}" step="0.01" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Số lần dùng tối đa</label>
+                    <input type="number" name="max_uses" class="form-control" value="{{ discount.max_uses or '' }}">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Ngày bắt đầu *</label>
+                    <input type="date" name="start_date" class="form-control" value="{{ discount.start_date or '' }}" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Ngày kết thúc *</label>
+                    <input type="date" name="end_date" class="form-control" value="{{ discount.end_date or '' }}" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Giá trị đơn hàng tối thiểu (VNĐ)</label>
+                    <input type="number" name="min_order_value" class="form-control" value="{{ discount.min_order_value or '' }}">
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label">Mô tả</label>
+                    <textarea name="description" class="form-control" rows="3">{{ discount.description or '' }}</textarea>
+                </div>
+
+                <div class="col-12">
+                    <div class="form-check">
+                        <input type="checkbox" name="is_active" class="form-check-input" value="1" {{ 'checked' if discount.is_active }}>
+                        <label class="form-check-label">Kích hoạt</label>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <button type="submit" class="owner-btn owner-btn-primary">Cập nhật</button>
+                    <a href="{{ url_for('owner.owner_discounts') }}" class="owner-btn owner-btn-outline-secondary">Hủy</a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+{% else %}
+    <div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+{% endblock %}

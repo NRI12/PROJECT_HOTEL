@@ -1,0 +1,50 @@
+{% extends "owner/base.html" %}
+
+{% block title %}Thêm tiện nghi mới{% endblock %}
+
+{% block content %}
+
+<div class="owner-header">
+    <div>
+        <h1 class="owner-header-title">Thêm tiện nghi mới</h1>
+        <p class="owner-header-subtitle">Tạo tiện nghi mới cho khách sạn</p>
+    </div>
+</div>
+
+<div class="owner-card">
+    <form method="POST">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Tên tiện nghi *</label>
+                <input type="text" name="amenity_name" class="form-control" placeholder="VD: WiFi miễn phí" required>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Icon (FontAwesome class)</label>
+                <input type="text" name="icon" class="form-control" placeholder="fas fa-wifi">
+                <small class="text-muted">Tham khảo: <a href="https://fontawesome.com/icons" target="_blank">FontAwesome Icons</a></small>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label">Danh mục *</label>
+                <select name="category" class="form-control">
+                    <option value="both">Cả khách sạn & phòng</option>
+                    <option value="hotel">Chỉ khách sạn</option>
+                    <option value="room">Chỉ phòng</option>
+                </select>
+            </div>
+
+            <div class="col-12">
+                <button type="submit" class="owner-btn owner-btn-primary">
+                    <i class="fas fa-save"></i> Tạo tiện nghi
+                </button>
+                <a href="{{ url_for('owner.owner_amenities') }}" class="owner-btn owner-btn-outline-secondary">
+                    <i class="fas fa-times"></i> Hủy
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
