@@ -1,0 +1,123 @@
+<!-- app/templates/payment/success.html -->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh toán thành công - HotelBooking</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('main.index') }}">
+                <i class="bi bi-building"></i> HotelBooking
+            </a>
+        </div>
+    </nav>
+
+    <section class="payment-success-section py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card border-0 shadow-lg">
+                        <div class="card-body text-center p-5">
+                            <div class="success-checkmark mb-4">
+                                <div class="check-icon">
+                                    <span class="icon-line line-tip"></span>
+                                    <span class="icon-line line-long"></span>
+                                    <div class="icon-circle"></div>
+                                    <div class="icon-fix"></div>
+                                </div>
+                            </div>
+                            
+                            <h1 class="display-5 fw-bold text-success mb-3">Thanh toán thành công!</h1>
+                            <p class="lead text-muted mb-4">
+                                Cảm ơn bạn đã đặt phòng. Chúng tôi đã gửi email xác nhận đến địa chỉ của bạn.
+                            </p>
+                            
+                            <div class="booking-info-card mx-auto mb-4" style="max-width: 500px;">
+                                <div class="row g-3">
+                                    <div class="col-6 text-start">
+                                        <small class="text-muted d-block">Mã đặt phòng</small>
+                                        <strong class="text-primary">#{{ booking_id if booking_id else 'BK123456' }}</strong>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <small class="text-muted d-block">Tổng thanh toán</small>
+                                        <strong class="text-success">{{ '{:,.0f}'.format(amount if amount else 0) }}đ</strong>
+                                    </div>
+                                    <div class="col-12">
+                                        <hr>
+                                    </div>
+                                    <div class="col-12 text-start">
+                                        <small class="text-muted d-block mb-2">Thông tin đặt phòng</small>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Khách sạn:</span>
+                                            <strong>{{ hotel_name if hotel_name else 'N/A' }}</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Nhận phòng:</span>
+                                            <strong>{{ check_in if check_in else 'N/A' }}</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Trả phòng:</span>
+                                            <strong>{{ check_out if check_out else 'N/A' }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-info mb-4">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Vui lòng kiểm tra email để xem chi tiết đặt phòng và hướng dẫn check-in
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                                <a href="/user/bookings" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-calendar-check me-2"></i>Xem đặt phòng
+                                </a>
+                                <a href="{{ url_for('main.index') }}" class="btn btn-outline-primary btn-lg">
+                                    <i class="bi bi-house me-2"></i>Về trang chủ
+                                </a>
+                            </div>
+                            
+                            <div class="mt-5 pt-4 border-top">
+                                <h5 class="mb-3">Cần hỗ trợ?</h5>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <div class="support-card">
+                                            <i class="bi bi-telephone-fill text-primary mb-2" style="font-size: 2rem;"></i>
+                                            <div class="fw-semibold">Hotline</div>
+                                            <small class="text-muted">1900-1234</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="support-card">
+                                            <i class="bi bi-envelope-fill text-primary mb-2" style="font-size: 2rem;"></i>
+                                            <div class="fw-semibold">Email</div>
+                                            <small class="text-muted">support@hotelbooking.vn</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="support-card">
+                                            <i class="bi bi-chat-dots-fill text-primary mb-2" style="font-size: 2rem;"></i>
+                                            <div class="fw-semibold">Live Chat</div>
+                                            <small class="text-muted">24/7</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,139 +1,139 @@
+<!-- app/templates/user/favorites.html -->
 {% extends "user/base_user.html" %}
 
 {% block title %}Danh sách yêu thích{% endblock %}
-{% block page_icon %}heart-fill{% endblock %}
+{% block page_icon %}heart{% endblock %}
 {% block page_title %}Khách sạn yêu thích{% endblock %}
 
 {% block content %}
-<!-- Search and Filter -->
-<div class="row mb-4">
-    <div class="col-md-12">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <div class="input-group">
-                            <span class="input-group-text">
-                                <i class="bi bi-search"></i>
-                            </span>
-                            <input type="text" class="form-control" placeholder="Tìm kiếm khách sạn...">
+<!-- Filter Section -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Sắp xếp theo</label>
+                <select class="form-select">
+                    <option selected>Mới nhất</option>
+                    <option>Giá thấp đến cao</option>
+                    <option>Giá cao đến thấp</option>
+                    <option>Đánh giá cao nhất</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Địa điểm</label>
+                <select class="form-select">
+                    <option selected>Tất cả</option>
+                    <option>Hà Nội</option>
+                    <option>Hồ Chí Minh</option>
+                    <option>Đà Nẵng</option>
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-funnel me-2"></i>Áp dụng
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Favorites List -->
+<div class="row">
+    {% if favorites and favorites|length > 0 %}
+        {% for favorite in favorites %}
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm h-100 favorite-card">
+                <div class="row g-0">
+                    <div class="col-md-5">
+                        <img src="{{ favorite.hotel.image_url if favorite.hotel and favorite.hotel.image_url else 'https://via.placeholder.com/400x300' }}" 
+                             class="img-fluid rounded-start h-100" 
+                             alt="{{ favorite.hotel.hotel_name if favorite.hotel else 'Hotel' }}"
+                             style="object-fit: cover;">
+                    </div>
+                    <div class="col-md-7">
+                        <div class="card-body d-flex flex-column h-100">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title mb-0">{{ favorite.hotel.hotel_name if favorite.hotel else 'N/A' }}</h5>
+                                <button class="btn btn-link text-danger p-0 remove-favorite" data-id="{{ favorite.favorite_id }}">
+                                    <i class="bi bi-heart-fill" style="font-size: 1.5rem;"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="mb-2">
+                                <span class="badge bg-warning text-dark me-1">
+                                    <i class="bi bi-star-fill"></i> {{ favorite.hotel.rating if favorite.hotel else 'N/A' }}
+                                </span>
+                                <span class="text-muted small">({{ favorite.hotel.review_count if favorite.hotel else 0 }} đánh giá)</span>
+                            </div>
+                            
+                            <p class="text-muted mb-2">
+                                <i class="bi bi-geo-alt"></i> {{ favorite.hotel.address if favorite.hotel else 'N/A' }}
+                            </p>
+                            
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <small class="text-muted">Giá từ</small>
+                                        <div class="h5 mb-0 text-primary">
+                                            {{ '{:,.0f}'.format(favorite.hotel.price_from if favorite.hotel and favorite.hotel.price_from else 0) }}đ
+                                        </div>
+                                    </div>
+                                    <a href="/hotel/{{ favorite.hotel_id }}" class="btn btn-primary">
+                                        Xem chi tiết
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <select class="form-select">
-                            <option selected>Tất cả địa điểm</option>
-                            <option>Hà Nội</option>
-                            <option>TP. Hồ Chí Minh</option>
-                            <option>Đà Nẵng</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <select class="form-select">
-                            <option selected>Sắp xếp</option>
-                            <option>Mới nhất</option>
-                            <option>Cũ nhất</option>
-                            <option>Giá tăng dần</option>
-                            <option>Giá giảm dần</option>
-                        </select>
-                    </div>
                 </div>
             </div>
         </div>
+        {% endfor %}
+    {% else %}
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-heart text-muted" style="font-size: 4rem;"></i>
+                <h4 class="mt-4 mb-3">Chưa có khách sạn yêu thích</h4>
+                <p class="text-muted mb-4">Thêm khách sạn vào danh sách yêu thích để dễ dàng tìm lại sau này</p>
+                <a href="{{ url_for('main.search_page') }}" class="btn btn-primary">
+                    <i class="bi bi-search me-2"></i>Tìm khách sạn
+                </a>
+            </div>
+        </div>
     </div>
+    {% endif %}
 </div>
 
-<!-- Favorites Grid -->
+<!-- Pagination -->
 {% if favorites and favorites|length > 0 %}
-<div class="row">
-    {% for favorite in favorites %}
-    <div class="col-md-6 col-lg-4 mb-4">
-        <div class="card border-0 shadow-sm h-100">
-            <img src="{{ favorite.hotel_image or 'https://via.placeholder.com/400x250/667eea/ffffff?text=Hotel+Image' }}" 
-                 class="card-img-top" alt="{{ favorite.hotel_name }}" style="height: 200px; object-fit: cover;">
-            <div class="card-body">
-                <h5 class="card-title">{{ favorite.hotel_name }}</h5>
-                <p class="card-text text-muted">
-                    <i class="bi bi-geo-alt-fill"></i> {{ favorite.hotel_location }}
-                </p>
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="text-warning">
-                            <i class="bi bi-star-fill"></i>
-                            {{ favorite.hotel_rating or '5.0' }}
-                        </span>
-                    </div>
-                    <div>
-                        <strong class="text-primary">
-                            {{ favorite.hotel_price or '1,000,000' }} VNĐ
-                        </strong>
-                    </div>
-                </div>
-                <small class="text-muted">
-                    <i class="bi bi-clock"></i> Đã thêm: {{ favorite.created_at }}
-                </small>
-            </div>
-            <div class="card-footer bg-white border-0">
-                <div class="row g-2">
-                    <div class="col-6">
-                        <a href="/hotel/detail/{{ favorite.hotel_id }}" class="btn btn-outline-primary w-100">
-                            <i class="bi bi-eye"></i> Xem
-                        </a>
-                    </div>
-                    <div class="col-6">
-                        <form method="POST" action="/favorite/remove/{{ favorite.id }}" class="d-inline">
-                            <button type="submit" class="btn btn-outline-danger w-100">
-                                <i class="bi bi-heart-fill"></i> Bỏ thích
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endfor %}
-</div>
-{% else %}
-<div class="card border-0 shadow-sm">
-    <div class="card-body text-center py-5">
-        <i class="bi bi-heart" style="font-size: 4rem; color: #ddd;"></i>
-        <h4 class="mt-3">Chưa có khách sạn yêu thích</h4>
-        <p class="text-muted">Hãy thêm các khách sạn bạn thích để dễ dàng theo dõi và đặt phòng</p>
-        <a href="/hotel/list" class="btn btn-primary mt-3">
-            <i class="bi bi-search me-2"></i>
-            Khám phá khách sạn
-        </a>
-    </div>
-</div>
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        <li class="page-item disabled">
+            <a class="page-link" href="#"><i class="bi bi-chevron-left"></i></a>
+        </li>
+        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+        <li class="page-item"><a class="page-link" href="#">2</a></li>
+        <li class="page-item"><a class="page-link" href="#">3</a></li>
+        <li class="page-item">
+            <a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a>
+        </li>
+    </ul>
+</nav>
 {% endif %}
+{% endblock %}
 
-<!-- Favorites Stats -->
-<div class="row mt-4">
-    <div class="col-md-4 mb-3">
-        <div class="card border-0 shadow-sm text-center">
-            <div class="card-body">
-                <i class="bi bi-heart-fill text-danger" style="font-size: 2rem;"></i>
-                <h3 class="mt-2 mb-0">{{ favorites|length if favorites else 0 }}</h3>
-                <p class="text-muted mb-0">Khách sạn yêu thích</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-3">
-        <div class="card border-0 shadow-sm text-center">
-            <div class="card-body">
-                <i class="bi bi-tag-fill text-warning" style="font-size: 2rem;"></i>
-                <h3 class="mt-2 mb-0">0</h3>
-                <p class="text-muted mb-0">Đang giảm giá</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-3">
-        <div class="card border-0 shadow-sm text-center">
-            <div class="card-body">
-                <i class="bi bi-check-circle-fill text-success" style="font-size: 2rem;"></i>
-                <h3 class="mt-2 mb-0">0</h3>
-                <p class="text-muted mb-0">Còn phòng trống</p>
-            </div>
-        </div>
-    </div>
-</div>
+{% block extra_scripts %}
+<script>
+document.querySelectorAll('.remove-favorite').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (confirm('Bạn có chắc muốn xóa khỏi danh sách yêu thích?')) {
+            // Handle remove favorite
+            const favoriteId = this.dataset.id;
+            // Add AJAX call here
+        }
+    });
+});
+</script>
 {% endblock %}

@@ -1,0 +1,280 @@
+<!-- app/templates/booking/confirmation.html -->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xác nhận đặt phòng - HotelBooking</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('main.index') }}">
+                <i class="bi bi-building"></i> HotelBooking
+            </a>
+            
+            {% if session.get('user_id') %}
+            <div class="d-flex gap-2 ms-3">
+                <a href="{{ url_for('user.profile') }}" class="btn btn-outline-primary">Tài khoản</a>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    <section class="booking-confirmation-section py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <!-- Success Header -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body text-center p-5">
+                            <div class="confirmation-icon mb-4">
+                                <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
+                            </div>
+                            <h1 class="display-6 fw-bold mb-3">Đặt phòng thành công!</h1>
+                            <p class="lead text-muted">
+                                Mã đặt phòng: <span class="text-primary fw-bold">#{{ booking.booking_id if booking else 'BK123456' }}</span>
+                            </p>
+                            <div class="alert alert-info d-inline-block">
+                                <i class="bi bi-envelope me-2"></i>
+                                Email xác nhận đã được gửi đến <strong>{{ user_email if user_email else 'email@example.com' }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Booking Details -->
+                    <div class="row g-4">
+                        <div class="col-lg-8">
+                            <div class="card border-0 shadow-sm mb-4">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        Thông tin đặt phòng
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="hotel-info mb-4 pb-4 border-bottom">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <img src="{{ hotel_image if hotel_image else 'https://via.placeholder.com/400x300' }}" 
+                                                     class="img-fluid rounded" alt="Hotel">
+                                            </div>
+                                            <div class="col-md-8">
+                                                <h4 class="mb-2">{{ hotel_name if hotel_name else 'Khách sạn' }}</h4>
+                                                <p class="text-muted mb-2">
+                                                    <i class="bi bi-geo-alt"></i> {{ hotel_address if hotel_address else 'Địa chỉ' }}
+                                                </p>
+                                                <div class="mb-2">
+                                                    <span class="badge bg-warning text-dark">
+                                                        <i class="bi bi-star-fill"></i> {{ hotel_rating if hotel_rating else '4.5' }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="info-item">
+                                                <i class="bi bi-calendar-check text-primary me-2"></i>
+                                                <div>
+                                                    <small class="text-muted d-block">Ngày nhận phòng</small>
+                                                    <strong>{{ check_in_date if check_in_date else '25/11/2025' }}</strong>
+                                                    <small class="text-muted d-block">Sau 14:00</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="info-item">
+                                                <i class="bi bi-calendar-x text-danger me-2"></i>
+                                                <div>
+                                                    <small class="text-muted d-block">Ngày trả phòng</small>
+                                                    <strong>{{ check_out_date if check_out_date else '27/11/2025' }}</strong>
+                                                    <small class="text-muted d-block">Trước 12:00</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="info-item">
+                                                <i class="bi bi-moon-stars text-info me-2"></i>
+                                                <div>
+                                                    <small class="text-muted d-block">Số đêm</small>
+                                                    <strong>{{ num_nights if num_nights else '2' }} đêm</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="info-item">
+                                                <i class="bi bi-people text-success me-2"></i>
+                                                <div>
+                                                    <small class="text-muted d-block">Số khách</small>
+                                                    <strong>{{ num_guests if num_guests else '2' }} người</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <hr class="my-4">
+                                    
+                                    <div class="room-details">
+                                        <h6 class="mb-3">Chi tiết phòng</h6>
+                                        <div class="card bg-light border-0">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between align-items-start">
+                                                    <div>
+                                                        <h6 class="mb-1">{{ room_type if room_type else 'Phòng Deluxe' }}</h6>
+                                                        <small class="text-muted">{{ num_rooms if num_rooms else '1' }} phòng</small>
+                                                    </div>
+                                                    <div class="text-end">
+                                                        <div class="fw-bold text-primary">
+                                                            {{ '{:,.0f}'.format(room_price if room_price else 0) }}đ
+                                                        </div>
+                                                        <small class="text-muted">/ đêm</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Guest Information -->
+                            <div class="card border-0 shadow-sm mb-4">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-person me-2"></i>
+                                        Thông tin khách hàng
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <small class="text-muted d-block">Họ và tên</small>
+                                            <strong>{{ guest_name if guest_name else 'Nguyễn Văn A' }}</strong>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <small class="text-muted d-block">Email</small>
+                                            <strong>{{ guest_email if guest_email else 'example@email.com' }}</strong>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <small class="text-muted d-block">Số điện thoại</small>
+                                            <strong>{{ guest_phone if guest_phone else '0123456789' }}</strong>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <small class="text-muted d-block">Yêu cầu đặc biệt</small>
+                                            <strong>{{ special_requests if special_requests else 'Không có' }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Important Notes -->
+                            <div class="card border-warning shadow-sm">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-exclamation-triangle me-2"></i>
+                                        Lưu ý quan trọng
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="mb-0">
+                                        <li>Vui lòng mang theo CMND/CCCD khi check-in</li>
+                                        <li>Giờ check-in: Sau 14:00 | Giờ check-out: Trước 12:00</li>
+                                        <li>Hủy phòng miễn phí trước 48h so với ngày nhận phòng</li>
+                                        <li>Liên hệ khách sạn trước nếu đến muộn sau 18:00</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-4">
+                            <!-- Price Summary -->
+                            <div class="card border-0 shadow-sm mb-4 sticky-summary">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-receipt me-2"></i>
+                                        Tổng chi phí
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Giá phòng x {{ num_nights if num_nights else '2' }} đêm</span>
+                                        <strong>{{ '{:,.0f}'.format(subtotal if subtotal else 0) }}đ</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2 text-success">
+                                        <span>Giảm giá</span>
+                                        <strong>-{{ '{:,.0f}'.format(discount if discount else 0) }}đ</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Thuế & phí</span>
+                                        <strong>{{ '{:,.0f}'.format(tax if tax else 0) }}đ</strong>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between mb-0">
+                                        <strong>Tổng cộng</strong>
+                                        <h4 class="mb-0 text-primary">{{ '{:,.0f}'.format(total if total else 0) }}đ</h4>
+                                    </div>
+                                    <small class="text-muted d-block mt-2">Đã bao gồm thuế & phí</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Actions -->
+                            <div class="card border-0 shadow-sm mb-4">
+                                <div class="card-body">
+                                    <div class="d-grid gap-2">
+                                        <a href="/user/bookings" class="btn btn-primary">
+                                            <i class="bi bi-calendar-check me-2"></i>Xem đặt phòng
+                                        </a>
+                                        <button class="btn btn-outline-primary" onclick="window.print()">
+                                            <i class="bi bi-printer me-2"></i>In xác nhận
+                                        </button>
+                                        <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary">
+                                            <i class="bi bi-house me-2"></i>Về trang chủ
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Support -->
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-white">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-headset me-2"></i>
+                                        Hỗ trợ 24/7
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <small class="text-muted d-block">Hotline</small>
+                                        <a href="tel:19001234" class="text-decoration-none">
+                                            <i class="bi bi-telephone-fill me-2"></i>1900-1234
+                                        </a>
+                                    </div>
+                                    <div class="mb-3">
+                                        <small class="text-muted d-block">Email</small>
+                                        <a href="mailto:support@hotelbooking.vn" class="text-decoration-none">
+                                            <i class="bi bi-envelope-fill me-2"></i>support@hotelbooking.vn
+                                        </a>
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-sm btn-outline-primary w-100">
+                                            <i class="bi bi-chat-dots me-2"></i>Chat ngay
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
