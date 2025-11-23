@@ -136,8 +136,8 @@ def admin_bookings():
 @admin_bp.route('/bookings/statistics', methods=['GET'])
 @role_required('admin')
 def admin_booking_statistics():
-    result = AdminPanelController.booking_statistics()
-    return _render_template(result, 'admin/bookings_statistics.html')
+    # Redirect to dashboard
+    return redirect(url_for('admin.admin_dashboard'))
 
 
 @admin_bp.route('/payments', methods=['GET'])
@@ -173,29 +173,29 @@ def admin_review_delete(review_id):
 @admin_bp.route('/statistics', methods=['GET'])
 @role_required('admin')
 def admin_statistics():
-    result = AdminPanelController.system_statistics()
-    return _render_template(result, 'admin/statistics.html')
+    # Redirect to dashboard - all statistics are now in dashboard
+    return redirect(url_for('admin.admin_dashboard'))
 
 
 @admin_bp.route('/statistics/revenue', methods=['GET'])
 @role_required('admin')
 def admin_statistics_revenue():
-    result = AdminPanelController.revenue_statistics()
-    return _render_template(result, 'admin/statistics_revenue.html')
+    # Redirect to dashboard
+    return redirect(url_for('admin.admin_dashboard'))
 
 
 @admin_bp.route('/statistics/users', methods=['GET'])
 @role_required('admin')
 def admin_statistics_users():
-    result = AdminPanelController.user_statistics()
-    return _render_template(result, 'admin/statistics_users.html')
+    # Redirect to dashboard
+    return redirect(url_for('admin.admin_dashboard'))
 
 
 @admin_bp.route('/statistics/bookings', methods=['GET'])
 @role_required('admin')
 def admin_statistics_bookings():
-    result = AdminPanelController.booking_statistics_detail()
-    return _render_template(result, 'admin/statistics_bookings.html')
+    # Redirect to dashboard
+    return redirect(url_for('admin.admin_dashboard'))
 
 
 @admin_bp.route('/reports/export', methods=['POST'])

@@ -1,76 +1,80 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Quản lý người dùng</title>
-</head>
-<body>
-    <h1>Quản lý người dùng</h1>
+{% extends "admin/base.html" %}
 
-    {% if error %}
-        <p class="flash-error">{{ error }}</p>
-    {% endif %}
-    {% if success %}
-        <p class="flash-success">{{ success }}</p>
-    {% endif %}
+{% block title %}Quản lý Người dùng{% endblock %}
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <p class="flash-{{ category }}">{{ message }}</p>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+{% block content %}
 
-    <form method="GET">
-        <label>Từ khóa:</label>
-        <input type="text" name="q" value="{{ request.args.get('q', '') }}">
-        <label>Role ID:</label>
-        <input type="number" name="role_id" value="{{ request.args.get('role_id', '') }}">
-        <label>Trạng thái:</label>
-        <select name="is_active">
-            <option value="" {% if request.args.get('is_active','') == '' %}selected{% endif %}>Tất cả</option>
-            <option value="true" {% if request.args.get('is_active') == 'true' %}selected{% endif %}>Hoạt động</option>
-            <option value="false" {% if request.args.get('is_active') == 'false' %}selected{% endif %}>Bị khóa</option>
-        </select>
-        <button type="submit">Lọc</button>
-        <a href="{{ url_for('admin.admin_users') }}">Xóa lọc</a>
-    </form>
+<div class="owner-header">
+    <div>
+        <h1 class="owner-header-title">
+            <i class="fas fa-users me-2"></i> Quản lý Người dùng
+        </h1>
+        <p class="owner-header-subtitle">Danh sách tất cả người dùng trong hệ thống</p>
+    </div>
+</div>
 
-    {% set payload = result[0].json if result and result[1] == 200 else None %}
-    {% set users = payload.data.users if payload and payload.data and payload.data.users else [] %}
+{% set payload = result[0].json if result and result[1] == 200 else None %}
+{% set users = payload.data.users if payload and payload.data and payload.data.users else [] %}
 
+<div class="owner-table-wrapper">
+    <div class="owner-table-header">
+        <h5><i class="fas fa-list me-2"></i> Danh sách người dùng</h5>
+        <span class="badge bg-primary" style="font-size: 1rem; padding: 0.5rem 1rem;">
+            {{ users|length }} người dùng
+        </span>
+    </div>
     {% if users %}
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Email</th>
-                    <th>Tên</th>
-                    <th>Role</th>
-                    <th>Trạng thái</th>
-                    <th>Hành động</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for user in users %}
-                <tr>
-                    <td>{{ user.user_id }}</td>
-                    <td>{{ user.email }}</td>
-                    <td>{{ user.full_name }}</td>
-                    <td>{{ user.role.role_name if user.role else '' }}</td>
-                    <td>{{ 'Hoạt động' if user.is_active else 'Bị khóa' }}</td>
-                    <td>
-                        <a href="{{ url_for('admin.admin_user_detail', user_id=user.user_id) }}">Chi tiết</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="owner-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Họ tên</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày tạo</th>
+                        <th class="text-center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td><strong>#{{ user.user_id }}</strong></td>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.full_name or 'N/A' }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            <span class="badge bg-primary">
+                                {{ user.role.role_name if user.role else 'N/A' }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if user.is_active %}
+                                <span class="owner-badge status-available">Active</span>
+                            {% else %}
+                                <span class="owner-badge status-maintenance">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ user.created_at }}</td>
+                        <td class="text-center">
+                            <a href="{{ url_for('admin.admin_user_detail', user_id=user.user_id) }}" 
+                               class="owner-btn owner-btn-sm owner-btn-outline-primary">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% else %}
-        <p>Không có người dùng.</p>
+        <div class="owner-empty-state">
+            <div class="owner-empty-icon"><i class="fas fa-users"></i></div>
+            <h4 class="owner-empty-title">Chưa có người dùng</h4>
+        </div>
     {% endif %}
+</div>
 
-    <p><a href="{{ url_for('admin.admin_dashboard') }}">Quay lại dashboard</a></p>
-</body>
-</html>
-
+{% endblock %}

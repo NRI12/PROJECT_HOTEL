@@ -35,6 +35,16 @@
         </div>
         
         <div>
+            <label>Giá cơ bản/đêm (VNĐ): *</label>
+            <input type="number" step="0.01" name="base_price" value="{{ request.form.base_price or request.args.base_price or '' }}" required placeholder="VD: 500000">
+        </div>
+        
+        <div>
+            <label>Giá cuối tuần (VNĐ):</label>
+            <input type="number" step="0.01" name="weekend_price" value="{{ request.form.weekend_price or request.args.weekend_price or '' }}" placeholder="VD: 700000">
+        </div>
+        
+        <div>
             <label>Mô tả:</label>
             <textarea name="description" rows="4" placeholder="Mô tả chi tiết về phòng">{{ request.form.description or request.args.description or '' }}</textarea>
         </div>
@@ -56,17 +66,7 @@
         
         <div>
             <label>Loại giường:</label>
-            <input type="text" name="bed_type" value="{{ request.form.bed_type or request.args.bed_type or '' }}" placeholder="VD: 1 giường King, 2 giường đơn">
-        </div>
-        
-        <div>
-            <label>Giá cơ bản (VNĐ/đêm): *</label>
-            <input type="number" step="0.01" name="base_price" value="{{ request.form.base_price or request.args.base_price or '' }}" min="0" required placeholder="VD: 500000">
-        </div>
-        
-        <div>
-            <label>Giá cuối tuần (VNĐ/đêm):</label>
-            <input type="number" step="0.01" name="weekend_price" value="{{ request.form.weekend_price or request.args.weekend_price or '' }}" min="0" placeholder="VD: 600000">
+            <input type="text" name="bed_type" value="{{ request.form.bed_type or request.args.bed_type or '' }}" placeholder="VD: King, Queen, Twin">
         </div>
         
         <div>
@@ -74,12 +74,10 @@
             <input type="number" name="quantity" value="{{ request.form.quantity or request.args.quantity or '1' }}" min="1">
         </div>
         
-        <div>
+        <div style="margin-top: 20px;">
             <button type="submit">Tạo phòng</button>
-            <a href="/room">Hủy</a>
+            <a href="/room/">Hủy</a>
         </div>
     </form>
-    
-    <p><small>* Trường bắt buộc</small></p>
 </body>
 </html>

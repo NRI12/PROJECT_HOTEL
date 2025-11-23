@@ -1,75 +1,95 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Quản lý đánh giá</title>
-</head>
-<body>
-    <h1>Quản lý đánh giá</h1>
+{% extends "admin/base.html" %}
 
-    {% if error %}
-        <p class="flash-error">{{ error }}</p>
-    {% endif %}
-    {% if success %}
-        <p class="flash-success">{{ success }}</p>
-    {% endif %}
+{% block title %}Quản lý Đánh giá{% endblock %}
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <p class="flash-{{ category }}">{{ message }}</p>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+{% block content %}
 
-    <form method="GET">
-        <label>Trạng thái:</label>
-        <input type="text" name="status" value="{{ request.args.get('status', '') }}">
-        <button type="submit">Lọc</button>
-        <a href="{{ url_for('admin.admin_reviews') }}">Xóa lọc</a>
-    </form>
+<div class="owner-header">
+    <div>
+        <h1 class="owner-header-title">
+            <i class="fas fa-star me-2"></i> Quản lý Đánh giá
+        </h1>
+        <p class="owner-header-subtitle">Danh sách tất cả đánh giá trong hệ thống</p>
+    </div>
+</div>
 
-    {% set payload = result[0].json if result and result[1] == 200 else None %}
-    {% set reviews = payload.data.reviews if payload and payload.data and payload.data.reviews else [] %}
+{% set payload = result[0].json if result and result[1] == 200 else None %}
+{% set reviews = payload.data.reviews if payload and payload.data and payload.data.reviews else [] %}
 
+<div class="owner-table-wrapper">
+    <div class="owner-table-header">
+        <h5><i class="fas fa-list me-2"></i> Danh sách đánh giá</h5>
+        <span class="badge bg-primary" style="font-size: 1rem; padding: 0.5rem 1rem;">
+            {{ reviews|length }} đánh giá
+        </span>
+    </div>
     {% if reviews %}
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Khách sạn</th>
-                    <th>Người dùng</th>
-                    <th>Điểm</th>
-                    <th>Trạng thái</th>
-                    <th>Ngày tạo</th>
-                    <th>Hành động</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for review in reviews %}
-                <tr>
-                    <td>{{ review.review_id }}</td>
-                    <td>{{ review.hotel_id }}</td>
-                    <td>{{ review.user_id }}</td>
-                    <td>{{ review.rating }}</td>
-                    <td>{{ review.status }}</td>
-                    <td>{{ review.created_at }}</td>
-                    <td>
-                        <form method="POST" action="{{ url_for('admin.admin_review_hide', review_id=review.review_id) }}" style="display:inline;">
-                            <button type="submit">Ẩn</button>
-                        </form>
-                        <form method="POST" action="{{ url_for('admin.admin_review_delete', review_id=review.review_id) }}" style="display:inline;">
-                            <button type="submit" onclick="return confirm('Xóa đánh giá này?')">Xóa</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="p-3">
+            {% for review in reviews %}
+                <div class="owner-review-card mb-3">
+                    <div class="owner-review-header">
+                        <div>
+                            <div class="owner-review-user">
+                                <i class="fas fa-user-circle me-2"></i>
+                                {{ review.user.username if review.user else 'N/A' }}
+                            </div>
+                            <div class="text-muted small">
+                                <i class="fas fa-hotel me-1"></i>
+                                {{ review.hotel.hotel_name if review.hotel else 'N/A' }}
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="owner-review-rating mb-2">
+                                {% for i in range(5) %}
+                                    {% if i < review.rating %}
+                                        <i class="fas fa-star"></i>
+                                    {% else %}
+                                        <i class="far fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                                <strong class="ms-2">{{ review.rating }}/5</strong>
+                            </div>
+                            <span class="owner-badge status-{{ review.status }}">
+                                {{ review.status }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="owner-review-content">
+                        {% if review.comment %}
+                            {{ review.comment }}
+                        {% else %}
+                            <em class="text-muted">Không có nhận xét</em>
+                        {% endif %}
+                    </div>
+                    <div class="owner-review-footer">
+                        <div>
+                            <i class="fas fa-hashtag me-1"></i>
+                            <strong>#{{ review.review_id }}</strong>
+                        </div>
+                        <div>
+                            <form method="POST" action="{{ url_for('admin.admin_review_hide', review_id=review.review_id) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-warning">
+                                    <i class="fas fa-eye-slash"></i> Ẩn
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ url_for('admin.admin_review_delete', review_id=review.review_id) }}" 
+                                  style="display: inline;" 
+                                  onsubmit="return confirm('Xóa đánh giá này?');">
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i> Xóa
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
     {% else %}
-        <p>Không có đánh giá.</p>
+        <div class="owner-empty-state">
+            <div class="owner-empty-icon"><i class="fas fa-star-half-alt"></i></div>
+            <h4 class="owner-empty-title">Chưa có đánh giá</h4>
+        </div>
     {% endif %}
+</div>
 
-    <p><a href="{{ url_for('admin.admin_dashboard') }}">Quay lại dashboard</a></p>
-</body>
-</html>
-
+{% endblock %}

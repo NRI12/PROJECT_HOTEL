@@ -1,59 +1,69 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Danh sách thanh toán</title>
-</head>
-<body>
-    <h1>Tất cả thanh toán</h1>
+{% extends "admin/base.html" %}
 
-    {% if error %}
-        <p class="flash-error">{{ error }}</p>
-    {% endif %}
-    {% if success %}
-        <p class="flash-success">{{ success }}</p>
-    {% endif %}
+{% block title %}Quản lý Thanh toán{% endblock %}
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <p class="flash-{{ category }}">{{ message }}</p>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+{% block content %}
 
-    {% set payload = result[0].json if result and result[1] == 200 else None %}
-    {% set payments = payload.data.payments if payload and payload.data and payload.data.payments else [] %}
+<div class="owner-header">
+    <div>
+        <h1 class="owner-header-title">
+            <i class="fas fa-credit-card me-2"></i> Quản lý Thanh toán
+        </h1>
+        <p class="owner-header-subtitle">Danh sách tất cả giao dịch thanh toán</p>
+    </div>
+</div>
 
+{% set payload = result[0].json if result and result[1] == 200 else None %}
+{% set payments = payload.data.payments if payload and payload.data and payload.data.payments else [] %}
+
+<div class="owner-table-wrapper">
+    <div class="owner-table-header">
+        <h5><i class="fas fa-list me-2"></i> Danh sách thanh toán</h5>
+        <span class="badge bg-primary" style="font-size: 1rem; padding: 0.5rem 1rem;">
+            {{ payments|length }} giao dịch
+        </span>
+    </div>
     {% if payments %}
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Booking</th>
-                    <th>Phương thức</th>
-                    <th>Số tiền</th>
-                    <th>Trạng thái</th>
-                    <th>Ngày thanh toán</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for payment in payments %}
-                <tr>
-                    <td>{{ payment.payment_id }}</td>
-                    <td>{{ payment.booking_id }}</td>
-                    <td>{{ payment.payment_method }}</td>
-                    <td>{{ payment.amount }}</td>
-                    <td>{{ payment.payment_status }}</td>
-                    <td>{{ payment.payment_date or payment.created_at }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="owner-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Booking ID</th>
+                        <th>Người dùng</th>
+                        <th>Phương thức</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end">Số tiền</th>
+                        <th>Ngày thanh toán</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments %}
+                    <tr>
+                        <td><strong>#{{ payment.payment_id }}</strong></td>
+                        <td>#{{ payment.booking_id }}</td>
+                        <td>{{ payment.user.username if payment.user else 'N/A' }}</td>
+                        <td>{{ payment.payment_method }}</td>
+                        <td>
+                            <span class="owner-badge status-{{ payment.payment_status }}">
+                                {{ payment.payment_status }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <strong class="text-success">{{ "{:,.0f}".format(payment.amount) }} VNĐ</strong>
+                        </td>
+                        <td>{{ payment.payment_date }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% else %}
-        <p>Không có thanh toán.</p>
+        <div class="owner-empty-state">
+            <div class="owner-empty-icon"><i class="fas fa-credit-card"></i></div>
+            <h4 class="owner-empty-title">Chưa có giao dịch</h4>
+        </div>
     {% endif %}
+</div>
 
-    <p><a href="{{ url_for('admin.admin_dashboard') }}">Quay lại dashboard</a></p>
-</body>
-</html>
-
+{% endblock %}

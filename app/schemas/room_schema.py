@@ -13,6 +13,7 @@ class RoomCreateSchema(Schema):
     base_price = fields.Decimal(required=True, as_string=False, validate=validate.Range(min=0))
     weekend_price = fields.Decimal(as_string=False, allow_none=True, validate=validate.Range(min=0))
     quantity = fields.Integer(allow_none=True, validate=validate.Range(min=1))
+    amenity_ids = fields.List(fields.Integer(), allow_none=True)
 
 class RoomUpdateSchema(Schema):
     room_type_id = fields.Integer()

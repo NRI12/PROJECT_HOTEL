@@ -1,64 +1,101 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Chi tiết người dùng</title>
-</head>
-<body>
-    <h1>Chi tiết người dùng #{{ user_id }}</h1>
+{% extends "admin/base.html" %}
 
-    {% if error %}
-        <p class="flash-error">{{ error }}</p>
-    {% endif %}
-    {% if success %}
-        <p class="flash-success">{{ success }}</p>
-    {% endif %}
+{% block title %}Chi tiết người dùng{% endblock %}
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <p class="flash-{{ category }}">{{ message }}</p>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+{% block content %}
 
-    {% set payload = result[0].json if result and result[1] == 200 else None %}
-    {% set user = payload.data.user if payload and payload.data and payload.data.user else None %}
+<div class="owner-header">
+    <div>
+        <h1 class="owner-header-title">
+            <i class="fas fa-user me-2"></i> Chi tiết người dùng
+        </h1>
+    </div>
+    <div class="owner-header-actions">
+        <a href="{{ url_for('admin.admin_users') }}" class="owner-btn owner-btn-outline">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+    </div>
+</div>
 
-    {% if user %}
-        <ul>
-            <li>Email: {{ user.email }}</li>
-            <li>Họ tên: {{ user.full_name }}</li>
-            <li>Số điện thoại: {{ user.phone or 'N/A' }}</li>
-            <li>Địa chỉ: {{ user.address or 'N/A' }}</li>
-            <li>Role: {{ user.role.role_name if user.role else '' }}</li>
-            <li>Trạng thái: {{ 'Hoạt động' if user.is_active else 'Bị khóa' }}</li>
-        </ul>
+{% if result[1] == 200 %}
+    {% set user = result[0].get_json()['data']['user'] %}
 
-        <h2>Cập nhật trạng thái</h2>
-        <form method="POST" action="{{ url_for('admin.admin_user_status', user_id=user_id) }}">
-            <select name="is_active">
-                <option value="true" {% if user.is_active %}selected{% endif %}>Kích hoạt</option>
-                <option value="false" {% if not user.is_active %}selected{% endif %}>Khóa</option>
-            </select>
-            <button type="submit">Lưu</button>
-        </form>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="owner-card">
+                <h5 class="mb-3"><i class="fas fa-info-circle me-2"></i> Thông tin cơ bản</h5>
+                <table class="table">
+                    <tr>
+                        <td><strong>ID:</strong></td>
+                        <td>#{{ user.user_id }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Username:</strong></td>
+                        <td>{{ user.username }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Họ tên:</strong></td>
+                        <td>{{ user.full_name or 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Email:</strong></td>
+                        <td>{{ user.email }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Số điện thoại:</strong></td>
+                        <td>{{ user.phone or 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Ngày tạo:</strong></td>
+                        <td>{{ user.created_at }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
 
-        <h2>Đổi role</h2>
-        <form method="POST" action="{{ url_for('admin.admin_user_role', user_id=user_id) }}">
-            <label>Role ID:</label>
-            <input type="number" name="role_id" required>
-            <button type="submit">Cập nhật</button>
-        </form>
+        <div class="col-md-6">
+            <div class="owner-card">
+                <h5 class="mb-3"><i class="fas fa-cog me-2"></i> Quản lý</h5>
+                
+                <!-- Update Role -->
+                <form method="POST" action="{{ url_for('admin.admin_user_role', user_id=user.user_id) }}" class="mb-3">
+                    <label class="form-label">Role</label>
+                    <div class="input-group">
+                        <select name="role_id" class="form-control" required>
+                            <option value="">-- Chọn role --</option>
+                            {% if user.role %}
+                            <option value="{{ user.role.role_id }}" selected>{{ user.role.role_name }} (hiện tại)</option>
+                            {% endif %}
+                        </select>
+                        <button type="submit" class="owner-btn owner-btn-primary">Cập nhật</button>
+                    </div>
+                </form>
 
-        <h2>Xóa người dùng</h2>
-        <form method="POST" action="{{ url_for('admin.admin_user_delete', user_id=user_id) }}">
-            <button type="submit" onclick="return confirm('Xóa người dùng này?')">Xóa</button>
-        </form>
-    {% else %}
-        <p>Không tìm thấy người dùng.</p>
-    {% endif %}
+                <!-- Update Status -->
+                <form method="POST" action="{{ url_for('admin.admin_user_status', user_id=user.user_id) }}" class="mb-3">
+                    <label class="form-label">Trạng thái</label>
+                    <div class="input-group">
+                        <select name="is_active" class="form-control" required>
+                            <option value="1" {{ 'selected' if user.is_active }}>Active</option>
+                            <option value="0" {{ 'selected' if not user.is_active }}>Inactive</option>
+                        </select>
+                        <button type="submit" class="owner-btn owner-btn-primary">Cập nhật</button>
+                    </div>
+                </form>
 
-    <p><a href="{{ url_for('admin.admin_users') }}">Quay lại danh sách</a></p>
-</body>
-</html>
+                <!-- Delete User -->
+                <form method="POST" action="{{ url_for('admin.admin_user_delete', user_id=user.user_id) }}" 
+                      onsubmit="return confirm('Bạn có chắc muốn xóa người dùng này?');">
+                    <button type="submit" class="owner-btn owner-btn-danger w-100">
+                        <i class="fas fa-trash"></i> Xóa người dùng
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
 
+{% else %}
+    <div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+{% endblock %}

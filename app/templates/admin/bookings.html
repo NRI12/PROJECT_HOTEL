@@ -1,70 +1,76 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Quản lý đặt phòng</title>
-</head>
-<body>
-    <h1>Quản lý đặt phòng</h1>
+{% extends "admin/base.html" %}
 
-    {% if error %}
-        <p class="flash-error">{{ error }}</p>
-    {% endif %}
-    {% if success %}
-        <p class="flash-success">{{ success }}</p>
-    {% endif %}
+{% block title %}Quản lý Booking{% endblock %}
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <p class="flash-{{ category }}">{{ message }}</p>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+{% block content %}
 
-    <form method="GET">
-        <label>Trạng thái:</label>
-        <input type="text" name="status" value="{{ request.args.get('status', '') }}">
-        <button type="submit">Lọc</button>
-        <a href="{{ url_for('admin.admin_bookings') }}">Xóa lọc</a>
-    </form>
+<div class="owner-header">
+    <div>
+        <h1 class="owner-header-title">
+            <i class="fas fa-calendar-check me-2"></i> Quản lý Booking
+        </h1>
+        <p class="owner-header-subtitle">Danh sách tất cả đặt phòng trong hệ thống</p>
+    </div>
+</div>
 
-    {% set payload = result[0].json if result and result[1] == 200 else None %}
-    {% set bookings = payload.data.bookings if payload and payload.data and payload.data.bookings else [] %}
+{% set payload = result[0].json if result and result[1] == 200 else None %}
+{% set bookings = payload.data.bookings if payload and payload.data and payload.data.bookings else [] %}
 
+<div class="owner-table-wrapper">
+    <div class="owner-table-header">
+        <h5><i class="fas fa-list me-2"></i> Danh sách booking</h5>
+        <span class="badge bg-primary" style="font-size: 1rem; padding: 0.5rem 1rem;">
+            {{ bookings|length }} booking
+        </span>
+    </div>
     {% if bookings %}
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Mã</th>
-                    <th>Người dùng</th>
-                    <th>Khách sạn</th>
-                    <th>Check-in</th>
-                    <th>Check-out</th>
-                    <th>Trạng thái</th>
-                    <th>Số tiền</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for booking in bookings %}
-                <tr>
-                    <td>{{ booking.booking_id }}</td>
-                    <td>{{ booking.booking_code }}</td>
-                    <td>{{ booking.user_id }}</td>
-                    <td>{{ booking.hotel_id }}</td>
-                    <td>{{ booking.check_in_date }}</td>
-                    <td>{{ booking.check_out_date }}</td>
-                    <td>{{ booking.status }}</td>
-                    <td>{{ booking.final_amount }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="owner-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Khách sạn</th>
+                        <th>Khách hàng</th>
+                        <th>Check-in</th>
+                        <th>Check-out</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end">Số tiền</th>
+                        <th class="text-center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                    <tr>
+                        <td><strong>#{{ booking.booking_id }}</strong></td>
+                        <td>{{ booking.hotel.hotel_name if booking.hotel else 'N/A' }}</td>
+                        <td>{{ booking.user.username if booking.user else 'N/A' }}</td>
+                        <td>{{ booking.check_in_date }}</td>
+                        <td>{{ booking.check_out_date }}</td>
+                        <td>
+                            <span class="owner-badge status-{{ booking.status }}">
+                                {{ booking.status }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <strong class="text-success">{{ "{:,.0f}".format(booking.final_amount) }} VNĐ</strong>
+                        </td>
+                        <td class="text-center">
+                            <a href="{{ url_for('booking.booking_detail', booking_id=booking.booking_id) }}" 
+                               class="owner-btn owner-btn-sm owner-btn-outline-primary">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% else %}
-        <p>Không có booking.</p>
+        <div class="owner-empty-state">
+            <div class="owner-empty-icon"><i class="fas fa-calendar-times"></i></div>
+            <h4 class="owner-empty-title">Chưa có booking</h4>
+        </div>
     {% endif %}
+</div>
 
-    <p><a href="{{ url_for('admin.admin_booking_statistics') }}">Xem thống kê booking</a></p>
-</body>
-</html>
-
+{% endblock %}

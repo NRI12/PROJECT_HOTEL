@@ -108,20 +108,13 @@ def owner_rooms():
     result = RoomController.list_rooms()
     return _render_template(result, 'owner/rooms.html')
 
-
 @owner_bp.route('/rooms/create', methods=['GET', 'POST'])
 @role_required('hotel_owner', 'admin')
 def owner_rooms_create():
     from app.controllers.room_controller import RoomController
     from app.controllers.owner_controller import OwnerDashboardController
     from app.models.room_type import RoomType
-    
-    if request.method == 'POST':
-        result = RoomController.create_room()
-        if result[1] == 201:
-            flash('Tạo phòng thành công', 'success')
-            return redirect(url_for('owner.owner_rooms'))
-        flash('Tạo phòng thất bại', 'error')
+    from app.models.amenity import Amenity
     
     # Get data for form
     hotels_result = OwnerDashboardController.my_hotels()
@@ -133,8 +126,38 @@ def owner_rooms_create():
     room_types = RoomType.query.all()
     room_types_data = [rt.to_dict() for rt in room_types]
     
-    return render_template('owner/rooms_create.html', hotels=hotels, room_types=room_types_data)
-
+    # Get amenities for room category
+    amenities = Amenity.query.filter(
+        (Amenity.category == 'room') | (Amenity.category == 'both')
+    ).all()
+    amenities_data = [a.to_dict() for a in amenities]
+    
+    if request.method == 'POST':
+        print("=== DEBUG: Room Create Data ===")
+        print(f"Form data: {dict(request.form)}")
+        print(f"Files: {request.files}")
+        print("=" * 50)
+        
+        result = RoomController.create_room()
+        if result[1] == 201:
+            flash('Tạo phòng thành công', 'success')
+            return redirect(url_for('owner.owner_rooms'))
+        else:
+            try:
+                error_data = result[0].get_json()
+                error_message = error_data.get('message', 'Tạo phòng thất bại')
+            except:
+                error_message = 'Tạo phòng thất bại'
+            return render_template('owner/rooms_create.html', 
+                                 error=error_message, 
+                                 hotels=hotels, 
+                                 room_types=room_types_data,
+                                 amenities=amenities_data)
+    
+    return render_template('owner/rooms_create.html', 
+                         hotels=hotels, 
+                         room_types=room_types_data,
+                         amenities=amenities_data)
 
 @owner_bp.route('/rooms/<int:room_id>/edit', methods=['GET', 'POST'])
 @role_required('hotel_owner', 'admin')

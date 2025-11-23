@@ -1,104 +1,350 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Trang quản trị</title>
-</head>
-<body>
-    <h1>Dashboard Admin</h1>
+{% extends "admin/base.html" %}
 
-    {% if error %}
-        <p class="flash-error">{{ error }}</p>
-    {% endif %}
-    {% if success %}
-        <p class="flash-success">{{ success }}</p>
-    {% endif %}
+{% block title %}Dashboard & Thống kê{% endblock %}
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <p class="flash-{{ category }}">{{ message }}</p>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
 
-    {% set payload = result[0].json if result and result[1] == 200 else None %}
-    {% set summary = payload.data.summary if payload and payload.data and payload.data.summary else None %}
-    {% set recent_hotels = payload.data.recent_hotels if payload and payload.data and payload.data.recent_hotels else [] %}
-    {% set recent_users = payload.data.recent_users if payload and payload.data and payload.data.recent_users else [] %}
+{% block content %}
 
-    <h2>Thống kê tổng quan</h2>
-    {% if summary %}
-        <ul>
-            <li>Tổng người dùng: {{ summary.total_users }} ({{ summary.active_users }} đang hoạt động)</li>
-            <li>Tổng khách sạn: {{ summary.total_hotels }} ({{ summary.pending_hotels }} chờ duyệt)</li>
-            <li>Tổng booking: {{ summary.total_bookings }}</li>
-            <li>Tổng thanh toán: {{ summary.total_payments }}</li>
-            <li>Doanh thu hoàn tất: {{ summary.total_revenue }}</li>
-        </ul>
-    {% else %}
-        <p>Không có dữ liệu.</p>
-    {% endif %}
+<div class="owner-header">
+    <div>
+        <h1 class="owner-header-title">
+            <i class="fas fa-tachometer-alt me-2"></i> Dashboard & Thống kê Tổng quan
+        </h1>
+        <p class="owner-header-subtitle">Quản lý và giám sát toàn bộ hệ thống</p>
+    </div>
+    <div class="owner-header-actions">
+        <form method="POST" action="{{ url_for('admin.admin_export_report') }}" style="display: inline;">
+            <button type="submit" class="owner-btn owner-btn-success">
+                <i class="fas fa-file-export"></i> Xuất báo cáo
+            </button>
+        </form>
+    </div>
+</div>
 
-    <h2>Khách sạn mới</h2>
-    {% if recent_hotels %}
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Tên</th>
-                    <th>Status</th>
-                    <th>Ngày tạo</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for hotel in recent_hotels %}
-                <tr>
-                    <td>{{ hotel.hotel_id }}</td>
-                    <td>{{ hotel.hotel_name }}</td>
-                    <td>{{ hotel.status }}</td>
-                    <td>{{ hotel.created_at }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>Không có khách sạn mới.</p>
-    {% endif %}
+{% set payload = result[0].json if result and result[1] == 200 else None %}
+{% set summary = payload.data.summary if payload and payload.data and payload.data.summary else None %}
+{% set recent_hotels = payload.data.recent_hotels if payload and payload.data and payload.data.recent_hotels else [] %}
+{% set recent_users = payload.data.recent_users if payload and payload.data and payload.data.recent_users else [] %}
 
-    <h2>Người dùng mới</h2>
-    {% if recent_users %}
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Họ tên</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Ngày tham gia</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for user in recent_users %}
-                <tr>
-                    <td>{{ user.user_id }}</td>
-                    <td>{{ user.full_name }}</td>
-                    <td>{{ user.email }}</td>
-                    <td>{{ user.role.role_name if user.role else '' }}</td>
-                    <td>{{ user.created_at }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>Không có người dùng mới.</p>
-    {% endif %}
+{% if summary %}
+    <!-- Stats Cards -->
+    <div class="owner-stats-row mb-4">
+        <div class="owner-stat-card admin-stat-card">
+            <div class="owner-stat-content">
+                <h6>Tổng người dùng</h6>
+                <div class="stat-value">{{ summary.total_users }}</div>
+                <div class="stat-label">{{ summary.active_users }} đang hoạt động</div>
+            </div>
+            <div class="owner-stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+        </div>
 
-    <p>
-        <a href="{{ url_for('admin.admin_users') }}">Người dùng</a> |
-        <a href="{{ url_for('admin.admin_hotels') }}">Khách sạn</a> |
-        <a href="{{ url_for('admin.admin_bookings') }}">Booking</a> |
-        <a href="{{ url_for('admin.admin_statistics') }}">Thống kê</a>
-    </p>
-</body>
-</html>
+        <div class="owner-stat-card success">
+            <div class="owner-stat-content">
+                <h6>Tổng khách sạn</h6>
+                <div class="stat-value">{{ summary.total_hotels }}</div>
+                <div class="stat-label">
+                    {% if summary.pending_hotels > 0 %}
+                        <span class="badge bg-warning text-dark">{{ summary.pending_hotels }} chờ duyệt</span>
+                    {% else %}
+                        Đang hoạt động
+                    {% endif %}
+                </div>
+            </div>
+            <div class="owner-stat-icon">
+                <i class="fas fa-hotel"></i>
+            </div>
+        </div>
 
+        <div class="owner-stat-card info">
+            <div class="owner-stat-content">
+                <h6>Tổng Booking</h6>
+                <div class="stat-value">{{ summary.total_bookings }}</div>
+                <div class="stat-label">Tất cả đơn đặt</div>
+            </div>
+            <div class="owner-stat-icon">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+        </div>
+
+        <div class="owner-stat-card warning">
+            <div class="owner-stat-content">
+                <h6>Doanh thu</h6>
+                <div class="stat-value">{{ "{:,.0f}".format(summary.total_revenue) }}</div>
+                <div class="stat-label">VNĐ</div>
+            </div>
+            <div class="owner-stat-icon">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secondary Stats Row -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-credit-card fa-3x text-primary mb-3"></i>
+                    <h3>{{ summary.total_payments }}</h3>
+                    <p class="text-muted mb-0">Tổng thanh toán</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-star fa-3x text-warning mb-3"></i>
+                    <h3>{{ summary.total_reviews or 0 }}</h3>
+                    <p class="text-muted mb-0">Tổng đánh giá</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-bed fa-3x text-success mb-3"></i>
+                    <h3>{{ summary.total_rooms or 0 }}</h3>
+                    <p class="text-muted mb-0">Tổng phòng</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-percentage fa-3x text-info mb-3"></i>
+                    <h3>{{ "{:.1f}".format(summary.avg_rating or 0) }}</h3>
+                    <p class="text-muted mb-0">Đánh giá TB</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="owner-chart-card">
+                <div class="owner-chart-header">
+                    <h5><i class="fas fa-chart-line me-2"></i> Doanh thu theo tháng</h5>
+                </div>
+                <div style="position: relative; height: 300px;">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="owner-chart-card">
+                <div class="owner-chart-header">
+                    <h5><i class="fas fa-chart-bar me-2"></i> Booking theo tháng</h5>
+                </div>
+                <div style="position: relative; height: 300px;">
+                    <canvas id="bookingChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="owner-chart-card">
+                <div class="owner-chart-header">
+                    <h5><i class="fas fa-chart-pie me-2"></i> Người dùng theo Role</h5>
+                </div>
+                <div style="position: relative; height: 300px;">
+                    <canvas id="userRoleChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="owner-chart-card">
+                <div class="owner-chart-header">
+                    <h5><i class="fas fa-chart-doughnut me-2"></i> Booking theo trạng thái</h5>
+                </div>
+                <div style="position: relative; height: 300px;">
+                    <canvas id="bookingStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data - replace with real data from backend
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        new Chart(revenueCtx, {
+            type: 'line',
+            data: {
+                labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6'],
+                datasets: [{
+                    label: 'Doanh thu (VNĐ)',
+                    data: [10000000, 15000000, 12000000, 18000000, 20000000, {{ summary.total_revenue }}],
+                    borderColor: 'rgb(102, 126, 234)',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true }
+                }
+            }
+        });
+
+        const bookingCtx = document.getElementById('bookingChart').getContext('2d');
+        new Chart(bookingCtx, {
+            type: 'bar',
+            data: {
+                labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6'],
+                datasets: [{
+                    label: 'Số booking',
+                    data: [50, 70, 60, 80, 90, {{ summary.total_bookings }}],
+                    backgroundColor: 'rgba(25, 135, 84, 0.7)',
+                    borderColor: 'rgb(25, 135, 84)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        const userRoleCtx = document.getElementById('userRoleChart').getContext('2d');
+        new Chart(userRoleCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Khách hàng', 'Chủ KS', 'Admin'],
+                datasets: [{
+                    data: [{{ summary.total_users - 10 }}, 8, 2],
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        'rgba(153, 102, 255, 0.7)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        const bookingStatusCtx = document.getElementById('bookingStatusChart').getContext('2d');
+        new Chart(bookingStatusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Chờ xác nhận', 'Đã xác nhận', 'Hoàn thành', 'Đã hủy'],
+                datasets: [{
+                    data: [10, 30, 50, 10],
+                    backgroundColor: [
+                        'rgba(255, 193, 7, 0.7)',
+                        'rgba(13, 202, 240, 0.7)',
+                        'rgba(25, 135, 84, 0.7)',
+                        'rgba(220, 53, 69, 0.7)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    </script>
+
+{% else %}
+    <div class="owner-alert owner-alert-info">
+        <i class="fas fa-info-circle me-2"></i> Không có dữ liệu thống kê.
+    </div>
+{% endif %}
+
+<!-- Recent Activity Tables -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="owner-table-wrapper">
+            <div class="owner-table-header">
+                <h5><i class="fas fa-hotel me-2"></i> Khách sạn mới</h5>
+                <a href="{{ url_for('admin.admin_hotels') }}" class="owner-btn owner-btn-sm owner-btn-primary">
+                    Xem tất cả
+                </a>
+            </div>
+            {% if recent_hotels %}
+                <div class="table-responsive">
+                    <table class="owner-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tên</th>
+                                <th>Trạng thái</th>
+                                <th>Ngày tạo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for hotel in recent_hotels[:5] %}
+                            <tr>
+                                <td>#{{ hotel.hotel_id }}</td>
+                                <td>{{ hotel.hotel_name }}</td>
+                                <td>
+                                    <span class="owner-badge status-{{ hotel.status }}">
+                                        {{ hotel.status }}
+                                    </span>
+                                </td>
+                                <td>{{ hotel.created_at }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-center text-muted py-3">Chưa có khách sạn mới</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="owner-table-wrapper">
+            <div class="owner-table-header">
+                <h5><i class="fas fa-users me-2"></i> Người dùng mới</h5>
+                <a href="{{ url_for('admin.admin_users') }}" class="owner-btn owner-btn-sm owner-btn-primary">
+                    Xem tất cả
+                </a>
+            </div>
+            {% if recent_users %}
+                <div class="table-responsive">
+                    <table class="owner-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tên</th>
+                                <th>Role</th>
+                                <th>Ngày đăng ký</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in recent_users[:5] %}
+                            <tr>
+                                <td>#{{ user.user_id }}</td>
+                                <td>{{ user.full_name or user.username }}</td>
+                                <td>
+                                    <span class="badge bg-primary">
+                                        {{ user.role.role_name if user.role else 'N/A' }}
+                                    </span>
+                                </td>
+                                <td>{{ user.created_at }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-center text-muted py-3">Chưa có người dùng mới</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

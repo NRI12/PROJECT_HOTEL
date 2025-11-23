@@ -91,13 +91,16 @@ class RoomController:
             return error_response('Chưa đăng nhập', 401)
         
         try:
+            # Get form data
             data = RoomController._get_request_data()
             
+            # Validate required fields
             required_fields = ['hotel_id', 'room_type_id', 'room_name', 'base_price', 'max_guests']
             is_valid, error_msg = validate_required_fields(data, required_fields)
             if not is_valid:
                 return error_response(error_msg, 400)
             
+            # Check hotel ownership
             hotel = Hotel.query.get(data['hotel_id'])
             if not hotel:
                 return error_response('Không tìm thấy khách sạn', 404)
@@ -105,9 +108,11 @@ class RoomController:
             if hotel.owner_id != session['user_id']:
                 return error_response('Không có quyền tạo phòng cho khách sạn này', 403)
             
+            # Validate room data
             schema = RoomCreateSchema()
             validated_data = schema.load(data)
             
+            # Create room
             room = Room(
                 hotel_id=validated_data['hotel_id'],
                 room_type_id=validated_data['room_type_id'],
@@ -125,6 +130,44 @@ class RoomController:
             )
             
             db.session.add(room)
+            db.session.flush()  # Get room_id without committing
+            
+            # Handle image uploads
+            if 'images' in request.files:
+                files = request.files.getlist('images')
+                allowed_extensions = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
+                
+                for idx, file in enumerate(files):
+                    if file.filename == '':
+                        continue
+                    
+                    if '.' in file.filename and file.filename.rsplit('.', 1)[1].lower() in allowed_extensions:
+                        from werkzeug.utils import secure_filename
+                        import os
+                        from datetime import datetime
+                        
+                        filename = secure_filename(f"room_{room.room_id}_{datetime.now().timestamp()}_{file.filename}")
+                        upload_folder = os.path.join('uploads', 'rooms')
+                        os.makedirs(upload_folder, exist_ok=True)
+                        
+                        file_path = os.path.join(upload_folder, filename)
+                        file.save(file_path)
+                        
+                        image = RoomImage(
+                            room_id=room.room_id,
+                            image_url=f"/uploads/rooms/{filename}",
+                            is_primary=(idx == 0),
+                            display_order=idx
+                        )
+                        db.session.add(image)
+            
+            # Handle amenities
+            if validated_data.get('amenity_ids'):
+                amenities = Amenity.query.filter(
+                    Amenity.amenity_id.in_(validated_data['amenity_ids'])
+                ).all()
+                room.amenities = amenities
+            
             db.session.commit()
             
             return success_response(
@@ -134,6 +177,7 @@ class RoomController:
             )
             
         except ValidationError as e:
+            db.session.rollback()
             return validation_error_response(e.messages)
         except Exception as e:
             db.session.rollback()

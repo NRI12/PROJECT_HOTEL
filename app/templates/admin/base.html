@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Dashboard{% endblock %} - Quản trị hệ thống</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/owner.css') }}">
+    {% block extra_css %}{% endblock %}
+    <style>
+        .admin-sidebar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .admin-nav-link.active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .admin-stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .admin-badge {
+            font-weight: 600;
+            padding: 0.35rem 0.65rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="owner-wrapper">
+        <!-- Sidebar -->
+        <aside class="owner-sidebar admin-sidebar">
+            <div class="owner-sidebar-header">
+                <a href="{{ url_for('admin.admin_dashboard') }}" class="owner-sidebar-logo">
+                    <i class="fas fa-shield-alt"></i> ADMIN
+                </a>
+                <div class="owner-sidebar-subtitle">Quản trị viên</div>
+            </div>
+            <nav class="owner-nav">
+                <ul class="list-unstyled">
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('admin.admin_dashboard') }}" class="owner-nav-link admin-nav-link {% if request.endpoint == 'admin.admin_dashboard' %}active{% endif %}">
+                            <i class="owner-nav-icon fas fa-tachometer-alt"></i>
+                            Dashboard & Thống kê
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('admin.admin_users') }}" class="owner-nav-link admin-nav-link {% if 'users' in request.endpoint %}active{% endif %}">
+                            <i class="owner-nav-icon fas fa-users"></i>
+                            Người dùng
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('admin.admin_hotels') }}" class="owner-nav-link admin-nav-link {% if request.endpoint == 'admin.admin_hotels' %}active{% endif %}">
+                            <i class="owner-nav-icon fas fa-hotel"></i>
+                            Khách sạn
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('admin.admin_hotels_pending') }}" class="owner-nav-link admin-nav-link {% if request.endpoint == 'admin.admin_hotels_pending' %}active{% endif %}">
+                            <i class="owner-nav-icon fas fa-clock"></i>
+                            KS Chờ duyệt
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('admin.admin_bookings') }}" class="owner-nav-link admin-nav-link {% if 'bookings' in request.endpoint %}active{% endif %}">
+                            <i class="owner-nav-icon fas fa-calendar-check"></i>
+                            Booking
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('admin.admin_payments') }}" class="owner-nav-link admin-nav-link {% if request.endpoint == 'admin.admin_payments' %}active{% endif %}">
+                            <i class="owner-nav-icon fas fa-credit-card"></i>
+                            Thanh toán
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('admin.admin_reviews') }}" class="owner-nav-link admin-nav-link {% if 'reviews' in request.endpoint %}active{% endif %}">
+                            <i class="owner-nav-icon fas fa-star"></i>
+                            Đánh giá
+                        </a>
+                    </li>
+                    <li class="owner-nav-item">
+                        <a href="{{ url_for('admin.admin_roles') }}" class="owner-nav-link admin-nav-link {% if 'roles' in request.endpoint %}active{% endif %}">
+                            <i class="owner-nav-icon fas fa-user-tag"></i>
+                            Roles
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="owner-content">
+            <!-- Flash Messages -->
+            {% if error %}
+                <div class="owner-alert owner-alert-error">
+                    <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+                </div>
+            {% endif %}
+            {% if success %}
+                <div class="owner-alert owner-alert-success">
+                    <i class="fas fa-check-circle me-2"></i>{{ success }}
+                </div>
+            {% endif %}
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="owner-alert owner-alert-{{ category }}">
+                            <i class="fas fa-info-circle me-2"></i>{{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Page Content -->
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+

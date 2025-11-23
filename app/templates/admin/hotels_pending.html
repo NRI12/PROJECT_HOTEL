@@ -1,64 +1,90 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Khách sạn chờ duyệt</title>
-</head>
-<body>
-    <h1>Khách sạn chờ duyệt</h1>
+{% extends "admin/base.html" %}
 
-    {% if error %}
-        <p class="flash-error">{{ error }}</p>
-    {% endif %}
-    {% if success %}
-        <p class="flash-success">{{ success }}</p>
-    {% endif %}
+{% block title %}Khách sạn chờ duyệt{% endblock %}
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <p class="flash-{{ category }}">{{ message }}</p>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+{% block content %}
 
-    {% set payload = result[0].json if result and result[1] == 200 else None %}
-    {% set hotels = payload.data.hotels if payload and payload.data and payload.data.hotels else [] %}
+<div class="owner-header">
+    <div>
+        <h1 class="owner-header-title">
+            <i class="fas fa-clock me-2"></i> Khách sạn chờ duyệt
+        </h1>
+        <p class="owner-header-subtitle">Danh sách khách sạn đang chờ phê duyệt</p>
+    </div>
+    <div class="owner-header-actions">
+        <a href="{{ url_for('admin.admin_hotels') }}" class="owner-btn owner-btn-outline">
+            <i class="fas fa-list"></i> Tất cả KS
+        </a>
+    </div>
+</div>
 
+{% set payload = result[0].json if result and result[1] == 200 else None %}
+{% set hotels = payload.data.hotels if payload and payload.data and payload.data.hotels else [] %}
+
+<div class="owner-table-wrapper">
+    <div class="owner-table-header">
+        <h5><i class="fas fa-list me-2"></i> Khách sạn chờ duyệt</h5>
+        <span class="badge bg-warning text-dark" style="font-size: 1rem; padding: 0.5rem 1rem;">
+            {{ hotels|length }} khách sạn
+        </span>
+    </div>
     {% if hotels %}
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Tên</th>
-                    <th>Chủ sở hữu</th>
-                    <th>Ngày tạo</th>
-                    <th>Hành động</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for hotel in hotels %}
-                <tr>
-                    <td>{{ hotel.hotel_id }}</td>
-                    <td>{{ hotel.hotel_name }}</td>
-                    <td>{{ hotel.owner_id }}</td>
-                    <td>{{ hotel.created_at }}</td>
-                    <td>
-                        <form method="POST" action="{{ url_for('admin.admin_hotels_approve', hotel_id=hotel.hotel_id) }}" style="display:inline;">
-                            <button type="submit">Duyệt</button>
-                        </form>
-                        <form method="POST" action="{{ url_for('admin.admin_hotels_reject', hotel_id=hotel.hotel_id) }}" style="display:inline;">
-                            <button type="submit">Từ chối</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="owner-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tên khách sạn</th>
+                        <th>Chủ sở hữu</th>
+                        <th>Địa chỉ</th>
+                        <th>Sao</th>
+                        <th>Ngày tạo</th>
+                        <th class="text-center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for hotel in hotels %}
+                    <tr>
+                        <td><strong>#{{ hotel.hotel_id }}</strong></td>
+                        <td>{{ hotel.hotel_name }}</td>
+                        <td>{{ hotel.owner.username if hotel.owner else 'N/A' }}</td>
+                        <td>{{ hotel.city }}</td>
+                        <td>
+                            {% for i in range(hotel.star_rating or 0) %}
+                                <i class="fas fa-star text-warning"></i>
+                            {% endfor %}
+                        </td>
+                        <td>{{ hotel.created_at }}</td>
+                        <td class="text-center">
+                            <a href="{{ url_for('hotel.hotel_detail', hotel_id=hotel.hotel_id) }}" 
+                               class="owner-btn owner-btn-sm owner-btn-outline-primary" title="Xem">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <form method="POST" action="{{ url_for('admin.admin_hotels_approve', hotel_id=hotel.hotel_id) }}" 
+                                  style="display: inline;">
+                                <button type="submit" class="owner-btn owner-btn-sm owner-btn-success" title="Duyệt">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ url_for('admin.admin_hotels_reject', hotel_id=hotel.hotel_id) }}" 
+                                  style="display: inline;" 
+                                  onsubmit="return confirm('Từ chối khách sạn này?');">
+                                <button type="submit" class="owner-btn owner-btn-sm owner-btn-danger" title="Từ chối">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% else %}
-        <p>Không có khách sạn đang chờ.</p>
+        <div class="owner-empty-state">
+            <div class="owner-empty-icon"><i class="fas fa-check-circle text-success"></i></div>
+            <h4 class="owner-empty-title">Không có khách sạn chờ duyệt</h4>
+        </div>
     {% endif %}
+</div>
 
-    <p><a href="{{ url_for('admin.admin_hotels') }}">Quay lại danh sách</a></p>
-</body>
-</html>
-
+{% endblock %}

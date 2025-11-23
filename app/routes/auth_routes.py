@@ -13,7 +13,7 @@ def _get_redirect_by_role(user):
     
     # Admin -> Admin Dashboard
     if role_name == 'admin':
-        return url_for('admin.dashboard')
+        return url_for('admin.admin_dashboard')
     
     # Hotel Owner -> Owner Dashboard
     elif role_name == 'hotel_owner':
