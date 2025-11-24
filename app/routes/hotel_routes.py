@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from app.controllers.hotel_controller import HotelController
 from app.utils.decorators import role_required, hotel_owner_required
 
@@ -99,6 +99,31 @@ def set_primary_image(hotel_id, image_id):
 def hotel_reviews(hotel_id):
     result = HotelController.get_hotel_reviews(hotel_id)
     return render_template('hotel/reviews.html', hotel_id=hotel_id, result=result)
+
+
+# API Endpoint for AJAX
+@hotel_bp.route('/api/<int:hotel_id>/rooms', methods=['GET'])
+def api_get_hotel_rooms(hotel_id):
+    """API endpoint to get rooms for a specific hotel (for AJAX calls)"""
+    from app.models.room import Room
+    try:
+        rooms = Room.query.filter_by(hotel_id=hotel_id).all()
+        rooms_data = []
+        for room in rooms:
+            room_dict = room.to_dict()
+            if room.room_type:
+                room_dict['room_type'] = room.room_type.to_dict()
+            rooms_data.append(room_dict)
+        
+        return jsonify({
+            'success': True,
+            'data': rooms_data
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error: {str(e)}'
+        }), 500
 
 @hotel_bp.route('/<int:hotel_id>/rooms', methods=['GET'])
 def hotel_rooms(hotel_id):

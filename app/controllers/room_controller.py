@@ -129,7 +129,6 @@ class RoomController:
                 bed_type=validated_data.get('bed_type'),
                 base_price=validated_data['base_price'],
                 weekend_price=validated_data.get('weekend_price'),
-                quantity=validated_data.get('quantity', 1),
                 status='available'
             )
             
@@ -204,9 +203,49 @@ class RoomController:
             schema = RoomUpdateSchema()
             validated_data = schema.load(data)
             
+            # Update basic fields
             for key, value in validated_data.items():
-                if hasattr(room, key):
+                if key != 'amenity_ids' and hasattr(room, key):
                     setattr(room, key, value)
+            
+            # Handle image uploads
+            if 'images' in request.files:
+                files = request.files.getlist('images')
+                allowed_extensions = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
+                
+                for idx, file in enumerate(files):
+                    if file.filename == '':
+                        continue
+                    
+                    if '.' in file.filename and file.filename.rsplit('.', 1)[1].lower() in allowed_extensions:
+                        from werkzeug.utils import secure_filename
+                        import os
+                        from datetime import datetime
+                        
+                        filename = secure_filename(f"room_{room.room_id}_{datetime.now().timestamp()}_{file.filename}")
+                        upload_folder = os.path.join('uploads', 'rooms')
+                        os.makedirs(upload_folder, exist_ok=True)
+                        
+                        file_path = os.path.join(upload_folder, filename)
+                        file.save(file_path)
+                        
+                        # Set as primary only if no images exist
+                        is_primary = len(room.images) == 0
+                        
+                        image = RoomImage(
+                            room_id=room.room_id,
+                            image_url=f"/uploads/rooms/{filename}",
+                            is_primary=is_primary,
+                            display_order=len(room.images) + idx
+                        )
+                        db.session.add(image)
+            
+            # Handle amenities
+            if validated_data.get('amenity_ids'):
+                amenities = Amenity.query.filter(
+                    Amenity.amenity_id.in_(validated_data['amenity_ids'])
+                ).all()
+                room.amenities = amenities
             
             db.session.commit()
             
@@ -216,6 +255,7 @@ class RoomController:
             )
             
         except ValidationError as e:
+            db.session.rollback()
             return validation_error_response(e.messages)
         except Exception as e:
             db.session.rollback()
@@ -402,7 +442,8 @@ class RoomController:
             if check_in < date.today():
                 return error_response('Ngày check_in không thể là quá khứ', 400)
             
-            booked_count = db.session.query(db.func.sum(BookingDetail.quantity)).join(
+            # Check if room is already booked in the date range
+            has_booking = db.session.query(BookingDetail).join(
                 BookingDetail.booking
             ).filter(
                 and_(
@@ -427,18 +468,15 @@ class RoomController:
                         )
                     )
                 )
-            ).scalar() or 0
+            ).first() is not None
             
-            available_quantity = room.quantity - booked_count
-            is_available = available_quantity > 0 and room.status == 'available'
+            is_available = not has_booking and room.status == 'available'
             
             return success_response(data={
                 'room_id': room_id,
                 'check_in': check_in_str,
                 'check_out': check_out_str,
                 'is_available': is_available,
-                'total_quantity': room.quantity,
-                'available_quantity': max(0, available_quantity),
                 'status': room.status
             })
             

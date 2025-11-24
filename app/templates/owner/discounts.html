@@ -60,10 +60,10 @@
                                     {% endif %}
                                 </strong>
                             </td>
-                            <td>{{ discount.max_uses or 'Không giới hạn' }}</td>
-                            <td>{{ discount.current_uses or 0 }}</td>
-                            <td>{{ "{:,.0f}".format(discount.min_order_value) if discount.min_order_value else 'Không' }} VNĐ</td>
-                            <td>{{ discount.valid_until or 'Không giới hạn' }}</td>
+                            <td>{{ discount.usage_limit or 'Không giới hạn' }}</td>
+                            <td>{{ discount.used_count or 0 }}</td>
+                            <td>{{ "{:,.0f}".format(discount.min_order_amount) if discount.min_order_amount else 'Không' }} VNĐ</td>
+                            <td>{{ discount.end_date[:10] if discount.end_date else 'Không giới hạn' }}</td>
                             <td>
                                 <span class="owner-badge status-{{ 'available' if discount.is_active else 'maintenance' }}">
                                     {% if discount.is_active %}Kích hoạt

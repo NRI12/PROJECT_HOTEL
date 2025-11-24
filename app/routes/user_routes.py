@@ -4,30 +4,6 @@ from app.utils.decorators import login_required
 
 user_bp = Blueprint('user', __name__, url_prefix='/user')
 
-@user_bp.route('/dashboard', methods=['GET'])
-@login_required
-def dashboard():
-    """Trang tổng quan dashboard của user"""
-    # Lấy thông tin bookings
-    bookings_result = UserController.get_bookings()
-    bookings_data = bookings_result[0].get_json() if bookings_result and bookings_result[0] else {}
-    bookings = bookings_data.get('data', [])
-    
-    # Lấy thông tin favorites
-    favorites_result = UserController.get_favorites()
-    favorites_data = favorites_result[0].get_json() if favorites_result and favorites_result[0] else {}
-    favorites = favorites_data.get('data', [])
-    
-    # Lấy thông tin notifications
-    notifications_result = UserController.get_notifications()
-    notifications_data = notifications_result[0].get_json() if notifications_result and notifications_result[0] else {}
-    notifications = notifications_data.get('data', [])
-    
-    return render_template('user/dashboard.html', 
-                         bookings=bookings, 
-                         favorites=favorites,
-                         notifications=notifications)
-
 @user_bp.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():

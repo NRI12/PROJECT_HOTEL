@@ -148,7 +148,7 @@
 
                 <div class="col-md-6">
                     <label class="form-label">Giờ trả phòng (Check-out)</label>
-                    <input type="time" name="check_out_time" class="form-control" 
+                    <input type="time" name="check_out_time" class="form-control"
                            value="{{ request.form.check_out_time or (hotel.check_out_time[:5] if hotel.check_out_time else '12:00') }}">
                     <small class="text-muted">Mặc định: 12:00</small>
                 </div>
@@ -167,6 +167,63 @@
                 </div>
             </div>
         </form>
+    </div>
+
+    <!-- Hình ảnh khách sạn -->
+    <div class="owner-card mt-4">
+        <h5 class="mb-3">
+            <i class="fas fa-images me-2 text-success"></i>
+            Hình ảnh khách sạn
+        </h5>
+
+        <!-- Upload form -->
+        <form action="{{ url_for('hotel.upload_images', hotel_id=hotel_id) }}" method="POST" enctype="multipart/form-data" class="mb-3">
+            <div class="input-group">
+                <input type="file" name="images" class="form-control" multiple accept="image/*" required>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-upload"></i> Upload ảnh
+                </button>
+            </div>
+            <small class="text-muted">Chọn nhiều ảnh cùng lúc (JPG, PNG, GIF, WEBP)</small>
+        </form>
+
+        {% if hotel.images and hotel.images|length > 0 %}
+        <div class="row g-3">
+            {% for image in hotel.images %}
+            <div class="col-md-3">
+                <div class="position-relative">
+                    <img src="{{ image.image_url }}" class="img-fluid rounded" alt="Hotel Image" style="height: 150px; width: 100%; object-fit: cover;">
+                    {% if image.is_primary %}
+                    <span class="badge bg-success position-absolute top-0 start-0 m-2">
+                        <i class="fas fa-star"></i> Chính
+                    </span>
+                    {% else %}
+                    <form action="{{ url_for('hotel.set_primary_image', hotel_id=hotel_id, image_id=image.image_id) }}" method="POST" class="position-absolute top-0 start-0 m-2">
+                        <button type="submit" class="btn btn-sm btn-light" title="Đặt làm ảnh chính">
+                            <i class="far fa-star"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                    <form action="{{ url_for('hotel.delete_image', hotel_id=hotel_id, image_id=image.image_id) }}" method="POST"
+                          class="position-absolute top-0 end-0 m-2"
+                          onsubmit="return confirm('Bạn có chắc muốn xóa ảnh này?');">
+                        <button type="submit" class="btn btn-sm btn-danger">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                    <div class="position-absolute bottom-0 start-0 end-0 p-2 bg-dark bg-opacity-75 text-white small">
+                        {{ image.caption or 'Không có mô tả' }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-4">
+            <i class="fas fa-image fa-3x mb-3"></i>
+            <p>Chưa có hình ảnh nào. Hãy upload ảnh đầu tiên!</p>
+        </div>
+        {% endif %}
     </div>
 
 {% else %}

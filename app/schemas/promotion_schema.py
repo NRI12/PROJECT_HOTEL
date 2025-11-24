@@ -13,6 +13,8 @@ class PromotionCreateSchema(Schema):
     min_nights = fields.Integer(allow_none=True, validate=validate.Range(min=1))
 
 class PromotionUpdateSchema(Schema):
+    hotel_id = fields.Integer(allow_none=True)
+    room_id = fields.Integer(allow_none=True)
     title = fields.String(validate=validate.Length(min=1, max=200))
     description = fields.String(allow_none=True)
     discount_type = fields.String(validate=validate.OneOf(['percentage', 'fixed']))

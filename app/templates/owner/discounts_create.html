@@ -11,6 +11,13 @@
     </div>
 </div>
 
+{% if error %}
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endif %}
+
 <div class="owner-card">
     <form method="POST">
         <div class="row g-3">
@@ -37,7 +44,7 @@
 
             <div class="col-md-6">
                 <label class="form-label">Số lần dùng tối đa</label>
-                <input type="number" name="max_uses" class="form-control" placeholder="Để trống = không giới hạn">
+                <input type="number" name="usage_limit" class="form-control" placeholder="Để trống = không giới hạn">
             </div>
 
             <div class="col-md-6">
@@ -52,7 +59,13 @@
 
             <div class="col-md-6">
                 <label class="form-label">Giá trị đơn hàng tối thiểu (VNĐ)</label>
-                <input type="number" name="min_order_value" class="form-control" placeholder="500000">
+                <input type="number" name="min_order_amount" class="form-control" placeholder="500000">
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Giảm tối đa (VNĐ)</label>
+                <input type="number" name="max_discount_amount" class="form-control" placeholder="Để trống = không giới hạn">
+                <small class="text-muted">Áp dụng cho giảm giá theo %</small>
             </div>
 
             <div class="col-12">

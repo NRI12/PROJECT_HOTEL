@@ -17,8 +17,7 @@ class Room(db.Model):
     bed_type = db.Column(db.String(100))
     base_price = db.Column(db.Numeric(10, 2), nullable=False)
     weekend_price = db.Column(db.Numeric(10, 2))
-    quantity = db.Column(db.Integer, nullable=False, default=1)
-    status = db.Column(db.Enum('available', 'unavailable', 'maintenance'), default='available')
+    status = db.Column(db.Enum('available', 'occupied', 'maintenance'), default='available')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -41,7 +40,6 @@ class Room(db.Model):
             'bed_type': self.bed_type,
             'base_price': float(self.base_price) if self.base_price else 0,
             'weekend_price': float(self.weekend_price) if self.weekend_price else None,
-            'quantity': self.quantity,
             'status': self.status,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None

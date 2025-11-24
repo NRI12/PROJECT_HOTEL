@@ -12,6 +12,9 @@
         <p class="owner-header-subtitle">Quản lý danh sách khách sạn và thông tin</p>
     </div>
     <div class="owner-header-actions">
+        <a href="{{ url_for('hotel.create_hotel') }}" class="owner-btn owner-btn-primary me-2">
+            <i class="fas fa-plus"></i> Thêm khách sạn
+        </a>
         <a href="{{ url_for('owner.dashboard') }}" class="owner-btn owner-btn-outline">
             <i class="fas fa-arrow-left"></i> Quay lại
         </a>
@@ -50,7 +53,16 @@
                         <td><strong>#{{ hotel.hotel_id }}</strong></td>
                         <td>
                             <div class="d-flex align-items-center">
-                                <i class="fas fa-hotel text-primary me-2" style="font-size: 1.5rem;"></i>
+                                {% if hotel.images and hotel.images|length > 0 %}
+                                    {% set primary_image = hotel.images|selectattr('is_primary')|first or hotel.images[0] %}
+                                    <img src="{{ primary_image.image_url }}" alt="{{ hotel.hotel_name }}" 
+                                         class="rounded me-2" style="width: 60px; height: 60px; object-fit: cover;">
+                                {% else %}
+                                    <div class="bg-light rounded me-2 d-flex align-items-center justify-content-center" 
+                                         style="width: 60px; height: 60px;">
+                                        <i class="fas fa-hotel text-muted"></i>
+                                    </div>
+                                {% endif %}
                                 <div>
                                     <strong>{{ hotel.hotel_name }}</strong>
                                     {% if hotel.rating %}
@@ -66,13 +78,25 @@
                             {{ hotel.address }}
                         </td>
                         <td class="text-center">
-                            {% if hotel.is_active %}
-                                <span class="owner-badge status-active">
+                            {% if hotel.status == 'active' %}
+                                <span class="owner-badge status-confirmed">
                                     <i class="fas fa-check-circle"></i> Hoạt động
                                 </span>
+                            {% elif hotel.status == 'pending' %}
+                                <span class="owner-badge status-pending">
+                                    <i class="fas fa-clock"></i> Chờ duyệt
+                                </span>
+                            {% elif hotel.status == 'suspended' %}
+                                <span class="owner-badge status-cancelled">
+                                    <i class="fas fa-pause-circle"></i> Tạm dừng
+                                </span>
+                            {% elif hotel.status == 'rejected' %}
+                                <span class="owner-badge status-cancelled">
+                                    <i class="fas fa-times-circle"></i> Từ chối
+                                </span>
                             {% else %}
-                                <span class="owner-badge status-inactive">
-                                    <i class="fas fa-times-circle"></i> Tạm dừng
+                                <span class="owner-badge status-pending">
+                                    {{ hotel.status }}
                                 </span>
                             {% endif %}
                         </td>
@@ -115,16 +139,32 @@
         {% for hotel in hotels %}
         <div class="col-md-6 col-lg-4 mb-4">
             <div class="card h-100 shadow-sm border-0">
+                {% if hotel.images and hotel.images|length > 0 %}
+                    {% set primary_image = hotel.images|selectattr('is_primary')|first or hotel.images[0] %}
+                    <img src="{{ primary_image.image_url }}" class="card-img-top" alt="{{ hotel.hotel_name }}" 
+                         style="height: 200px; object-fit: cover;">
+                {% else %}
+                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                         style="height: 200px;">
+                        <i class="fas fa-hotel fa-3x text-muted"></i>
+                    </div>
+                {% endif %}
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <h5 class="card-title mb-0">
                             <i class="fas fa-hotel text-primary me-2"></i>
                             {{ hotel.hotel_name }}
                         </h5>
-                        {% if hotel.is_active %}
-                            <span class="badge bg-success">Active</span>
+                        {% if hotel.status == 'active' %}
+                            <span class="badge bg-success">Hoạt động</span>
+                        {% elif hotel.status == 'pending' %}
+                            <span class="badge bg-warning">Chờ duyệt</span>
+                        {% elif hotel.status == 'suspended' %}
+                            <span class="badge bg-secondary">Tạm dừng</span>
+                        {% elif hotel.status == 'rejected' %}
+                            <span class="badge bg-danger">Từ chối</span>
                         {% else %}
-                            <span class="badge bg-secondary">Inactive</span>
+                            <span class="badge bg-secondary">{{ hotel.status }}</span>
                         {% endif %}
                     </div>
                     <p class="card-text text-muted mb-2">

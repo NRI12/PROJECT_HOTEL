@@ -35,7 +35,7 @@ def role_required(*allowed_roles):
                 elif user_role == 'hotel_owner':
                     return redirect(url_for('owner.dashboard'))
                 elif user_role == 'customer':
-                    return redirect(url_for('user.dashboard'))
+                    return redirect(url_for('user.profile'))
                 else:
                     return redirect(url_for('main.index'))
             

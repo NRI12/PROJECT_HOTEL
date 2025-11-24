@@ -27,11 +27,10 @@
                         <tr>
                             <th>ID</th>
                             <th>Tiêu đề</th>
+                            <th>Áp dụng</th>
                             <th>Loại giảm</th>
                             <th>Giá trị</th>
-                            <th>Số lượng</th>
-                            <th>Ngày bắt đầu</th>
-                            <th>Ngày kết thúc</th>
+                            <th>Thời gian</th>
                             <th>Trạng thái</th>
                             <th class="text-center">Thao tác</th>
                         </tr>
@@ -41,8 +40,28 @@
                         <tr>
                             <td><strong>#{{ promo.promotion_id }}</strong></td>
                             <td>
-                                <i class="fas fa-tags text-primary me-1"></i>
-                                <strong>{{ promo.title }}</strong>
+                                <div>
+                                    <i class="fas fa-tags text-primary me-1"></i>
+                                    <strong>{{ promo.title }}</strong>
+                                    {% if promo.description %}
+                                    <br><small class="text-muted">{{ promo.description[:50] }}...</small>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                {% if promo.room %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-bed"></i> Phòng #{{ promo.room_id }}
+                                    </span>
+                                {% elif promo.hotel %}
+                                    <span class="badge bg-info">
+                                        <i class="fas fa-hotel"></i> {{ promo.hotel.hotel_name if promo.hotel.hotel_name|length < 20 else promo.hotel.hotel_name[:20] + '...' }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-globe"></i> Tất cả
+                                    </span>
+                                {% endif %}
                             </td>
                             <td>
                                 {% if promo.discount_type == 'percentage' %}
@@ -59,30 +78,43 @@
                                         {{ "{:,.0f}".format(promo.discount_value) }} VNĐ
                                     {% endif %}
                                 </strong>
+                                {% if promo.min_nights and promo.min_nights > 1 %}
+                                <br><small class="text-muted">Min: {{ promo.min_nights }} đêm</small>
+                                {% endif %}
                             </td>
-                            <td>{{ promo.quantity or 'Không giới hạn' }}</td>
-                            <td>{{ promo.start_date }}</td>
-                            <td>{{ promo.end_date }}</td>
                             <td>
-                                <span class="owner-badge status-{{ promo.status }}">
-                                    {% if promo.status == 'active' %}Kích hoạt
-                                    {% elif promo.status == 'inactive' %}Tạm dừng
-                                    {% else %}{{ promo.status }}{% endif %}
-                                </span>
+                                <small>
+                                    <i class="fas fa-calendar-check text-success"></i> {{ promo.start_date[:10] }}
+                                    <br>
+                                    <i class="fas fa-calendar-times text-danger"></i> {{ promo.end_date[:10] }}
+                                </small>
+                            </td>
+                            <td>
+                                {% if promo.is_active %}
+                                    <span class="owner-badge status-confirmed">
+                                        <i class="fas fa-check-circle"></i> Hoạt động
+                                    </span>
+                                {% else %}
+                                    <span class="owner-badge status-cancelled">
+                                        <i class="fas fa-pause-circle"></i> Tạm dừng
+                                    </span>
+                                {% endif %}
                             </td>
                             <td class="text-center">
-                                <a href="{{ url_for('owner.owner_promotions_edit', promotion_id=promo.promotion_id) }}" 
-                                   class="owner-btn owner-btn-sm owner-btn-outline-primary" 
-                                   title="Sửa">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <form method="POST" action="{{ url_for('owner.owner_promotions_delete', promotion_id=promo.promotion_id) }}" 
-                                      style="display:inline;" 
-                                      onsubmit="return confirm('Bạn có chắc muốn xóa khuyến mãi này?');">
-                                    <button type="submit" class="owner-btn owner-btn-sm owner-btn-outline-danger" title="Xóa">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('owner.owner_promotions_edit', promotion_id=promo.promotion_id) }}" 
+                                       class="btn btn-sm btn-warning text-white" 
+                                       title="Sửa">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form method="POST" action="{{ url_for('owner.owner_promotions_delete', promotion_id=promo.promotion_id) }}" 
+                                          style="display:inline;" 
+                                          onsubmit="return confirm('Bạn có chắc muốn xóa khuyến mãi này?');">
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Xóa">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}

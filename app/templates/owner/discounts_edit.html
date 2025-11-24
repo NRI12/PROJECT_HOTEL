@@ -34,22 +34,28 @@
 
                 <div class="col-md-6">
                     <label class="form-label">Số lần dùng tối đa</label>
-                    <input type="number" name="max_uses" class="form-control" value="{{ discount.max_uses or '' }}">
+                    <input type="number" name="usage_limit" class="form-control" value="{{ discount.usage_limit or '' }}">
                 </div>
 
                 <div class="col-md-6">
                     <label class="form-label">Ngày bắt đầu *</label>
-                    <input type="date" name="start_date" class="form-control" value="{{ discount.start_date or '' }}" required>
+                    <input type="date" name="start_date" class="form-control" value="{{ discount.start_date[:10] if discount.start_date else '' }}" required>
                 </div>
 
                 <div class="col-md-6">
                     <label class="form-label">Ngày kết thúc *</label>
-                    <input type="date" name="end_date" class="form-control" value="{{ discount.end_date or '' }}" required>
+                    <input type="date" name="end_date" class="form-control" value="{{ discount.end_date[:10] if discount.end_date else '' }}" required>
                 </div>
 
                 <div class="col-md-6">
                     <label class="form-label">Giá trị đơn hàng tối thiểu (VNĐ)</label>
-                    <input type="number" name="min_order_value" class="form-control" value="{{ discount.min_order_value or '' }}">
+                    <input type="number" name="min_order_amount" class="form-control" value="{{ discount.min_order_amount or '' }}">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Giảm tối đa (VNĐ)</label>
+                    <input type="number" name="max_discount_amount" class="form-control" value="{{ discount.max_discount_amount or '' }}">
+                    <small class="text-muted">Áp dụng cho giảm giá theo %</small>
                 </div>
 
                 <div class="col-12">

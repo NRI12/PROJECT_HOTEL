@@ -15,8 +15,11 @@
     {% set room = result[0].get_json()['data']['room'] %}
 
     <div class="owner-card">
-        <form method="POST">
-            <div class="row g-3">
+        <form method="POST" enctype="multipart/form-data">
+            
+            <!-- BƯỚC 1: THÔNG TIN CƠ BẢN -->
+            <h5 class="mb-3 pb-2 border-bottom">1. Thông tin cơ bản</h5>
+            <div class="row g-3 mb-4">
                 <div class="col-md-6">
                     <label class="form-label">Khách sạn *</label>
                     <select name="hotel_id" class="form-control" required>
@@ -34,7 +37,7 @@
                     <select name="room_type_id" class="form-control" required>
                         <option value="">-- Chọn loại phòng --</option>
                         {% for room_type in room_types %}
-                        <option value="{{ room_type.room_type_id }}" {{ 'selected' if room_type.room_type_id == room.room_type_id }}>
+                        <option value="{{ room_type.room_type_id or room_type.type_id }}" {{ 'selected' if (room_type.room_type_id or room_type.type_id) == room.room_type_id }}>
                             {{ room_type.type_name }}
                         </option>
                         {% endfor %}
@@ -43,52 +46,149 @@
 
                 <div class="col-md-6">
                     <label class="form-label">Tên phòng *</label>
-                    <input type="text" name="room_name" class="form-control" value="{{ room.room_name }}" required>
+                    <input type="text" name="room_name" class="form-control" value="{{ room.room_name }}" placeholder="VD: Phòng Deluxe 101" required>
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label">Giá cơ bản/đêm (VNĐ) *</label>
-                    <input type="number" name="base_price" class="form-control" value="{{ room.base_price }}" required>
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label">Số khách tối đa *</label>
-                    <input type="number" name="max_guests" class="form-control" value="{{ room.max_guests }}" required>
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label">Diện tích (m²)</label>
-                    <input type="number" name="size" class="form-control" value="{{ room.size or '' }}" step="0.1">
+                    <label class="form-label">Số phòng</label>
+                    <input type="text" name="room_number" class="form-control" value="{{ room.room_number or '' }}" placeholder="VD: 101, A-203">
                 </div>
 
                 <div class="col-12">
                     <label class="form-label">Mô tả</label>
-                    <textarea name="description" class="form-control" rows="4">{{ room.description or '' }}</textarea>
+                    <textarea name="description" class="form-control" rows="3" placeholder="Mô tả về phòng...">{{ room.description or '' }}</textarea>
+                </div>
+            </div>
+
+            <!-- BƯỚC 2: CHI TIẾT PHÒNG -->
+            <h5 class="mb-3 pb-2 border-bottom">2. Chi tiết phòng</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="form-label">Diện tích (m²)</label>
+                    <input type="number" name="area" class="form-control" value="{{ room.area or '' }}" placeholder="25" step="0.01">
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Số khách tối đa *</label>
+                    <input type="number" name="max_guests" class="form-control" value="{{ room.max_guests }}" placeholder="2" min="1" required>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Số giường</label>
+                    <input type="number" name="num_beds" class="form-control" value="{{ room.num_beds or 1 }}" placeholder="1" min="1">
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label">Số giường đơn</label>
-                    <input type="number" name="bed_type_single" class="form-control" value="{{ room.bed_type_single or 0 }}">
+                    <label class="form-label">Loại giường</label>
+                    <select name="bed_type" class="form-control">
+                        <option value="">-- Chọn loại giường --</option>
+                        <option value="Single" {{ 'selected' if room.bed_type == 'Single' }}>Single (Đơn)</option>
+                        <option value="Twin" {{ 'selected' if room.bed_type == 'Twin' }}>Twin (2 đơn)</option>
+                        <option value="Double" {{ 'selected' if room.bed_type == 'Double' }}>Double (Đôi)</option>
+                        <option value="Queen" {{ 'selected' if room.bed_type == 'Queen' }}>Queen</option>
+                        <option value="King" {{ 'selected' if room.bed_type == 'King' }}>King</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <!-- BƯỚC 3: GIÁ PHÒNG -->
+            <h5 class="mb-3 pb-2 border-bottom">3. Giá phòng</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label">Giá cơ bản/đêm (VNĐ) *</label>
+                    <input type="number" name="base_price" class="form-control" value="{{ room.base_price }}" placeholder="500000" step="0.01" required>
+                    <small class="text-muted">Giá cho các ngày thường (Thứ 2 - Thứ 5)</small>
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label">Số giường đôi</label>
-                    <input type="number" name="bed_type_double" class="form-control" value="{{ room.bed_type_double or 0 }}">
+                    <label class="form-label">Giá cuối tuần (VNĐ)</label>
+                    <input type="number" name="weekend_price" class="form-control" value="{{ room.weekend_price or '' }}" placeholder="700000" step="0.01">
+                    <small class="text-muted">Giá cho Thứ 6, Thứ 7, Chủ nhật</small>
                 </div>
+            </div>
 
-                <div class="col-12">
-                    <label class="form-label">Trạng thái *</label>
+            <!-- BƯỚC 4: HÌNH ẢNH -->
+            <h5 class="mb-3 pb-2 border-bottom">4. Hình ảnh phòng</h5>
+            <div class="mb-4">
+                <!-- Hiển thị ảnh hiện tại -->
+                {% if room.images and room.images|length > 0 %}
+                <div class="mb-3">
+                    <label class="form-label">Ảnh hiện tại</label>
+                    <div class="row g-2" id="currentImages">
+                        {% for image in room.images %}
+                        <div class="col-md-3" id="image-{{ image.image_id }}">
+                            <div class="position-relative">
+                                <img src="{{ image.image_url }}" class="img-thumbnail" style="width: 100%; height: 150px; object-fit: cover;">
+                                {% if image.is_primary %}
+                                <span class="badge bg-primary position-absolute top-0 start-0 m-2">Ảnh chính</span>
+                                {% endif %}
+                                <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2" 
+                                        onclick="deleteImage({{ image.image_id }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Upload ảnh mới -->
+                <label class="form-label">Upload ảnh mới</label>
+                <input type="file" name="images" class="form-control" multiple accept="image/*" id="imageInput">
+                <small class="text-muted">Chọn nhiều ảnh (JPG, PNG, GIF, WEBP). Ảnh đầu tiên sẽ là ảnh chính nếu chưa có ảnh.</small>
+                
+                <div id="imagePreview" class="mt-3" style="display: none;">
+                    <div class="row g-2" id="previewContainer"></div>
+                </div>
+            </div>
+
+            <!-- BƯỚC 5: TIỆN NGHI -->
+            <h5 class="mb-3 pb-2 border-bottom">5. Tiện nghi phòng</h5>
+            <div class="mb-4">
+                {% if amenities %}
+                <div class="row">
+                    {% for amenity in amenities %}
+                    <div class="col-md-4 mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="amenity_ids" 
+                                   value="{{ amenity.amenity_id }}" 
+                                   id="amenity{{ amenity.amenity_id }}"
+                                   {% if room.amenities and amenity.amenity_id in room.amenities|map(attribute='amenity_id')|list %}checked{% endif %}>
+                            <label class="form-check-label" for="amenity{{ amenity.amenity_id }}">
+                                {% if amenity.icon %}{{ amenity.icon }}{% endif %} {{ amenity.amenity_name }}
+                            </label>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">Chưa có tiện nghi nào.</p>
+                {% endif %}
+            </div>
+
+            <!-- BƯỚC 6: TRẠNG THÁI -->
+            <h5 class="mb-3 pb-2 border-bottom">6. Trạng thái</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label">Trạng thái phòng *</label>
                     <select name="status" class="form-control">
                         <option value="available" {{ 'selected' if room.status == 'available' }}>Có sẵn</option>
                         <option value="occupied" {{ 'selected' if room.status == 'occupied' }}>Đã đặt</option>
                         <option value="maintenance" {{ 'selected' if room.status == 'maintenance' }}>Bảo trì</option>
                     </select>
                 </div>
+            </div>
 
-                <div class="col-12">
-                    <button type="submit" class="owner-btn owner-btn-primary">Cập nhật</button>
-                    <a href="{{ url_for('owner.owner_rooms') }}" class="owner-btn owner-btn-outline-secondary">Hủy</a>
-                </div>
+            <!-- NÚT HÀNH ĐỘNG -->
+            <div class="col-12">
+                <button type="submit" class="owner-btn owner-btn-primary">
+                    <i class="fas fa-save"></i> Cập nhật
+                </button>
+                <a href="{{ url_for('owner.owner_rooms') }}" class="owner-btn owner-btn-outline-secondary">
+                    <i class="fas fa-times"></i> Hủy
+                </a>
             </div>
         </form>
     </div>
@@ -96,5 +196,67 @@
 {% else %}
     <div class="alert alert-danger">{{ error }}</div>
 {% endif %}
+
+<script>
+// Preview ảnh mới
+document.getElementById('imageInput').addEventListener('change', function(e) {
+    const previewDiv = document.getElementById('imagePreview');
+    const container = document.getElementById('previewContainer');
+    const files = e.target.files;
+    
+    if (files.length > 0) {
+        container.innerHTML = '';
+        previewDiv.style.display = 'block';
+        
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const col = document.createElement('div');
+                col.className = 'col-md-3';
+                col.innerHTML = `
+                    <div class="position-relative">
+                        <img src="${e.target.result}" class="img-thumbnail" style="width: 100%; height: 150px; object-fit: cover;">
+                        <span class="badge bg-success position-absolute top-0 start-0 m-2">Mới</span>
+                    </div>
+                `;
+                container.appendChild(col);
+            };
+            
+            reader.readAsDataURL(file);
+        }
+    } else {
+        previewDiv.style.display = 'none';
+    }
+});
+
+// Xóa ảnh
+function deleteImage(imageId) {
+    if (!confirm('Bạn có chắc muốn xóa ảnh này?')) {
+        return;
+    }
+    
+    fetch(`/owner/rooms/{{ room.room_id }}/images/${imageId}/delete`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('image-' + imageId).remove();
+            alert('Xóa ảnh thành công!');
+        } else {
+            alert(data.message || 'Xóa ảnh thất bại!');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Có lỗi xảy ra!');
+    });
+}
+</script>
 
 {% endblock %}

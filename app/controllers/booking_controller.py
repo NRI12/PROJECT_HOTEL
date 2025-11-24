@@ -164,6 +164,14 @@ class BookingController:
                 discount_code_obj = DiscountCode.query.filter_by(code=discount_code_str, is_active=True).first()
                 
                 if discount_code_obj:
+                    # Check if discount belongs to hotel owner
+                    hotel = Hotel.query.get(validated_data['hotel_id'])
+                    if not hotel:
+                        return error_response('Không tìm thấy khách sạn', 404)
+                    
+                    if hotel.owner_id != discount_code_obj.owner_id:
+                        return error_response('Mã giảm giá không áp dụng cho khách sạn này', 400)
+                    
                     # Kiểm tra validity
                     now = datetime.utcnow()
                     if discount_code_obj.start_date <= now <= discount_code_obj.end_date:

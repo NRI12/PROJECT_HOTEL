@@ -349,32 +349,10 @@
             <div class="row mt-4">
                 <div class="col-12">
                     <div class="info-card">
-                        <h3>
-                            <i class="bi bi-gear me-2"></i>
-                            Quản lý đặt phòng
-                        </h3>
                         <div class="action-buttons">
                             <a href="{{ url_for('booking.list_bookings') }}" class="btn btn-secondary">
                                 <i class="bi bi-arrow-left me-2"></i>Quay lại danh sách
                             </a>
-                            
-                            <!-- INSTANT CONFIRM - No longer need confirm button -->
-                            
-                            {% if booking.status == 'confirmed' %}
-                            <form action="{{ url_for('booking.check_in', booking_id=booking_id) }}" method="POST" style="display:inline;">
-                                <button type="submit" class="btn btn-success">
-                                    <i class="bi bi-box-arrow-in-right me-2"></i>Check-in
-                                </button>
-                            </form>
-                            {% endif %}
-                            
-                            {% if booking.status == 'checked_in' %}
-                            <form action="{{ url_for('booking.check_out', booking_id=booking_id) }}" method="POST" style="display:inline;">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-box-arrow-right me-2"></i>Check-out
-                                </button>
-                            </form>
-                            {% endif %}
                             
                             {% if booking.status in ['pending', 'confirmed'] %}
                             <form action="{{ url_for('booking.cancel_booking', booking_id=booking_id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đặt phòng này?')">

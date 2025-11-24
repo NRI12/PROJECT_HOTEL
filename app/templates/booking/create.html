@@ -213,14 +213,12 @@
                                         <!-- Input fields thông thường khi chưa có room_id -->
                                         <div class="room-selection-item mb-3">
                                             <div class="row g-3">
-                                                <div class="col-md-6">
+                                                <div class="col-md-10">
                                                     <label class="form-label">Mã phòng <span class="text-danger">*</span></label>
                                                     <input type="number" class="form-control" name="rooms[0][room_id]" required>
+                                                    <small class="text-muted">Lưu ý: Mỗi phòng cần được chọn riêng. Để đặt nhiều phòng, nhấn "Thêm phòng".</small>
                                                 </div>
-                                                <div class="col-md-4">
-                                                    <label class="form-label">Số lượng <span class="text-danger">*</span></label>
-                                                    <input type="number" class="form-control" name="rooms[0][quantity]" min="1" value="1" required>
-                                                </div>
+                                                <input type="hidden" name="rooms[0][quantity]" value="1">
                                                 <div class="col-md-2 d-flex align-items-end">
                                                     <button type="button" class="btn btn-outline-danger w-100" onclick="removeRoom(this)" style="display: none;">
                                                         <i class="bi bi-trash"></i>
@@ -546,14 +544,12 @@
             newRoom.className = 'room-selection-item mb-3';
             newRoom.innerHTML = `
                 <div class="row g-3">
-                    <div class="col-md-6">
+                    <div class="col-md-10">
                         <label class="form-label">Mã phòng <span class="text-danger">*</span></label>
                         <input type="number" class="form-control" name="rooms[${roomCount - 1}][room_id]" required>
+                        <small class="text-muted">Lưu ý: Mỗi phòng cần được chọn riêng. Để đặt nhiều phòng, nhấn "Thêm phòng".</small>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Số lượng <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control" name="rooms[${roomCount - 1}][quantity]" min="1" value="1" required>
-                    </div>
+                    <input type="hidden" name="rooms[${roomCount - 1}][quantity]" value="1">
                     <div class="col-md-2 d-flex align-items-end">
                         <button type="button" class="btn btn-outline-danger w-100" onclick="removeRoom(this)">
                             <i class="bi bi-trash"></i>

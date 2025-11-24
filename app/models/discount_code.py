@@ -6,7 +6,8 @@ class DiscountCode(db.Model):
     __tablename__ = 'discount_codes'
     
     code_id = db.Column(db.Integer, primary_key=True)
-    code = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    owner_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+    code = db.Column(db.String(50), nullable=False, index=True)
     description = db.Column(db.Text)
     discount_type = db.Column(db.Enum('percentage', 'fixed'), nullable=False)
     discount_value = db.Column(db.Numeric(10, 2), nullable=False)
@@ -20,11 +21,18 @@ class DiscountCode(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    owner = db.relationship('User', backref='discount_codes', lazy=True)
     discount_usage = db.relationship('DiscountUsage', backref='discount_code', lazy=True)
+    
+    # Add unique constraint for code per owner
+    __table_args__ = (
+        db.UniqueConstraint('owner_id', 'code', name='uq_owner_code'),
+    )
     
     def to_dict(self):
         return {
             'code_id': self.code_id,
+            'owner_id': self.owner_id,
             'code': self.code,
             'description': self.description,
             'discount_type': self.discount_type,

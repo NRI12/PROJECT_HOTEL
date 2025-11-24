@@ -26,6 +26,15 @@ class PromotionController:
             return {}
     
     @staticmethod
+    def _preprocess_form_data(data):
+        """Convert empty strings to None for optional integer fields"""
+        optional_int_fields = ['hotel_id', 'room_id', 'min_nights']
+        for field in optional_int_fields:
+            if field in data and data[field] == '':
+                data[field] = None
+        return data
+    
+    @staticmethod
     def list_promotions():
         try:
             page = request.args.get('page', 1, type=int)
@@ -89,6 +98,7 @@ class PromotionController:
         
         try:
             data = PromotionController._get_request_data()
+            data = PromotionController._preprocess_form_data(data)
             
             required_fields = ['title', 'discount_type', 'discount_value', 'start_date', 'end_date']
             is_valid, error_msg = validate_required_fields(data, required_fields)
@@ -172,6 +182,7 @@ class PromotionController:
                         return error_response('Không có quyền cập nhật khuyến mãi này', 403)
             
             data = PromotionController._get_request_data()
+            data = PromotionController._preprocess_form_data(data)
             schema = PromotionUpdateSchema()
             validated_data = schema.load(data)
             

@@ -12,10 +12,10 @@ class RoomCreateSchema(Schema):
     bed_type = fields.String(allow_none=True)
     base_price = fields.Decimal(required=True, as_string=False, validate=validate.Range(min=0))
     weekend_price = fields.Decimal(as_string=False, allow_none=True, validate=validate.Range(min=0))
-    quantity = fields.Integer(allow_none=True, validate=validate.Range(min=1))
     amenity_ids = fields.List(fields.Integer(), allow_none=True)
 
 class RoomUpdateSchema(Schema):
+    hotel_id = fields.Integer()
     room_type_id = fields.Integer()
     room_number = fields.String()
     room_name = fields.String(validate=validate.Length(min=1, max=200))
@@ -26,13 +26,14 @@ class RoomUpdateSchema(Schema):
     bed_type = fields.String()
     base_price = fields.Decimal(as_string=False, validate=validate.Range(min=0))
     weekend_price = fields.Decimal(as_string=False, validate=validate.Range(min=0))
-    quantity = fields.Integer(validate=validate.Range(min=1))
+    status = fields.String(validate=validate.OneOf(['available', 'occupied', 'maintenance']))
+    amenity_ids = fields.List(fields.Integer(), allow_none=True)
 
 class RoomAmenitySchema(Schema):
     amenity_ids = fields.List(fields.Integer(), required=True)
 
 class RoomStatusSchema(Schema):
-    status = fields.String(required=True, validate=validate.OneOf(['available', 'unavailable', 'maintenance']))
+    status = fields.String(required=True, validate=validate.OneOf(['available', 'occupied', 'maintenance']))
 
 class RoomTypeCreateSchema(Schema):
     type_name = fields.String(required=True, validate=validate.Length(min=1, max=100))

@@ -11,17 +11,14 @@ def _get_redirect_by_role(user):
     
     role_name = user.role.role_name
     
-    # Admin -> Admin Dashboard
     if role_name == 'admin':
         return url_for('admin.admin_dashboard')
     
-    # Hotel Owner -> Owner Dashboard
     elif role_name == 'hotel_owner':
         return url_for('owner.dashboard')
     
-    # Customer -> User Dashboard (hoặc main index)
     elif role_name == 'customer':
-        return url_for('user.dashboard')
+        return url_for('user.profile')
     
     # Default -> Main Index
     else:

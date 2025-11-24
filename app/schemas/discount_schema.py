@@ -10,6 +10,7 @@ class DiscountCreateSchema(Schema):
     usage_limit = fields.Integer(allow_none=True, validate=validate.Range(min=1))
     start_date = fields.DateTime(required=True)
     end_date = fields.DateTime(required=True)
+    is_active = fields.Boolean()
 
 class DiscountUpdateSchema(Schema):
     code = fields.String(validate=validate.Length(min=1, max=50))
@@ -26,3 +27,4 @@ class DiscountUpdateSchema(Schema):
 class DiscountValidateSchema(Schema):
     code = fields.String(required=True)
     order_amount = fields.Decimal(required=True, as_string=False, validate=validate.Range(min=0))
+    hotel_id = fields.Integer(allow_none=True)  # To validate discount owner matches hotel owner

@@ -7,31 +7,31 @@
 <div class="owner-header">
     <div>
         <h1 class="owner-header-title">
-            <i class="fas fa-door-open me-2"></i> Quản lý phòng
+            Quản lý phòng
         </h1>
         <p class="owner-header-subtitle">Quản lý danh sách và trạng thái phòng của khách sạn</p>
     </div>
     <div class="owner-header-actions">
         <a href="{{ url_for('owner.owner_rooms_create') }}" class="owner-btn owner-btn-primary">
-            <i class="fas fa-plus"></i> Thêm phòng mới
+            Thêm phòng mới
         </a>
     </div>
 </div>
 
 {% if result[1] == 200 %}
-    {% set rooms = result[0].get_json()['data']['rooms'] %}
+    {% set rooms = result[0].get_json()['data'] %}
     
     <!-- Stats Overview -->
     {% if rooms %}
         {% set stats = namespace(total=0, available=0, maintenance=0, occupied=0) %}
         {% for room in rooms %}
-            {% set stats.total = stats.total + (room.quantity or 1) %}
+            {% set stats.total = stats.total + 1 %}
             {% if room.status == 'available' %}
-                {% set stats.available = stats.available + (room.quantity or 1) %}
+                {% set stats.available = stats.available + 1 %}
             {% elif room.status == 'maintenance' %}
-                {% set stats.maintenance = stats.maintenance + (room.quantity or 1) %}
+                {% set stats.maintenance = stats.maintenance + 1 %}
             {% elif room.status == 'occupied' %}
-                {% set stats.occupied = stats.occupied + (room.quantity or 1) %}
+                {% set stats.occupied = stats.occupied + 1 %}
             {% endif %}
         {% endfor %}
 
@@ -43,7 +43,7 @@
                     <div class="stat-label">{{ rooms|length }} loại phòng</div>
                 </div>
                 <div class="owner-stat-icon">
-                    <i class="fas fa-bed"></i>
+                    
                 </div>
             </div>
 
@@ -54,7 +54,7 @@
                     <div class="stat-label">{{ "%.1f"|format((stats.available / stats.total * 100) if stats.total > 0 else 0) }}%</div>
                 </div>
                 <div class="owner-stat-icon">
-                    <i class="fas fa-check-circle"></i>
+                    
                 </div>
             </div>
 
@@ -65,7 +65,7 @@
                     <div class="stat-label">{{ "%.1f"|format((stats.maintenance / stats.total * 100) if stats.total > 0 else 0) }}%</div>
                 </div>
                 <div class="owner-stat-icon">
-                    <i class="fas fa-tools"></i>
+                    
                 </div>
             </div>
 
@@ -76,7 +76,7 @@
                     <div class="stat-label">{{ "%.1f"|format((stats.occupied / stats.total * 100) if stats.total > 0 else 0) }}%</div>
                 </div>
                 <div class="owner-stat-icon">
-                    <i class="fas fa-user-check"></i>
+                    
                 </div>
             </div>
         </div>
@@ -85,22 +85,22 @@
         <div class="owner-card mb-3">
             <form method="GET" action="{{ url_for('owner.owner_rooms') }}" class="row g-3">
                 <div class="col-md-4">
-                    <label class="form-label"><i class="fas fa-filter me-1"></i> Lọc theo trạng thái</label>
+                    <label class="form-label">Lọc theo trạng thái</label>
                     <select name="status" class="form-select" onchange="this.form.submit()">
                         <option value="">Tất cả trạng thái</option>
                         <option value="available" {% if request.args.get('status') == 'available' %}selected{% endif %}>
-                            ✅ Có sẵn
+                            Có sẵn
                         </option>
                         <option value="occupied" {% if request.args.get('status') == 'occupied' %}selected{% endif %}>
-                            🔒 Đã đặt
+                            Đã đặt
                         </option>
                         <option value="maintenance" {% if request.args.get('status') == 'maintenance' %}selected{% endif %}>
-                            🔧 Bảo trì
+                            Bảo trì
                         </option>
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label"><i class="fas fa-hotel me-1"></i> Lọc theo khách sạn</label>
+                    <label class="form-label">Lọc theo khách sạn</label>
                     <select name="hotel_id" class="form-select" onchange="this.form.submit()">
                         <option value="">Tất cả khách sạn</option>
                         {% for room in rooms %}
@@ -116,7 +116,7 @@
                 <div class="col-md-4 d-flex align-items-end">
                     {% if request.args.get('status') or request.args.get('hotel_id') %}
                         <a href="{{ url_for('owner.owner_rooms') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-times"></i> Xóa bộ lọc
+                            Xóa bộ lọc
                         </a>
                     {% endif %}
                 </div>
@@ -135,7 +135,6 @@
                             <th>Loại phòng</th>
                             <th>Giá/đêm</th>
                             <th>Sức chứa</th>
-                            <th>Số lượng</th>
                             <th>Trạng thái</th>
                             <th class="text-center">Thao tác</th>
                         </tr>
@@ -152,14 +151,14 @@
                                              style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px; margin-right: 10px;">
                                     {% else %}
                                         <div style="width: 50px; height: 50px; background: #f0f0f0; border-radius: 8px; margin-right: 10px; display: flex; align-items: center; justify-content: center;">
-                                            <i class="fas fa-bed text-muted"></i>
+                                            
                                         </div>
                                     {% endif %}
                                     <strong>{{ room.room_name }}</strong>
                                 </div>
                             </td>
                             <td>
-                                <i class="fas fa-hotel text-primary me-1"></i>
+                                
                                 {{ room.hotel.hotel_name if room.hotel else 'N/A' }}
                             </td>
                             <td>
@@ -174,24 +173,20 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <i class="fas fa-users me-1"></i>
                                 {{ room.max_guests }} người
-                            </td>
-                            <td class="text-center">
-                                <span class="badge bg-info">{{ room.quantity or 1 }} phòng</span>
                             </td>
                             <td>
                                 <select class="form-select form-select-sm status-select" 
                                         data-room-id="{{ room.room_id }}"
                                         style="min-width: 130px;">
                                     <option value="available" {% if room.status == 'available' %}selected{% endif %}>
-                                        ✅ Có sẵn
+                                        Có sẵn
                                     </option>
                                     <option value="occupied" {% if room.status == 'occupied' %}selected{% endif %}>
-                                        🔒 Đã đặt
+                                        Đã đặt
                                     </option>
                                     <option value="maintenance" {% if room.status == 'maintenance' %}selected{% endif %}>
-                                        🔧 Bảo trì
+                                        Bảo trì
                                     </option>
                                 </select>
                             </td>
@@ -224,12 +219,12 @@
         <div class="owner-card">
             <div class="owner-empty-state">
                 <div class="owner-empty-icon">
-                    <i class="fas fa-bed"></i>
+                    
                 </div>
                 <h4 class="owner-empty-title">Chưa có phòng nào</h4>
                 <p class="owner-empty-text">Thêm phòng mới để bắt đầu quản lý.</p>
                 <a href="{{ url_for('owner.owner_rooms_create') }}" class="owner-btn owner-btn-primary">
-                    <i class="fas fa-plus"></i> Thêm phòng đầu tiên
+                    Thêm phòng đầu tiên
                 </a>
             </div>
         </div>
@@ -294,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const toast = document.createElement('div');
         toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} position-fixed`;
         toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 250px;';
-        toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}`;
+        toast.innerHTML = `${message}`;
         document.body.appendChild(toast);
         
         setTimeout(() => {

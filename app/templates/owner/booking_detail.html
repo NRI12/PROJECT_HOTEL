@@ -1,0 +1,309 @@
+{% extends "owner/base.html" %}
+
+{% block title %}Chi tiết đặt phòng{% endblock %}
+
+{% block content %}
+
+{% if result and result[1] == 200 %}
+    {% set booking = result[0].get_json()['data']['booking'] %}
+    
+    <!-- BOOKING HEADER -->
+    <div class="owner-header mb-4">
+        <div>
+            <h1 class="owner-header-title">
+                <i class="fas fa-receipt me-2"></i> Chi tiết đặt phòng
+            </h1>
+            <p class="owner-header-subtitle">
+                Mã booking: <strong>{{ booking.booking_code }}</strong> | 
+                Đặt ngày: {{ booking.created_at[:10] }}
+            </p>
+        </div>
+        <div class="owner-header-actions">
+            <a href="{{ url_for('owner.owner_bookings') }}" class="owner-btn owner-btn-secondary">
+                <i class="fas fa-arrow-left"></i> Quay lại
+            </a>
+        </div>
+    </div>
+
+    <!-- Status Badges -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="owner-card">
+                <h5 class="mb-3"><i class="fas fa-info-circle me-2"></i>Trạng thái booking</h5>
+                <span class="owner-badge status-{{ booking.status }}" style="font-size: 1.1rem; padding: 0.5rem 1rem;">
+                    {% if booking.status == 'pending' %}
+                        <i class="fas fa-clock me-2"></i>Chờ xác nhận
+                    {% elif booking.status == 'confirmed' %}
+                        <i class="fas fa-check-circle me-2"></i>Đã xác nhận
+                    {% elif booking.status == 'checked_in' %}
+                        <i class="fas fa-door-open me-2"></i>Đã nhận phòng
+                    {% elif booking.status == 'checked_out' %}
+                        <i class="fas fa-check-double me-2"></i>Đã trả phòng
+                    {% elif booking.status == 'cancelled' %}
+                        <i class="fas fa-times-circle me-2"></i>Đã hủy
+                    {% elif booking.status == 'refunded' %}
+                        <i class="fas fa-undo me-2"></i>Đã hoàn tiền
+                    {% else %}
+                        {{ booking.status }}
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="owner-card">
+                <h5 class="mb-3"><i class="fas fa-credit-card me-2"></i>Trạng thái thanh toán</h5>
+                <span class="owner-badge payment-{{ booking.payment_status }}" style="font-size: 1.1rem; padding: 0.5rem 1rem;">
+                    {% if booking.payment_status == 'unpaid' %}
+                        <i class="fas fa-exclamation-circle me-2"></i>Chưa thanh toán
+                    {% elif booking.payment_status == 'partial' %}
+                        <i class="fas fa-adjust me-2"></i>Thanh toán 1 phần
+                    {% elif booking.payment_status == 'paid' %}
+                        <i class="fas fa-check-circle me-2"></i>Đã thanh toán
+                    {% elif booking.payment_status == 'refunded' %}
+                        <i class="fas fa-undo me-2"></i>Đã hoàn tiền
+                    {% else %}
+                        {{ booking.payment_status }}
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-lg-8">
+            <!-- Hotel Information -->
+            <div class="owner-card mb-3">
+                <h3 class="mb-3">
+                    <i class="fas fa-hotel me-2"></i>
+                    Thông tin khách sạn
+                </h3>
+                {% if booking.hotel %}
+                <div class="row">
+                    <div class="col-md-12">
+                        <h4>{{ booking.hotel.hotel_name }}</h4>
+                        <p class="mb-2"><i class="fas fa-map-marker-alt text-primary me-2"></i>{{ booking.hotel.address }}</p>
+                        <p class="mb-2"><i class="fas fa-phone text-primary me-2"></i>{{ booking.hotel.phone or 'N/A' }}</p>
+                        <p class="mb-2"><i class="fas fa-envelope text-primary me-2"></i>{{ booking.hotel.email or 'N/A' }}</p>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-muted">Không có thông tin khách sạn</p>
+                {% endif %}
+            </div>
+
+            <!-- Booking Details -->
+            <div class="owner-card mb-3">
+                <h3 class="mb-3">
+                    <i class="fas fa-calendar-check me-2"></i>
+                    Chi tiết đặt phòng
+                </h3>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <strong><i class="fas fa-calendar-day text-success me-2"></i>Ngày nhận phòng:</strong>
+                        <p class="mb-0">{{ booking.check_in_date }}</p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong><i class="fas fa-calendar-day text-danger me-2"></i>Ngày trả phòng:</strong>
+                        <p class="mb-0">{{ booking.check_out_date }}</p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong><i class="fas fa-moon me-2"></i>Số đêm:</strong>
+                        <p class="mb-0">
+                            {% if booking.details and booking.details[0] %}
+                                {{ booking.details[0].num_nights }} đêm
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong><i class="fas fa-users me-2"></i>Số khách:</strong>
+                        <p class="mb-0">{{ booking.num_guests }} người</p>
+                    </div>
+                    {% if booking.special_requests %}
+                    <div class="col-12 mb-3">
+                        <strong><i class="fas fa-comment-dots me-2"></i>Yêu cầu đặc biệt:</strong>
+                        <p class="mb-0 text-muted">{{ booking.special_requests }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Room Details -->
+            <div class="owner-card mb-3">
+                <h3 class="mb-3">
+                    <i class="fas fa-door-open me-2"></i>
+                    Chi tiết phòng
+                </h3>
+                <div class="table-responsive">
+                    <table class="owner-table">
+                        <thead>
+                            <tr>
+                                <th>Phòng</th>
+                                <th class="text-center">Số lượng</th>
+                                <th class="text-end">Giá/đêm</th>
+                                <th class="text-center">Số đêm</th>
+                                <th class="text-end">Tổng</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for detail in booking.details %}
+                            <tr>
+                                <td><strong>Phòng #{{ detail.room_id }}</strong></td>
+                                <td class="text-center">{{ detail.quantity }}</td>
+                                <td class="text-end">{{ "{:,.0f}".format(detail.price_per_night) }} VNĐ</td>
+                                <td class="text-center">{{ detail.num_nights }}</td>
+                                <td class="text-end"><strong>{{ "{:,.0f}".format(detail.subtotal) }} VNĐ</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Guest Information -->
+            {% if booking.user %}
+            <div class="owner-card mb-3">
+                <h3 class="mb-3">
+                    <i class="fas fa-user me-2"></i>
+                    Thông tin khách hàng
+                </h3>
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <strong><i class="fas fa-user-circle me-2"></i>Họ tên:</strong>
+                        <p class="mb-0">{{ booking.user.full_name }}</p>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong><i class="fas fa-envelope me-2"></i>Email:</strong>
+                        <p class="mb-0">{{ booking.user.email }}</p>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong><i class="fas fa-phone me-2"></i>Số điện thoại:</strong>
+                        <p class="mb-0">{{ booking.user.phone or 'N/A' }}</p>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong><i class="fas fa-id-card me-2"></i>CMND/CCCD:</strong>
+                        <p class="mb-0">{{ booking.user.id_card or 'N/A' }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-lg-4">
+            <!-- Payment Summary -->
+            <div class="owner-card mb-3">
+                <h3 class="mb-3">
+                    <i class="fas fa-calculator me-2"></i>
+                    Tổng thanh toán
+                </h3>
+                <div class="mb-2 d-flex justify-content-between">
+                    <span>Tổng tiền phòng:</span>
+                    <strong>{{ "{:,.0f}".format(booking.total_amount) }} VNĐ</strong>
+                </div>
+                {% if booking.discount_amount > 0 %}
+                <div class="mb-2 d-flex justify-content-between text-success">
+                    <span><i class="fas fa-tag me-1"></i>Giảm giá:</span>
+                    <strong>-{{ "{:,.0f}".format(booking.discount_amount) }} VNĐ</strong>
+                </div>
+                {% endif %}
+                <hr>
+                <div class="d-flex justify-content-between" style="font-size: 1.2rem;">
+                    <strong>Tổng cộng:</strong>
+                    <strong class="text-success">{{ "{:,.0f}".format(booking.final_amount) }} VNĐ</strong>
+                </div>
+            </div>
+
+            <!-- Booking Timeline -->
+            <div class="owner-card mb-3">
+                <h3 class="mb-3">
+                    <i class="fas fa-clock me-2"></i>
+                    Lịch sử
+                </h3>
+                <div class="timeline">
+                    <div class="mb-3">
+                        <strong><i class="fas fa-circle text-primary me-2"></i>Đặt phòng</strong>
+                        <p class="text-muted small mb-0">{{ booking.created_at }}</p>
+                    </div>
+                    {% if booking.status in ['confirmed', 'checked_in', 'checked_out'] %}
+                    <div class="mb-3">
+                        <strong><i class="fas fa-circle text-success me-2"></i>Đã xác nhận</strong>
+                        <p class="text-muted small mb-0">{{ booking.updated_at }}</p>
+                    </div>
+                    {% endif %}
+                    {% if booking.status in ['checked_in', 'checked_out'] %}
+                    <div class="mb-3">
+                        <strong><i class="fas fa-circle text-info me-2"></i>Đã nhận phòng</strong>
+                        <p class="text-muted small mb-0">{{ booking.check_in_date }}</p>
+                    </div>
+                    {% endif %}
+                    {% if booking.status == 'checked_out' %}
+                    <div class="mb-3">
+                        <strong><i class="fas fa-circle text-primary me-2"></i>Đã trả phòng</strong>
+                        <p class="text-muted small mb-0">{{ booking.check_out_date }}</p>
+                    </div>
+                    {% endif %}
+                    {% if booking.status == 'cancelled' %}
+                    <div class="mb-3">
+                        <strong class="text-danger"><i class="fas fa-circle me-2"></i>Đã hủy</strong>
+                        <p class="text-muted small mb-0">{{ booking.cancelled_at or booking.updated_at }}</p>
+                        {% if booking.cancellation_reason %}
+                        <p class="text-muted small mb-0">Lý do: {{ booking.cancellation_reason }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="owner-card">
+                <h3 class="mb-3">
+                    <i class="fas fa-tools me-2"></i>
+                    Quản lý đặt phòng
+                </h3>
+                <div class="d-grid gap-2">
+                    {% if booking.status == 'confirmed' %}
+                    <form action="{{ url_for('booking.check_in', booking_id=booking_id) }}" method="POST">
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="fas fa-door-open me-2"></i>Check-in
+                        </button>
+                    </form>
+                    {% endif %}
+                    
+                    {% if booking.status == 'checked_in' %}
+                    <form action="{{ url_for('booking.check_out', booking_id=booking_id) }}" method="POST">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-sign-out-alt me-2"></i>Check-out
+                        </button>
+                    </form>
+                    {% endif %}
+                    
+                    <a href="{{ url_for('booking.invoice', booking_id=booking_id) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-file-invoice me-2"></i>Xem hóa đơn
+                    </a>
+                    
+                    <form action="{{ url_for('booking.resend_confirmation', booking_id=booking_id) }}" method="POST">
+                        <button type="submit" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-envelope me-2"></i>Gửi lại email xác nhận
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% else %}
+    <div class="owner-card text-center py-5">
+        <i class="fas fa-exclamation-triangle" style="font-size: 4rem; color: #ffc107;"></i>
+        <h2 class="mt-3">Không tìm thấy đặt phòng</h2>
+        <p class="text-muted">Đặt phòng bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.</p>
+        <a href="{{ url_for('owner.owner_bookings') }}" class="btn btn-primary mt-3">
+            <i class="fas fa-arrow-left me-2"></i>Quay lại danh sách
+        </a>
+    </div>
+{% endif %}
+
+{% endblock %}
+

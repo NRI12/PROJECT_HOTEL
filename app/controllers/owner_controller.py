@@ -9,6 +9,7 @@ from app.models.hotel import Hotel
 from app.models.room import Room
 from app.models.review import Review
 from app.models.user import User
+from app.models.promotion import Promotion
 from app.utils.response import success_response, error_response, validation_error_response
 
 
@@ -90,6 +91,14 @@ class OwnerDashboardController:
 
             recent_bookings = booking_query.order_by(Booking.created_at.desc()).limit(5).all()
 
+            # Build bookings data with hotel and user info
+            bookings_data = []
+            for booking in recent_bookings:
+                booking_dict = booking.to_dict()
+                booking_dict['hotel'] = booking.hotel.to_dict() if booking.hotel else None
+                booking_dict['user'] = booking.user.to_dict() if booking.user else None
+                bookings_data.append(booking_dict)
+
             return success_response(
                 data={
                     'summary': {
@@ -99,7 +108,7 @@ class OwnerDashboardController:
                         'pending_booking_count': pending_bookings,
                         'total_revenue': float(revenue)
                     },
-                    'recent_bookings': [booking.to_dict() for booking in recent_bookings]
+                    'recent_bookings': bookings_data
                 }
             )
         except Exception as exc:
@@ -112,7 +121,13 @@ class OwnerDashboardController:
             return error
         try:
             hotels = OwnerDashboardController._base_hotel_query(user).order_by(Hotel.created_at.desc()).all()
-            return success_response(data={'hotels': [hotel.to_dict() for hotel in hotels]})
+            hotels_data = []
+            for hotel in hotels:
+                hotel_dict = hotel.to_dict()
+                # Include images
+                hotel_dict['images'] = [img.to_dict() for img in hotel.images] if hotel.images else []
+                hotels_data.append(hotel_dict)
+            return success_response(data={'hotels': hotels_data})
         except Exception as exc:
             return error_response(f'Lỗi khi lấy danh sách khách sạn: {str(exc)}', 500)
 
@@ -128,7 +143,16 @@ class OwnerDashboardController:
             if status:
                 booking_query = booking_query.filter_by(status=status)
             bookings = booking_query.order_by(Booking.created_at.desc()).limit(100).all()
-            return success_response(data={'bookings': [booking.to_dict() for booking in bookings]})
+            
+            # Build bookings data with hotel and user info
+            bookings_data = []
+            for booking in bookings:
+                booking_dict = booking.to_dict()
+                booking_dict['hotel'] = booking.hotel.to_dict() if booking.hotel else None
+                booking_dict['user'] = booking.user.to_dict() if booking.user else None
+                bookings_data.append(booking_dict)
+            
+            return success_response(data={'bookings': bookings_data})
         except Exception as exc:
             return error_response(f'Lỗi khi lấy booking: {str(exc)}', 500)
 
@@ -145,57 +169,6 @@ class OwnerDashboardController:
     #     except Exception as exc:
     #         return error_response(f'Lỗi khi lấy booking chờ xác nhận: {str(exc)}', 500)
 
-    @staticmethod
-    def revenue_summary():
-        user, error = OwnerDashboardController._require_owner()
-        if error:
-            return error
-        try:
-            data = OwnerDashboardController._get_request_data()
-            start_date = OwnerDashboardController._parse_date(data.get('start_date'))
-            end_date = OwnerDashboardController._parse_date(data.get('end_date'))
-
-            booking_query = OwnerDashboardController._booking_query_for_owner(user) \
-                .filter(Booking.status.in_(OwnerDashboardController.SAFE_BOOKING_STATUSES))
-
-            if start_date:
-                booking_query = booking_query.filter(Booking.check_in_date >= start_date)
-            if end_date:
-                booking_query = booking_query.filter(Booking.check_out_date <= end_date)
-
-            bookings = booking_query.order_by(Booking.check_in_date.asc()).all()
-
-            monthly_totals = defaultdict(float)
-            for booking in bookings:
-                key = booking.check_in_date.strftime('%Y-%m') if booking.check_in_date else 'unknown'
-                monthly_totals[key] += float(booking.final_amount or 0)
-
-            return success_response(
-                data={
-                    'total_revenue': sum(monthly_totals.values()),
-                    'monthly_revenue': [{'period': period, 'amount': amount} for period, amount in sorted(monthly_totals.items())]
-                }
-            )
-        except Exception as exc:
-            return error_response(f'Lỗi khi thống kê doanh thu: {str(exc)}', 500)
-
-    @staticmethod
-    def revenue_detail():
-        user, error = OwnerDashboardController._require_owner()
-        if error:
-            return error
-        try:
-            data = OwnerDashboardController._get_request_data()
-            status = data.get('status')
-
-            booking_query = OwnerDashboardController._booking_query_for_owner(user)
-            if status:
-                booking_query = booking_query.filter_by(status=status)
-
-            bookings = booking_query.order_by(Booking.created_at.desc()).limit(200).all()
-            return success_response(data={'bookings': [booking.to_dict() for booking in bookings]})
-        except Exception as exc:
-            return error_response(f'Lỗi khi lấy chi tiết doanh thu: {str(exc)}', 500)
 
     @staticmethod
     def room_status():
@@ -208,6 +181,76 @@ class OwnerDashboardController:
             return success_response(data={'rooms': [room.to_dict() for room in rooms]})
         except Exception as exc:
             return error_response(f'Lỗi khi lấy trạng thái phòng: {str(exc)}', 500)
+
+    @staticmethod
+    def owner_rooms():
+        user, error = OwnerDashboardController._require_owner()
+        if error:
+            return error
+        try:
+            data = OwnerDashboardController._get_request_data()
+            status = data.get('status')
+            hotel_id = data.get('hotel_id', type=int) if hasattr(data.get('hotel_id'), '__int__') else None
+            
+            # Get hotel IDs owned by this user
+            hotel_ids = OwnerDashboardController._get_hotel_ids(user)
+            
+            if not hotel_ids:
+                return success_response(data=[])
+            
+            # Build query filtering by owner's hotels
+            query = Room.query.filter(Room.hotel_id.in_(hotel_ids))
+            
+            # Apply additional filters
+            if hotel_id:
+                query = query.filter_by(hotel_id=hotel_id)
+            
+            if status:
+                query = query.filter_by(status=status)
+            
+            # Get rooms with relationships
+            rooms = query.order_by(Room.hotel_id, Room.room_name).all()
+            
+            # Build response with related data
+            rooms_data = []
+            for room in rooms:
+                room_dict = room.to_dict()
+                room_dict['hotel'] = room.hotel.to_dict() if room.hotel else None
+                room_dict['room_type'] = room.room_type.to_dict() if room.room_type else None
+                room_dict['images'] = [img.to_dict() for img in room.images]
+                rooms_data.append(room_dict)
+            
+            return success_response(data=rooms_data)
+        except Exception as exc:
+            return error_response(f'Lỗi khi lấy danh sách phòng: {str(exc)}', 500)
+
+    @staticmethod
+    def owner_promotions():
+        user, error = OwnerDashboardController._require_owner()
+        if error:
+            return error
+        try:
+            hotel_ids = OwnerDashboardController._get_hotel_ids(user)
+            
+            if not hotel_ids:
+                return success_response(data={'promotions': []})
+            
+            # Get promotions for owner's hotels
+            promotions = Promotion.query.filter(
+                (Promotion.hotel_id.in_(hotel_ids)) | (Promotion.hotel_id == None)
+            ).order_by(Promotion.created_at.desc()).all()
+            
+            # Build response with hotel and room info
+            promotions_data = []
+            for promo in promotions:
+                promo_dict = promo.to_dict()
+                promo_dict['hotel'] = promo.hotel.to_dict() if promo.hotel else None
+                promo_dict['room'] = promo.room.to_dict() if promo.room else None
+                promotions_data.append(promo_dict)
+            
+            return success_response(data={'promotions': promotions_data})
+        except Exception as exc:
+            return error_response(f'Lỗi khi lấy danh sách khuyến mãi: {str(exc)}', 500)
 
     @staticmethod
     def hotel_reviews():
@@ -227,94 +270,5 @@ class OwnerDashboardController:
         except Exception as exc:
             return error_response(f'Lỗi khi lấy đánh giá: {str(exc)}', 500)
 
-    @staticmethod
-    def statistics_report():
-        user, error = OwnerDashboardController._require_owner()
-        if error:
-            return error
-        try:
-            hotel_ids = OwnerDashboardController._get_hotel_ids(user)
-            total_rooms = Room.query.filter(Room.hotel_id.in_(hotel_ids)).with_entities(func.coalesce(func.sum(Room.quantity), 0)).scalar() if hotel_ids else 0
-            total_reviews = Review.query.filter(Review.hotel_id.in_(hotel_ids)).count() if hotel_ids else 0
-            booking_query = OwnerDashboardController._booking_query_for_owner(user)
-            completed_bookings = booking_query.filter(Booking.status.in_(OwnerDashboardController.SAFE_BOOKING_STATUSES)).count()
-            avg_rating = Review.query.filter(Review.hotel_id.in_(hotel_ids)).with_entities(func.coalesce(func.avg(Review.rating), 0)).scalar() if hotel_ids else 0
 
-            occupancy_rate = 0
-            if total_rooms:
-                occupancy_rate = (completed_bookings / total_rooms) * 100
-
-            return success_response(
-                data={
-                    'total_hotels': len(hotel_ids),
-                    'total_rooms': int(total_rooms or 0),
-                    'completed_bookings': completed_bookings,
-                    'total_reviews': total_reviews,
-                    'average_rating': float(avg_rating or 0),
-                    'occupancy_rate': round(occupancy_rate, 2)
-                }
-            )
-        except Exception as exc:
-            return error_response(f'Lỗi khi tạo báo cáo thống kê: {str(exc)}', 500)
-
-    @staticmethod
-    def occupancy_report():
-        user, error = OwnerDashboardController._require_owner()
-        if error:
-            return error
-        try:
-            hotels = OwnerDashboardController._base_hotel_query(user).all()
-            response = []
-
-            for hotel in hotels:
-                room_total = sum(room.quantity for room in hotel.rooms) if hotel.rooms else 0
-                booking_count = Booking.query.filter(
-                    Booking.hotel_id == hotel.hotel_id,
-                    Booking.status.in_(OwnerDashboardController.SAFE_BOOKING_STATUSES)
-                ).count()
-                occupancy_rate = 0
-                if room_total:
-                    occupancy_rate = min(100.0, (booking_count / room_total) * 100)
-                response.append({
-                    'hotel_id': hotel.hotel_id,
-                    'hotel_name': hotel.hotel_name,
-                    'room_total': room_total,
-                    'occupied': booking_count,
-                    'occupancy_rate': round(occupancy_rate, 2)
-                })
-
-            return success_response(data={'occupancy': response})
-        except Exception as exc:
-            return error_response(f'Lỗi khi tính tỷ lệ lấp đầy: {str(exc)}', 500)
-
-    @staticmethod
-    def export_report():
-        user, error = OwnerDashboardController._require_owner()
-        if error:
-            return error
-        try:
-            data = OwnerDashboardController._get_request_data()
-            start_date = OwnerDashboardController._parse_date(data.get('start_date'))
-            end_date = OwnerDashboardController._parse_date(data.get('end_date'))
-
-            if data.get('start_date') and not start_date:
-                return validation_error_response({'start_date': ['Ngày bắt đầu không hợp lệ']})
-            if data.get('end_date') and not end_date:
-                return validation_error_response({'end_date': ['Ngày kết thúc không hợp lệ']})
-
-            return success_response(
-                data={
-                    'export': {
-                        'requested_by': user.user_id,
-                        'start_date': start_date.isoformat() if start_date else None,
-                        'end_date': end_date.isoformat() if end_date else None,
-                        'generated_at': datetime.utcnow().isoformat()
-                    }
-                },
-                message='Đã tạo báo cáo và gửi tới email của bạn'
-            )
-        except ValidationError as exc:
-            return validation_error_response(exc.messages)
-        except Exception as exc:
-            return error_response(f'Lỗi khi xuất báo cáo: {str(exc)}', 500)
 

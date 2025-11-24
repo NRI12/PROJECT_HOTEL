@@ -25,6 +25,25 @@ class DiscountController:
             return {}
     
     @staticmethod
+    def _preprocess_form_data(data):
+        optional_fields = ['usage_limit', 'min_order_amount', 'max_discount_amount']
+        for field in optional_fields:
+            if field in data and data[field] == '':
+                data[field] = None
+        
+        # Convert date format from YYYY-MM-DD to YYYY-MM-DDTHH:MM:SS for datetime fields
+        date_fields = ['start_date', 'end_date']
+        for field in date_fields:
+            if field in data and data[field] and 'T' not in data[field]:
+                # If it's just a date (YYYY-MM-DD), add time component
+                if field == 'start_date':
+                    data[field] = data[field] + 'T00:00:00'
+                else:  # end_date
+                    data[field] = data[field] + 'T23:59:59'
+        
+        return data
+    
+    @staticmethod
     def list_discounts():
         try:
             page = request.args.get('page', 1, type=int)
@@ -32,6 +51,12 @@ class DiscountController:
             is_active = request.args.get('is_active', type=lambda v: v.lower() == 'true')
             
             query = DiscountCode.query
+            
+            # Filter by owner_id if user is hotel_owner
+            if 'user_id' in session:
+                user = User.query.get(session['user_id'])
+                if user and user.role.role_name == 'hotel_owner':
+                    query = query.filter_by(owner_id=session['user_id'])
             
             if is_active is not None:
                 query = query.filter_by(is_active=is_active)
@@ -43,10 +68,39 @@ class DiscountController:
             
             discounts_data = [d.to_dict() for d in discounts]
             
-            return paginated_response(discounts_data, page, per_page, total)
+            # Return in format expected by template
+            response_data = {
+                'discounts': discounts_data,
+                'pagination': {
+                    'page': page,
+                    'per_page': per_page,
+                    'total': total,
+                    'pages': (total + per_page - 1) // per_page
+                }
+            }
+            return success_response(data=response_data)
             
         except Exception as e:
             return error_response(f'Lỗi khi lấy danh sách mã giảm giá: {str(e)}', 500)
+    
+    @staticmethod
+    def get_discount(code_id):
+        try:
+            discount = DiscountCode.query.get(code_id)
+            if not discount:
+                return error_response('Không tìm thấy mã giảm giá', 404)
+            
+            # Check ownership if user is hotel_owner
+            if 'user_id' in session:
+                user = User.query.get(session['user_id'])
+                if user and user.role.role_name == 'hotel_owner':
+                    if discount.owner_id != session['user_id']:
+                        return error_response('Không có quyền xem mã giảm giá này', 403)
+            
+            return success_response(data={'discount': discount.to_dict()})
+            
+        except Exception as e:
+            return error_response(f'Lỗi khi lấy mã giảm giá: {str(e)}', 500)
     
     @staticmethod
     def get_discount_by_code(code):
@@ -71,6 +125,7 @@ class DiscountController:
         
         try:
             data = DiscountController._get_request_data()
+            data = DiscountController._preprocess_form_data(data)
             
             required_fields = ['code', 'discount_type', 'discount_value', 'start_date', 'end_date']
             is_valid, error_msg = validate_required_fields(data, required_fields)
@@ -80,11 +135,16 @@ class DiscountController:
             schema = DiscountCreateSchema()
             validated_data = schema.load(data)
             
-            existing = DiscountCode.query.filter_by(code=validated_data['code']).first()
+            # Check if code already exists for this owner
+            existing = DiscountCode.query.filter_by(
+                owner_id=session['user_id'],
+                code=validated_data['code']
+            ).first()
             if existing:
                 return error_response('Mã giảm giá đã tồn tại', 409)
             
             discount = DiscountCode(
+                owner_id=session['user_id'],
                 code=validated_data['code'],
                 description=validated_data.get('description'),
                 discount_type=validated_data['discount_type'],
@@ -94,7 +154,7 @@ class DiscountController:
                 usage_limit=validated_data.get('usage_limit'),
                 start_date=validated_data['start_date'],
                 end_date=validated_data['end_date'],
-                is_active=True
+                is_active=validated_data.get('is_active', True)
             )
             
             db.session.add(discount)
@@ -126,12 +186,18 @@ class DiscountController:
             if not discount:
                 return error_response('Không tìm thấy mã giảm giá', 404)
             
+            # Check ownership
+            if user.role.role_name == 'hotel_owner' and discount.owner_id != session['user_id']:
+                return error_response('Không có quyền cập nhật mã giảm giá này', 403)
+            
             data = DiscountController._get_request_data()
+            data = DiscountController._preprocess_form_data(data)
             schema = DiscountUpdateSchema()
             validated_data = schema.load(data)
             
             if 'code' in validated_data:
                 existing = DiscountCode.query.filter(
+                    DiscountCode.owner_id == discount.owner_id,
                     DiscountCode.code == validated_data['code'],
                     DiscountCode.code_id != code_id
                 ).first()
@@ -169,6 +235,10 @@ class DiscountController:
             if not discount:
                 return error_response('Không tìm thấy mã giảm giá', 404)
             
+            # Check ownership
+            if user.role.role_name == 'hotel_owner' and discount.owner_id != session['user_id']:
+                return error_response('Không có quyền xóa mã giảm giá này', 403)
+            
             if discount.used_count > 0:
                 return error_response('Không thể xóa mã giảm giá đã được sử dụng', 400)
             
@@ -197,6 +267,13 @@ class DiscountController:
             discount = DiscountCode.query.filter_by(code=validated_data['code']).first()
             if not discount:
                 return error_response('Mã giảm giá không tồn tại', 404)
+            
+            # Check if discount belongs to the hotel owner
+            if validated_data.get('hotel_id'):
+                from app.models.hotel import Hotel
+                hotel = Hotel.query.get(validated_data['hotel_id'])
+                if hotel and hotel.owner_id != discount.owner_id:
+                    return error_response('Mã giảm giá không áp dụng cho khách sạn này', 400)
             
             if not discount.is_active:
                 return error_response('Mã giảm giá không còn hiệu lực', 400)

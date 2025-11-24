@@ -164,7 +164,12 @@ class UserController:
             
             start = (page - 1) * per_page
             end = start + per_page
-            bookings = [booking.to_dict() for booking in bookings_query[start:end]]
+            
+            bookings = []
+            for booking in bookings_query[start:end]:
+                booking_dict = booking.to_dict()
+                booking_dict['hotel'] = booking.hotel.to_dict() if booking.hotel else None
+                bookings.append(booking_dict)
             
             return paginated_response(bookings, page, per_page, total)
             

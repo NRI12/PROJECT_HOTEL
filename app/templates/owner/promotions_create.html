@@ -6,71 +6,167 @@
 
 <div class="owner-header">
     <div>
-        <h1 class="owner-header-title">Thêm khuyến mãi mới</h1>
-        <p class="owner-header-subtitle">Tạo chương trình khuyến mãi mới</p>
+        <h1 class="owner-header-title">
+            <i class="fas fa-tags me-2"></i> Thêm khuyến mãi mới
+        </h1>
+        <p class="owner-header-subtitle">Tạo chương trình khuyến mãi cho khách sạn/phòng</p>
+    </div>
+    <div class="owner-header-actions">
+        <a href="{{ url_for('owner.owner_promotions') }}" class="owner-btn owner-btn-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
     </div>
 </div>
 
 <div class="owner-card">
     <form method="POST">
         <div class="row g-3">
+            <!-- Thông tin cơ bản -->
             <div class="col-12">
-                <label class="form-label">Tiêu đề *</label>
-                <input type="text" name="title" class="form-control" placeholder="VD: Giảm giá mùa hè" required>
+                <h5 class="mb-3"><i class="fas fa-info-circle me-2"></i>Thông tin cơ bản</h5>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label">Tiêu đề khuyến mãi *</label>
+                <input type="text" name="title" class="form-control" placeholder="VD: Giảm giá cuối tuần" required>
             </div>
 
             <div class="col-12">
                 <label class="form-label">Mô tả</label>
-                <textarea name="description" class="form-control" rows="3" placeholder="Mô tả chi tiết về chương trình..."></textarea>
+                <textarea name="description" class="form-control" rows="3" placeholder="Mô tả chi tiết về chương trình khuyến mãi..."></textarea>
             </div>
 
-            <div class="col-md-4">
+            <!-- Áp dụng cho -->
+            <div class="col-12 mt-4">
+                <h5 class="mb-3"><i class="fas fa-bullseye me-2"></i>Áp dụng cho</h5>
+            </div>
+
+            {% if hotels %}
+            <div class="col-md-6">
+                <label class="form-label">Khách sạn (Tùy chọn)</label>
+                <select name="hotel_id" id="hotel_id" class="form-control">
+                    <option value="">-- Chọn khách sạn --</option>
+                    {% for hotel in hotels %}
+                    <option value="{{ hotel.hotel_id }}">{{ hotel.hotel_name }}</option>
+                    {% endfor %}
+                </select>
+                <small class="text-muted">Để trống nếu áp dụng cho tất cả khách sạn</small>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Phòng (Tùy chọn)</label>
+                <select name="room_id" id="room_id" class="form-control" disabled>
+                    <option value="">-- Chọn phòng --</option>
+                </select>
+                <small class="text-muted">Chọn khách sạn trước để load phòng</small>
+            </div>
+            {% else %}
+            <div class="col-12">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Bạn chưa có khách sạn nào. Vui lòng tạo khách sạn trước.
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Giảm giá -->
+            <div class="col-12 mt-4">
+                <h5 class="mb-3"><i class="fas fa-percent me-2"></i>Thông tin giảm giá</h5>
+            </div>
+
+            <div class="col-md-6">
                 <label class="form-label">Loại giảm giá *</label>
-                <select name="discount_type" class="form-control">
+                <select name="discount_type" class="form-control" required>
                     <option value="percentage">Phần trăm (%)</option>
                     <option value="fixed">Số tiền cố định (VNĐ)</option>
                 </select>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <label class="form-label">Giá trị giảm *</label>
-                <input type="number" name="discount_value" class="form-control" placeholder="10" step="0.01" required>
+                <input type="number" name="discount_value" class="form-control" placeholder="VD: 20 (cho 20%)" step="0.01" min="0" required>
             </div>
 
-            <div class="col-md-4">
-                <label class="form-label">Số lượng</label>
-                <input type="number" name="quantity" class="form-control" placeholder="Để trống = không giới hạn">
+            <!-- Thời gian áp dụng -->
+            <div class="col-12 mt-4">
+                <h5 class="mb-3"><i class="fas fa-calendar me-2"></i>Thời gian áp dụng</h5>
             </div>
 
             <div class="col-md-6">
                 <label class="form-label">Ngày bắt đầu *</label>
-                <input type="date" name="start_date" class="form-control" required>
+                <input type="datetime-local" name="start_date" class="form-control" required>
             </div>
 
             <div class="col-md-6">
                 <label class="form-label">Ngày kết thúc *</label>
-                <input type="date" name="end_date" class="form-control" required>
+                <input type="datetime-local" name="end_date" class="form-control" required>
             </div>
 
-            <div class="col-12">
-                <label class="form-label">Trạng thái</label>
-                <select name="status" class="form-control">
-                    <option value="active">Kích hoạt</option>
-                    <option value="inactive">Tạm dừng</option>
-                </select>
+            <!-- Điều kiện áp dụng -->
+            <div class="col-12 mt-4">
+                <h5 class="mb-3"><i class="fas fa-cogs me-2"></i>Điều kiện áp dụng</h5>
             </div>
 
-            <div class="col-12">
+            <div class="col-md-6">
+                <label class="form-label">Số đêm tối thiểu</label>
+                <input type="number" name="min_nights" class="form-control" placeholder="1" min="1" value="1">
+                <small class="text-muted">Số đêm tối thiểu để được áp dụng khuyến mãi</small>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Áp dụng theo ngày (Tùy chọn)</label>
+                <input type="text" name="applicable_days" class="form-control" placeholder="VD: Mon,Tue,Fri">
+                <small class="text-muted">Các ngày trong tuần (Mon, Tue, Wed, Thu, Fri, Sat, Sun)</small>
+            </div>
+
+            <div class="col-12 mt-4">
                 <button type="submit" class="owner-btn owner-btn-primary">
-                    <i class="fas fa-save"></i> Tạo khuyến mãi
+                    <i class="fas fa-save me-2"></i> Tạo khuyến mãi
                 </button>
-                <a href="{{ url_for('owner.owner_promotions') }}" class="owner-btn owner-btn-outline-secondary">
-                    <i class="fas fa-times"></i> Hủy
+                <a href="{{ url_for('owner.owner_promotions') }}" class="owner-btn owner-btn-secondary">
+                    <i class="fas fa-times me-2"></i> Hủy
                 </a>
             </div>
         </div>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const hotelSelect = document.getElementById('hotel_id');
+    const roomSelect = document.getElementById('room_id');
+    
+    if (hotelSelect && roomSelect) {
+        hotelSelect.addEventListener('change', function() {
+            const hotelId = this.value;
+            
+            // Reset room dropdown
+            roomSelect.innerHTML = '<option value="">-- Chọn phòng --</option>';
+            roomSelect.disabled = true;
+            
+            if (hotelId) {
+                // Fetch rooms for selected hotel
+                fetch(`/hotel/api/${hotelId}/rooms`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.data && data.data.length > 0) {
+                            roomSelect.disabled = false;
+                            data.data.forEach(room => {
+                                const option = document.createElement('option');
+                                option.value = room.room_id;
+                                option.textContent = `${room.room_name} - ${room.room_type ? room.room_type.type_name : 'N/A'}`;
+                                roomSelect.appendChild(option);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading rooms:', error);
+                    });
+            }
+        });
+    }
+});
+</script>
 
 {% endblock %}
 

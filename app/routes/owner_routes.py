@@ -45,18 +45,12 @@ def owner_bookings():
     return _render_template(result, 'owner/bookings.html')
 
 
-@owner_bp.route('/revenue', methods=['GET'])
+@owner_bp.route('/bookings/<int:booking_id>', methods=['GET'])
 @role_required('hotel_owner', 'admin')
-def revenue_summary():
-    result = OwnerDashboardController.revenue_summary()
-    return _render_template(result, 'owner/revenue.html')
-
-
-@owner_bp.route('/revenue/detail', methods=['GET'])
-@role_required('hotel_owner', 'admin')
-def revenue_detail():
-    result = OwnerDashboardController.revenue_detail()
-    return _render_template(result, 'owner/revenue_detail.html')
+def owner_booking_detail(booking_id):
+    from app.controllers.booking_controller import BookingController
+    result = BookingController.get_booking(booking_id)
+    return _render_template(result, 'owner/booking_detail.html', booking_id=booking_id)
 
 
 @owner_bp.route('/reviews', methods=['GET'])
@@ -66,39 +60,11 @@ def owner_reviews():
     return _render_template(result, 'owner/reviews.html')
 
 
-@owner_bp.route('/statistics', methods=['GET'])
-@role_required('hotel_owner', 'admin')
-def statistics_report():
-    result = OwnerDashboardController.statistics_report()
-    return _render_template(result, 'owner/statistics.html')
-
-
-@owner_bp.route('/occupancy', methods=['GET'])
-@role_required('hotel_owner', 'admin')
-def occupancy_report():
-    result = OwnerDashboardController.occupancy_report()
-    return _render_template(result, 'owner/occupancy.html')
-
-
-@owner_bp.route('/reports/export', methods=['POST'])
-@role_required('hotel_owner', 'admin')
-def export_report():
-    result = OwnerDashboardController.export_report()
-    payload = _extract_payload(result)
-    message = payload.get('message')
-    if result[1] >= 400:
-        flash(message or 'Xuất báo cáo thất bại', 'error')
-    else:
-        flash(message or 'Đã xuất báo cáo', 'success')
-    return _redirect_with_params('owner.statistics_report')
-
-
 # ==================== ROOMS ====================
 @owner_bp.route('/rooms', methods=['GET'])
 @role_required('hotel_owner', 'admin')
 def owner_rooms():
-    from app.controllers.room_controller import RoomController
-    result = RoomController.list_rooms()
+    result = OwnerDashboardController.owner_rooms()
     return _render_template(result, 'owner/rooms.html')
 
 @owner_bp.route('/rooms/create', methods=['GET', 'POST'])
@@ -158,6 +124,7 @@ def owner_rooms_edit(room_id):
     from app.controllers.room_controller import RoomController
     from app.controllers.owner_controller import OwnerDashboardController
     from app.models.room_type import RoomType
+    from app.models.amenity import Amenity
     
     if request.method == 'POST':
         result = RoomController.update_room(room_id)
@@ -178,8 +145,14 @@ def owner_rooms_edit(room_id):
     room_types = RoomType.query.all()
     room_types_data = [rt.to_dict() for rt in room_types]
     
+    # Get amenities for room category
+    amenities = Amenity.query.filter(
+        (Amenity.category == 'room') | (Amenity.category == 'both')
+    ).all()
+    amenities_data = [a.to_dict() for a in amenities]
+    
     return _render_template(result, 'owner/rooms_edit.html', 
-                          room_id=room_id, hotels=hotels, room_types=room_types_data)
+                          room_id=room_id, hotels=hotels, room_types=room_types_data, amenities=amenities_data)
 
 
 @owner_bp.route('/rooms/<int:room_id>/delete', methods=['POST'])
@@ -196,6 +169,13 @@ def owner_rooms_delete(room_id):
 def owner_rooms_update_status(room_id):
     from app.controllers.room_controller import RoomController
     result = RoomController.update_room_status(room_id)
+    return result
+
+@owner_bp.route('/rooms/<int:room_id>/images/<int:image_id>/delete', methods=['POST'])
+@role_required('hotel_owner', 'admin')
+def owner_rooms_delete_image(room_id, image_id):
+    from app.controllers.room_controller import RoomController
+    result = RoomController.delete_image(room_id, image_id)
     return result
 
 
@@ -249,8 +229,7 @@ def owner_amenities_delete(amenity_id):
 @owner_bp.route('/promotions', methods=['GET'])
 @role_required('hotel_owner', 'admin')
 def owner_promotions():
-    from app.controllers.promotion_controller import PromotionController
-    result = PromotionController.list_promotions()
+    result = OwnerDashboardController.owner_promotions()
     return _render_template(result, 'owner/promotions.html')
 
 
@@ -258,27 +237,59 @@ def owner_promotions():
 @role_required('hotel_owner', 'admin')
 def owner_promotions_create():
     from app.controllers.promotion_controller import PromotionController
+    
     if request.method == 'POST':
         result = PromotionController.create_promotion()
         if result[1] == 201:
             flash('Tạo khuyến mãi thành công', 'success')
             return redirect(url_for('owner.owner_promotions'))
-        flash('Tạo khuyến mãi thất bại', 'error')
-    return render_template('owner/promotions_create.html')
+        else:
+            # Get error message
+            try:
+                error_data = result[0].get_json()
+                error_message = error_data.get('message', 'Tạo khuyến mãi thất bại')
+            except:
+                error_message = 'Tạo khuyến mãi thất bại'
+            flash(error_message, 'error')
+    
+    # Get hotels for dropdown
+    hotels_result = OwnerDashboardController.my_hotels()
+    hotels = []
+    if hotels_result[1] == 200:
+        payload = hotels_result[0].get_json()
+        hotels = payload.get('data', {}).get('hotels', [])
+    
+    return render_template('owner/promotions_create.html', hotels=hotels)
 
 
 @owner_bp.route('/promotions/<int:promotion_id>/edit', methods=['GET', 'POST'])
 @role_required('hotel_owner', 'admin')
 def owner_promotions_edit(promotion_id):
     from app.controllers.promotion_controller import PromotionController
+    
     if request.method == 'POST':
         result = PromotionController.update_promotion(promotion_id)
         if result[1] == 200:
             flash('Cập nhật khuyến mãi thành công', 'success')
             return redirect(url_for('owner.owner_promotions'))
-        flash('Cập nhật khuyến mãi thất bại', 'error')
+        else:
+            try:
+                error_data = result[0].get_json()
+                error_message = error_data.get('message', 'Cập nhật khuyến mãi thất bại')
+            except:
+                error_message = 'Cập nhật khuyến mãi thất bại'
+            flash(error_message, 'error')
+    
     result = PromotionController.get_promotion(promotion_id)
-    return _render_template(result, 'owner/promotions_edit.html', promotion_id=promotion_id)
+    
+    # Get hotels for dropdown
+    hotels_result = OwnerDashboardController.my_hotels()
+    hotels = []
+    if hotels_result[1] == 200:
+        payload = hotels_result[0].get_json()
+        hotels = payload.get('data', {}).get('hotels', [])
+    
+    return _render_template(result, 'owner/promotions_edit.html', promotion_id=promotion_id, hotels=hotels)
 
 
 @owner_bp.route('/promotions/<int:promotion_id>/delete', methods=['POST'])
@@ -309,7 +320,24 @@ def owner_discounts_create():
         if result[1] == 201:
             flash('Tạo mã giảm giá thành công', 'success')
             return redirect(url_for('owner.owner_discounts'))
-        flash('Tạo mã giảm giá thất bại', 'error')
+        # Extract error message from response
+        try:
+            error_data = result[0].get_json()
+            error_message = error_data.get('message', 'Tạo mã giảm giá thất bại')
+            if 'errors' in error_data:
+                # Validation errors
+                errors = error_data['errors']
+                if isinstance(errors, dict):
+                    error_details = []
+                    for field, msgs in errors.items():
+                        if isinstance(msgs, list):
+                            error_details.append(f"{field}: {', '.join(msgs)}")
+                        else:
+                            error_details.append(f"{field}: {msgs}")
+                    error_message = f"{error_message} - {'; '.join(error_details)}"
+        except:
+            error_message = 'Tạo mã giảm giá thất bại'
+        return render_template('owner/discounts_create.html', error=error_message)
     return render_template('owner/discounts_create.html')
 
 

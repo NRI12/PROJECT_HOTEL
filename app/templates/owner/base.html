@@ -21,11 +21,17 @@
             </div>
             <nav class="owner-nav">
                 <ul class="list-unstyled">
+                    <!-- Tổng quan -->
                     <li class="owner-nav-item">
                         <a href="{{ url_for('owner.dashboard') }}" class="owner-nav-link {% if request.endpoint == 'owner.dashboard' %}active{% endif %}">
                             <i class="owner-nav-icon fas fa-tachometer-alt"></i>
-                            Dashboard
+                            Tổng quan
                         </a>
+                    </li>
+                    
+                    <!-- Quản lý cơ sở -->
+                    <li class="owner-nav-section" style="margin-top: 1rem; padding: 0.5rem 1rem; font-size: 0.75rem; font-weight: 600; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">
+                        Quản lý cơ sở
                     </li>
                     <li class="owner-nav-item">
                         <a href="{{ url_for('owner.my_hotels') }}" class="owner-nav-link {% if request.endpoint == 'owner.my_hotels' %}active{% endif %}">
@@ -36,7 +42,7 @@
                     <li class="owner-nav-item">
                         <a href="{{ url_for('owner.owner_rooms') }}" class="owner-nav-link {% if 'rooms' in request.endpoint %}active{% endif %}">
                             <i class="owner-nav-icon fas fa-bed"></i>
-                            Quản lý phòng
+                            Phòng
                         </a>
                     </li>
                     <li class="owner-nav-item">
@@ -45,28 +51,15 @@
                             Tiện nghi
                         </a>
                     </li>
+                    
+                    <!-- Kinh doanh -->
+                    <li class="owner-nav-section" style="margin-top: 1rem; padding: 0.5rem 1rem; font-size: 0.75rem; font-weight: 600; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">
+                        Kinh doanh
+                    </li>
                     <li class="owner-nav-item">
-                        <a href="{{ url_for('owner.owner_bookings') }}" class="owner-nav-link {% if request.endpoint == 'owner.owner_bookings' %}active{% endif %}">
+                        <a href="{{ url_for('owner.owner_bookings') }}" class="owner-nav-link {% if 'bookings' in request.endpoint or 'booking' in request.endpoint %}active{% endif %}">
                             <i class="owner-nav-icon fas fa-calendar-check"></i>
                             Đặt phòng
-                        </a>
-                    </li>
-                    <li class="owner-nav-item">
-                        <a href="{{ url_for('owner.owner_promotions') }}" class="owner-nav-link {% if 'promotions' in request.endpoint %}active{% endif %}">
-                            <i class="owner-nav-icon fas fa-tags"></i>
-                            Khuyến mãi
-                        </a>
-                    </li>
-                    <li class="owner-nav-item">
-                        <a href="{{ url_for('owner.owner_discounts') }}" class="owner-nav-link {% if 'discounts' in request.endpoint %}active{% endif %}">
-                            <i class="owner-nav-icon fas fa-ticket-alt"></i>
-                            Mã giảm giá
-                        </a>
-                    </li>
-                    <li class="owner-nav-item">
-                        <a href="{{ url_for('owner.revenue_summary') }}" class="owner-nav-link {% if 'revenue' in request.endpoint %}active{% endif %}">
-                            <i class="owner-nav-icon fas fa-chart-line"></i>
-                            Doanh thu
                         </a>
                     </li>
                     <li class="owner-nav-item">
@@ -75,16 +68,21 @@
                             Đánh giá
                         </a>
                     </li>
+                    
+                    <!-- Marketing -->
+                    <li class="owner-nav-section" style="margin-top: 1rem; padding: 0.5rem 1rem; font-size: 0.75rem; font-weight: 600; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">
+                        Marketing
+                    </li>
                     <li class="owner-nav-item">
-                        <a href="{{ url_for('owner.statistics_report') }}" class="owner-nav-link {% if request.endpoint == 'owner.statistics_report' %}active{% endif %}">
-                            <i class="owner-nav-icon fas fa-chart-bar"></i>
-                            Thống kê
+                        <a href="{{ url_for('owner.owner_promotions') }}" class="owner-nav-link {% if 'promotions' in request.endpoint %}active{% endif %}">
+                            <i class="owner-nav-icon fas fa-tags"></i>
+                            Khuyến mại
                         </a>
                     </li>
                     <li class="owner-nav-item">
-                        <a href="{{ url_for('owner.occupancy_report') }}" class="owner-nav-link {% if request.endpoint == 'owner.occupancy_report' %}active{% endif %}">
-                            <i class="owner-nav-icon fas fa-percentage"></i>
-                            Tỷ lệ lấp đầy
+                        <a href="{{ url_for('owner.owner_discounts') }}" class="owner-nav-link {% if 'discounts' in request.endpoint %}active{% endif %}">
+                            <i class="owner-nav-icon fas fa-ticket-alt"></i>
+                            Mã giảm giá
                         </a>
                     </li>
                 </ul>
@@ -93,34 +91,169 @@
 
         <!-- Main Content -->
         <main class="owner-content">
-            <!-- Flash Messages -->
-            {% if error %}
-                <div class="owner-alert owner-alert-error">
-                    <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
-                </div>
-            {% endif %}
-            {% if success %}
-                <div class="owner-alert owner-alert-success">
-                    <i class="fas fa-check-circle me-2"></i>{{ success }}
-                </div>
-            {% endif %}
-
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="owner-alert owner-alert-{{ category }}">
-                            <i class="fas fa-info-circle me-2"></i>{{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-
             <!-- Page Content -->
             {% block content %}{% endblock %}
         </main>
     </div>
 
+    <!-- Toast Notification Container -->
+    <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px; max-width: 400px;"></div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    // Toast Notification System
+    function showToast(message, type = 'success', duration = 4000) {
+        const container = document.getElementById('toast-container');
+        
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = `toast-notification toast-${type}`;
+        toast.style.cssText = `
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 16px 20px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideInRight 0.3s ease-out;
+            border-left: 4px solid ${type === 'success' ? '#28a745' : '#dc3545'};
+            position: relative;
+            overflow: hidden;
+        `;
+        
+        // Icon
+        const icon = document.createElement('i');
+        icon.className = `fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}`;
+        icon.style.cssText = `
+            font-size: 24px;
+            color: ${type === 'success' ? '#28a745' : '#dc3545'};
+            flex-shrink: 0;
+        `;
+        
+        // Message
+        const messageDiv = document.createElement('div');
+        messageDiv.style.cssText = 'flex: 1; color: #333; font-size: 14px; font-weight: 500;';
+        messageDiv.textContent = message;
+        
+        // Close button
+        const closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '&times;';
+        closeBtn.style.cssText = `
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #999;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: color 0.2s;
+        `;
+        closeBtn.onmouseover = () => closeBtn.style.color = '#333';
+        closeBtn.onmouseout = () => closeBtn.style.color = '#999';
+        
+        // Progress bar
+        const progressBar = document.createElement('div');
+        progressBar.style.cssText = `
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: ${type === 'success' ? '#28a745' : '#dc3545'};
+            width: 100%;
+            animation: shrink ${duration}ms linear;
+        `;
+        
+        // Assemble toast
+        toast.appendChild(icon);
+        toast.appendChild(messageDiv);
+        toast.appendChild(closeBtn);
+        toast.appendChild(progressBar);
+        
+        // Add to container
+        container.appendChild(toast);
+        
+        // Remove toast function
+        const removeToast = () => {
+            toast.style.animation = 'slideOutRight 0.3s ease-out';
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        };
+        
+        // Close button click
+        closeBtn.onclick = removeToast;
+        
+        // Auto remove after duration
+        setTimeout(removeToast, duration);
+    }
+    
+    // Show messages on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    showToast('{{ message|safe }}', '{{ category }}');
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        {% if error and error|length > 0 %}
+            showToast('{{ error|safe }}', 'error');
+        {% endif %}
+        
+        {% if success and success|length > 0 %}
+            showToast('{{ success|safe }}', 'success');
+        {% endif %}
+    });
+    </script>
+    
+    <style>
+    @keyframes slideInRight {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOutRight {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+    }
+    
+    @keyframes shrink {
+        from {
+            width: 100%;
+        }
+        to {
+            width: 0%;
+        }
+    }
+    
+    .toast-notification:hover {
+        box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    }
+    </style>
+    
     {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -5,116 +5,213 @@
 {% block content %}
 
 <div class="owner-header">
-
-    <h1 class="owner-header-title">Sửa khuyến mãi</h1>
-
+    <div>
+        <h1 class="owner-header-title">
+            <i class="fas fa-edit me-2"></i> Sửa khuyến mãi
+        </h1>
+        <p class="owner-header-subtitle">Cập nhật thông tin khuyến mãi</p>
+    </div>
+    <div class="owner-header-actions">
+        <a href="{{ url_for('owner.owner_promotions') }}" class="owner-btn owner-btn-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+    </div>
 </div>
 
 {% if result[1] == 200 %}
-
     {% set promo = result[0].get_json()['data']['promotion'] %}
-
+    
     <div class="owner-card">
-
         <form method="POST">
-
             <div class="row g-3">
+                <!-- Thông tin cơ bản -->
+                <div class="col-12">
+                    <h5 class="mb-3"><i class="fas fa-info-circle me-2"></i>Thông tin cơ bản</h5>
+                </div>
 
                 <div class="col-12">
-
-                    <label class="form-label">Tiêu đề *</label>
-
+                    <label class="form-label">Tiêu đề khuyến mãi *</label>
                     <input type="text" name="title" class="form-control" value="{{ promo.title }}" required>
-
                 </div>
 
                 <div class="col-12">
-
                     <label class="form-label">Mô tả</label>
-
                     <textarea name="description" class="form-control" rows="3">{{ promo.description or '' }}</textarea>
-
                 </div>
 
-                <div class="col-md-4">
+                <!-- Áp dụng cho -->
+                <div class="col-12 mt-4">
+                    <h5 class="mb-3"><i class="fas fa-bullseye me-2"></i>Áp dụng cho</h5>
+                </div>
 
+                {% if hotels %}
+                <div class="col-md-6">
+                    <label class="form-label">Khách sạn (Tùy chọn)</label>
+                    <select name="hotel_id" id="hotel_id" class="form-control">
+                        <option value="">-- Chọn khách sạn --</option>
+                        {% for hotel in hotels %}
+                        <option value="{{ hotel.hotel_id }}" {% if promo.hotel_id == hotel.hotel_id %}selected{% endif %}>
+                            {{ hotel.hotel_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">Để trống nếu áp dụng cho tất cả khách sạn</small>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Phòng (Tùy chọn)</label>
+                    <select name="room_id" id="room_id" class="form-control">
+                        <option value="">-- Chọn phòng --</option>
+                    </select>
+                    <small class="text-muted">Chọn khách sạn trước để load phòng</small>
+                </div>
+                {% else %}
+                <div class="col-12">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Bạn chưa có khách sạn nào. Vui lòng tạo khách sạn trước.
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Giảm giá -->
+                <div class="col-12 mt-4">
+                    <h5 class="mb-3"><i class="fas fa-percent me-2"></i>Thông tin giảm giá</h5>
+                </div>
+
+                <div class="col-md-6">
                     <label class="form-label">Loại giảm giá *</label>
-
-                    <select name="discount_type" class="form-control">
-
-                        <option value="percentage" {{ 'selected' if promo.discount_type == 'percentage' }}>Phần trăm (%)</option>
-
-                        <option value="fixed" {{ 'selected' if promo.discount_type == 'fixed' }}>Số tiền cố định (VNĐ)</option>
-
+                    <select name="discount_type" class="form-control" required>
+                        <option value="percentage" {% if promo.discount_type == 'percentage' %}selected{% endif %}>Phần trăm (%)</option>
+                        <option value="fixed" {% if promo.discount_type == 'fixed' %}selected{% endif %}>Số tiền cố định (VNĐ)</option>
                     </select>
-
                 </div>
 
-                <div class="col-md-4">
-
+                <div class="col-md-6">
                     <label class="form-label">Giá trị giảm *</label>
-
-                    <input type="number" name="discount_value" class="form-control" value="{{ promo.discount_value }}" step="0.01" required>
-
+                    <input type="number" name="discount_value" class="form-control" value="{{ promo.discount_value }}" step="0.01" min="0" required>
                 </div>
 
-                <div class="col-md-4">
-
-                    <label class="form-label">Số lượng</label>
-
-                    <input type="number" name="quantity" class="form-control" value="{{ promo.quantity or '' }}">
-
+                <!-- Thời gian áp dụng -->
+                <div class="col-12 mt-4">
+                    <h5 class="mb-3"><i class="fas fa-calendar me-2"></i>Thời gian áp dụng</h5>
                 </div>
 
                 <div class="col-md-6">
-
                     <label class="form-label">Ngày bắt đầu *</label>
-
-                    <input type="date" name="start_date" class="form-control" value="{{ promo.start_date }}" required>
-
+                    <input type="datetime-local" name="start_date" class="form-control" 
+                           value="{{ promo.start_date[:16] if promo.start_date else '' }}" required>
                 </div>
 
                 <div class="col-md-6">
-
                     <label class="form-label">Ngày kết thúc *</label>
+                    <input type="datetime-local" name="end_date" class="form-control" 
+                           value="{{ promo.end_date[:16] if promo.end_date else '' }}" required>
+                </div>
 
-                    <input type="date" name="end_date" class="form-control" value="{{ promo.end_date }}" required>
+                <!-- Điều kiện áp dụng -->
+                <div class="col-12 mt-4">
+                    <h5 class="mb-3"><i class="fas fa-cogs me-2"></i>Điều kiện áp dụng</h5>
+                </div>
 
+                <div class="col-md-6">
+                    <label class="form-label">Số đêm tối thiểu</label>
+                    <input type="number" name="min_nights" class="form-control" 
+                           value="{{ promo.min_nights or 1 }}" min="1">
+                    <small class="text-muted">Số đêm tối thiểu để được áp dụng khuyến mãi</small>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Áp dụng theo ngày (Tùy chọn)</label>
+                    <input type="text" name="applicable_days" class="form-control" 
+                           value="{{ promo.applicable_days or '' }}" 
+                           placeholder="VD: Mon,Tue,Fri">
+                    <small class="text-muted">Các ngày trong tuần (Mon, Tue, Wed, Thu, Fri, Sat, Sun)</small>
+                </div>
+
+                <!-- Trạng thái -->
+                <div class="col-12 mt-4">
+                    <h5 class="mb-3"><i class="fas fa-toggle-on me-2"></i>Trạng thái</h5>
                 </div>
 
                 <div class="col-12">
-
-                    <label class="form-label">Trạng thái</label>
-
-                    <select name="status" class="form-control">
-
-                        <option value="active" {{ 'selected' if promo.status == 'active' }}>Kích hoạt</option>
-
-                        <option value="inactive" {{ 'selected' if promo.status == 'inactive' }}>Tạm dừng</option>
-
+                    <label class="form-label">Kích hoạt</label>
+                    <select name="is_active" class="form-control">
+                        <option value="1" {% if promo.is_active %}selected{% endif %}>Kích hoạt</option>
+                        <option value="0" {% if not promo.is_active %}selected{% endif %}>Tạm dừng</option>
                     </select>
-
                 </div>
 
-                <div class="col-12">
-
-                    <button type="submit" class="owner-btn owner-btn-primary">Cập nhật</button>
-
-                    <a href="{{ url_for('owner.owner_promotions') }}" class="owner-btn owner-btn-outline-secondary">Hủy</a>
-
+                <div class="col-12 mt-4">
+                    <button type="submit" class="owner-btn owner-btn-primary">
+                        <i class="fas fa-save me-2"></i> Cập nhật khuyến mãi
+                    </button>
+                    <a href="{{ url_for('owner.owner_promotions') }}" class="owner-btn owner-btn-secondary">
+                        <i class="fas fa-times me-2"></i> Hủy
+                    </a>
                 </div>
-
             </div>
-
         </form>
-
     </div>
 
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const hotelSelect = document.getElementById('hotel_id');
+        const roomSelect = document.getElementById('room_id');
+        const currentRoomId = {{ promo.room_id or 'null' }};
+        
+        function loadRooms(hotelId, selectRoomId = null) {
+            if (!hotelId) {
+                roomSelect.innerHTML = '<option value="">-- Chọn phòng --</option>';
+                roomSelect.disabled = true;
+                return;
+            }
+            
+            fetch(`/hotel/api/${hotelId}/rooms`)
+                .then(response => response.json())
+                .then(data => {
+                    roomSelect.innerHTML = '<option value="">-- Chọn phòng --</option>';
+                    
+                    if (data.success && data.data && data.data.length > 0) {
+                        roomSelect.disabled = false;
+                        data.data.forEach(room => {
+                            const option = document.createElement('option');
+                            option.value = room.room_id;
+                            option.textContent = `${room.room_name} - ${room.room_type ? room.room_type.type_name : 'N/A'}`;
+                            
+                            if (selectRoomId && room.room_id === selectRoomId) {
+                                option.selected = true;
+                            }
+                            
+                            roomSelect.appendChild(option);
+                        });
+                    } else {
+                        roomSelect.disabled = true;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading rooms:', error);
+                    roomSelect.disabled = true;
+                });
+        }
+        
+        // Load rooms on page load if hotel is selected
+        if (hotelSelect && roomSelect) {
+            const initialHotelId = hotelSelect.value;
+            if (initialHotelId) {
+                loadRooms(initialHotelId, currentRoomId);
+            }
+            
+            // Load rooms when hotel changes
+            hotelSelect.addEventListener('change', function() {
+                loadRooms(this.value);
+            });
+        }
+    });
+    </script>
+
 {% else %}
-
     <div class="alert alert-danger">{{ error }}</div>
-
 {% endif %}
 
 {% endblock %}
-
