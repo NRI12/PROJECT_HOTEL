@@ -29,6 +29,11 @@ class RoomController:
                         continue
                     elif len(value) == 1:
                         data[key] = value[0]
+            
+            # Convert amenity_ids to list if it's a single string
+            if 'amenity_ids' in data and isinstance(data['amenity_ids'], str):
+                data['amenity_ids'] = [data['amenity_ids']]
+            
             return data
         elif request.is_json:
             return request.get_json()
@@ -61,7 +66,6 @@ class RoomController:
                 room_dict['room_type'] = room.room_type.to_dict() if room.room_type else None
                 room_dict['images'] = [img.to_dict() for img in room.images]
                 rooms_data.append(room_dict)
-            
             return paginated_response(rooms_data, page, per_page, total)
             
         except Exception as e:

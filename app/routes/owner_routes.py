@@ -59,13 +59,6 @@ def revenue_detail():
     return _render_template(result, 'owner/revenue_detail.html')
 
 
-@owner_bp.route('/rooms/status', methods=['GET'])
-@role_required('hotel_owner', 'admin')
-def rooms_status():
-    result = OwnerDashboardController.room_status()
-    return _render_template(result, 'owner/rooms_status.html')
-
-
 @owner_bp.route('/reviews', methods=['GET'])
 @role_required('hotel_owner', 'admin')
 def owner_reviews():
@@ -197,6 +190,13 @@ def owner_rooms_delete(room_id):
     flash('Xóa phòng thành công' if result[1] == 200 else 'Xóa phòng thất bại', 
           'success' if result[1] == 200 else 'error')
     return redirect(url_for('owner.owner_rooms'))
+
+@owner_bp.route('/rooms/<int:room_id>/status', methods=['POST'])
+@role_required('hotel_owner', 'admin')
+def owner_rooms_update_status(room_id):
+    from app.controllers.room_controller import RoomController
+    result = RoomController.update_room_status(room_id)
+    return result
 
 
 # ==================== AMENITIES ====================

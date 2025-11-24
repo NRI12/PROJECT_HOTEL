@@ -52,12 +52,6 @@
                         </a>
                     </li>
                     <li class="owner-nav-item">
-                        <a href="{{ url_for('owner.rooms_status') }}" class="owner-nav-link {% if request.endpoint == 'owner.rooms_status' %}active{% endif %}">
-                            <i class="owner-nav-icon fas fa-door-open"></i>
-                            Trạng thái phòng
-                        </a>
-                    </li>
-                    <li class="owner-nav-item">
                         <a href="{{ url_for('owner.owner_promotions') }}" class="owner-nav-link {% if 'promotions' in request.endpoint %}active{% endif %}">
                             <i class="owner-nav-icon fas fa-tags"></i>
                             Khuyến mãi
