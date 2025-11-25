@@ -1,10 +1,11 @@
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 from flask_mail import Mail
 from config.config import config
+import os
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -50,5 +51,11 @@ def create_app(config_name='development'):
     
     from app.middleware.error_handler import register_error_handlers
     register_error_handlers(app)
+    
+    # Route để serve uploaded files
+    @app.route('/uploads/<path:filename>')
+    def uploaded_file(filename):
+        uploads_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'uploads')
+        return send_from_directory(uploads_dir, filename)
     
     return app

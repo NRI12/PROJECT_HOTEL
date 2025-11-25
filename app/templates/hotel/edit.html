@@ -22,7 +22,7 @@
     {% set hotel = result[0].get_json().data.hotel %}
 
     <div class="owner-card">
-        <form method="POST" action="{{ url_for('hotel.edit_hotel', hotel_id=hotel_id) }}">
+        <form method="POST" action="{{ url_for('hotel.edit_hotel', hotel_id=hotel_id) }}" enctype="multipart/form-data">
             <div class="row g-3">
                 <!-- Thông tin cơ bản -->
                 <div class="col-12">
@@ -153,6 +153,20 @@
                     <small class="text-muted">Mặc định: 12:00</small>
                 </div>
 
+                <!-- Upload ảnh (optional) -->
+                <div class="col-12 mt-4">
+                    <h5 class="mb-3">
+                        <i class="fas fa-images me-2 text-info"></i>
+                        Thêm hình ảnh mới (tùy chọn)
+                    </h5>
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label">Chọn ảnh để thêm</label>
+                    <input type="file" name="images" class="form-control" multiple accept="image/*">
+                    <small class="text-muted">Chọn nhiều ảnh (JPG, PNG, GIF, WEBP) để thêm vào khách sạn. Để trống nếu không muốn thêm ảnh.</small>
+                </div>
+
                 <!-- Buttons -->
                 <div class="col-12 mt-4">
                     <button type="submit" class="owner-btn owner-btn-primary">
@@ -169,23 +183,12 @@
         </form>
     </div>
 
-    <!-- Hình ảnh khách sạn -->
+    <!-- Hình ảnh hiện có -->
     <div class="owner-card mt-4">
         <h5 class="mb-3">
             <i class="fas fa-images me-2 text-success"></i>
-            Hình ảnh khách sạn
+            Hình ảnh hiện có ({{ hotel.images|length if hotel.images else 0 }})
         </h5>
-
-        <!-- Upload form -->
-        <form action="{{ url_for('hotel.upload_images', hotel_id=hotel_id) }}" method="POST" enctype="multipart/form-data" class="mb-3">
-            <div class="input-group">
-                <input type="file" name="images" class="form-control" multiple accept="image/*" required>
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-upload"></i> Upload ảnh
-                </button>
-            </div>
-            <small class="text-muted">Chọn nhiều ảnh cùng lúc (JPG, PNG, GIF, WEBP)</small>
-        </form>
 
         {% if hotel.images and hotel.images|length > 0 %}
         <div class="row g-3">

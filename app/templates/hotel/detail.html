@@ -16,6 +16,7 @@
 </head>
 <body>
 
+    {% set user_logged_in = session.get('user_id') %}
     <!-- HEADER / NAVIGATION -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
@@ -36,11 +37,17 @@
                         <a class="nav-link" href="{{ url_for('main.search_page') }}">Khách sạn</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#promotions">Ưu đãi</a>
+                        <a class="nav-link" href="{{ url_for('main.index') }}#promotions">Ưu đãi</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.index') }}#about">Về chúng tôi</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.index') }}#contact">Liên hệ</a>
                     </li>
                 </ul>
                 
-                {% if session.get('user_id') %}
+                {% if user_logged_in %}
                 <ul class="navbar-nav navbar-icons">
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('favorite.favorite_list') }}" title="Yêu thích">
@@ -92,10 +99,11 @@
     {% if result and result[0].get_json() and result[0].get_json().success %}
         {% set hotel = result[0].get_json().data.hotel %}
         
+        <div id="hotel-detail-page" data-hotel-id="{{ hotel.hotel_id }}">
         <!-- HOTEL HEADER -->
         <section class="hotel-detail-header">
             <div class="container py-4">
-                <div class="row">
+                <div class="row align-items-start">
                     <div class="col-lg-8">
                         <h1 class="hotel-detail-title">{{ hotel.hotel_name }}</h1>
                         <div class="hotel-detail-meta">
@@ -113,6 +121,18 @@
                                 <span class="ms-1">({{ hotel.review_count }} đánh giá)</span>
                             </div>
                             {% endif %}
+                            <div class="hotel-meta-badges d-flex flex-wrap gap-2 mt-2 mt-lg-0">
+                                {% if hotel.status %}
+                                <span class="badge bg-light text-dark text-uppercase">
+                                    <i class="bi bi-flag"></i> {{ hotel.status.replace('_', ' ') }}
+                                </span>
+                                {% endif %}
+                                {% if hotel.is_featured %}
+                                <span class="badge bg-warning text-dark text-uppercase">
+                                    <i class="bi bi-stars"></i> Nổi bật
+                                </span>
+                                {% endif %}
+                            </div>
                         </div>
                         <div class="hotel-address mt-2">
                             <i class="bi bi-geo-alt-fill text-danger"></i>
@@ -124,11 +144,11 @@
                             {% endif %}
                         </div>
                     </div>
-                    <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                        <button class="btn btn-outline-primary me-2" onclick="shareHotel()">
+                    <div class="col-lg-4 mt-3 mt-lg-0 d-flex flex-wrap gap-2 justify-content-lg-end">
+                        <button class="btn btn-outline-primary" type="button" onclick="shareHotel()">
                             <i class="bi bi-share"></i> Chia sẻ
                         </button>
-                        <button class="btn btn-outline-danger" onclick="toggleFavorite({{ hotel.hotel_id }})">
+                        <button class="btn btn-outline-danger" type="button" onclick="toggleFavorite(hotelId)">
                             <i class="bi bi-heart"></i> Yêu thích
                         </button>
                     </div>
@@ -142,12 +162,12 @@
                 <div class="gallery-grid">
                     {% if hotel.images %}
                         {% for image in hotel.images[:5] %}
-                        <div class="gallery-item {% if loop.index == 1 %}gallery-item-large{% endif %}">
-                            <img src="{{ image.image_url }}" alt="{{ hotel.hotel_name }}" onclick="openLightbox({{ loop.index0 }})">
+                        <div class="gallery-item {% if loop.index == 1 %}gallery-item-large{% endif %}" data-open-lightbox data-gallery-index="{{ loop.index0 }}">
+                            <img src="{{ image.image_url }}" alt="{{ hotel.hotel_name }}">
                         </div>
                         {% endfor %}
                         {% if hotel.images|length > 5 %}
-                        <button class="gallery-view-all" onclick="openLightbox(0)">
+                        <button class="gallery-view-all" type="button" data-open-lightbox data-gallery-index="0">
                             <i class="bi bi-images"></i> Xem tất cả {{ hotel.images|length }} ảnh
                         </button>
                         {% endif %}
@@ -164,8 +184,8 @@
         <section class="hotel-content py-4">
             <div class="container">
                 <div class="row">
-                    <!-- Left Content -->
-                    <div class="col-lg-8">
+                    <!-- Main Content -->
+                    <div class="col-12">
                         <!-- Navigation Tabs -->
                         <ul class="nav nav-tabs hotel-tabs mb-4" id="hotelTabs" role="tablist">
                             <li class="nav-item" role="presentation">
@@ -240,6 +260,45 @@
                                         {% endif %}
                                     </div>
                                     {% endif %}
+
+                                    <div class="row g-3 mt-4">
+                                        <div class="col-md-6">
+                                            <div class="info-box">
+                                                <i class="bi bi-flag text-warning"></i>
+                                                <div class="ms-3">
+                                                    <h6>Trạng thái</h6>
+                                                    <p class="mb-0 text-uppercase">{{ hotel.status.replace('_', ' ') if hotel.status else 'Chưa cập nhật' }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="info-box">
+                                                <i class="bi bi-stars text-primary"></i>
+                                                <div class="ms-3">
+                                                    <h6>Nổi bật</h6>
+                                                    <p class="mb-0">{{ 'Có' if hotel.is_featured else 'Không' }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="info-box">
+                                                <i class="bi bi-calendar-event text-success"></i>
+                                                <div class="ms-3">
+                                                    <h6>Ngày tạo</h6>
+                                                    <p class="mb-0">{{ hotel.created_at[:10] if hotel.created_at else 'Chưa cập nhật' }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="info-box">
+                                                <i class="bi bi-arrow-repeat text-danger"></i>
+                                                <div class="ms-3">
+                                                    <h6>Cập nhật lần cuối</h6>
+                                                    <p class="mb-0">{{ hotel.updated_at[:10] if hotel.updated_at else 'Chưa cập nhật' }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -370,71 +429,6 @@
                         </div>
                     </div>
 
-                    <!-- Right Sidebar - Booking Form -->
-                    <div class="col-lg-4">
-                        <div class="booking-sidebar">
-                            <div class="booking-card">
-                                <h4 class="booking-title">Đặt phòng ngay</h4>
-                                
-                                <form id="bookingForm">
-                                    <div class="mb-3">
-                                        <label class="form-label">Ngày nhận phòng</label>
-                                        <input type="date" class="form-control" id="checkin" required>
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label class="form-label">Ngày trả phòng</label>
-                                        <input type="date" class="form-control" id="checkout" required>
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label class="form-label">Số lượng khách</label>
-                                        <select class="form-select" id="guests">
-                                            <option value="1">1 người</option>
-                                            <option value="2" selected>2 người</option>
-                                            <option value="3">3 người</option>
-                                            <option value="4">4+ người</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div class="price-summary">
-                                        <div class="d-flex justify-content-between mb-2">
-                                            <span>Giá mỗi đêm từ:</span>
-                                            <span class="fw-bold" id="nightPrice">-</span>
-                                        </div>
-                                        <div class="d-flex justify-content-between mb-2">
-                                            <span>Số đêm:</span>
-                                            <span id="numNights">0</span>
-                                        </div>
-                                        <hr>
-                                        <div class="d-flex justify-content-between">
-                                            <strong>Tạm tính:</strong>
-                                            <strong class="text-primary" id="totalPrice">0₫</strong>
-                                        </div>
-                                    </div>
-                                    
-                                    <button type="button" class="btn btn-primary w-100 mt-3" onclick="goToRoomSelection()">
-                                        <i class="bi bi-calendar-check"></i> Chọn phòng
-                                    </button>
-                                </form>
-                                
-                                <div class="booking-features mt-3">
-                                    <div class="feature-item">
-                                        <i class="bi bi-check-circle text-success"></i>
-                                        <span>Xác nhận tức thì</span>
-                                    </div>
-                                    <div class="feature-item">
-                                        <i class="bi bi-check-circle text-success"></i>
-                                        <span>Không cần thanh toán trước</span>
-                                    </div>
-                                    <div class="feature-item">
-                                        <i class="bi bi-check-circle text-success"></i>
-                                        <span>Hủy miễn phí</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </section>
@@ -467,7 +461,7 @@
                 </div>
             </div>
         </div>
-
+        </div>
     {% else %}
         <div class="container my-5">
             <div class="alert alert-warning text-center">
@@ -480,7 +474,7 @@
     {% endif %}
 
     <!-- FOOTER -->
-    <footer>
+    <footer id="contact">
         <div class="container">
             <div class="row g-4">
                 <div class="col-md-4">
@@ -488,24 +482,53 @@
                         <i class="bi bi-building"></i> HotelBooking
                     </h3>
                     <p style="color: rgba(255, 255, 255, 0.8);">
-                        Nền tảng đặt phòng khách sạn hàng đầu Việt Nam.
+                        Nền tảng đặt phòng khách sạn hàng đầu Việt Nam. 
+                        Mang đến trải nghiệm du lịch tuyệt vời cho mọi khách hàng.
                     </p>
+                    <div class="social-links">
+                        <a href="#" class="social-icon"><i class="bi bi-facebook"></i></a>
+                        <a href="#" class="social-icon"><i class="bi bi-twitter"></i></a>
+                        <a href="#" class="social-icon"><i class="bi bi-instagram"></i></a>
+                        <a href="#" class="social-icon"><i class="bi bi-youtube"></i></a>
+                    </div>
                 </div>
-                <div class="col-md-4">
-                    <h3 class="footer-title">Liên kết</h3>
+                
+                <div class="col-md-2">
+                    <h3 class="footer-title">Công ty</h3>
                     <ul class="footer-links">
-                        <li><a href="{{ url_for('main.index') }}">Trang chủ</a></li>
-                        <li><a href="{{ url_for('main.search_page') }}">Khách sạn</a></li>
+                        <li><a href="#">Về chúng tôi</a></li>
+                        <li><a href="#">Tuyển dụng</a></li>
+                        <li><a href="#">Tin tức</a></li>
+                        <li><a href="#">Đối tác</a></li>
                     </ul>
                 </div>
+                
+                <div class="col-md-2">
+                    <h3 class="footer-title">Hỗ trợ</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Trung tâm trợ giúp</a></li>
+                        <li><a href="#">Điều khoản sử dụng</a></li>
+                        <li><a href="#">Chính sách bảo mật</a></li>
+                        <li><a href="#">Liên hệ</a></li>
+                    </ul>
+                </div>
+                
                 <div class="col-md-4">
-                    <h3 class="footer-title">Liên hệ</h3>
+                    <h3 class="footer-title">Nhận Tin Khuyến Mãi</h3>
                     <p style="color: rgba(255, 255, 255, 0.8);">
-                        <i class="bi bi-telephone"></i> Hotline: 1900-1234<br>
-                        <i class="bi bi-envelope"></i> Email: support@hotelbooking.vn
+                        Đăng ký để nhận thông tin ưu đãi mới nhất
                     </p>
+                    <form class="newsletter-form">
+                        <input type="email" placeholder="Email của bạn..." required>
+                        <button type="submit" class="btn btn-primary">Đăng ký</button>
+                    </form>
+                    <div class="mt-3" style="color: rgba(255, 255, 255, 0.8);">
+                        <p><i class="bi bi-telephone"></i> Hotline: 1900-1234</p>
+                        <p><i class="bi bi-envelope"></i> Email: support@hotelbooking.vn</p>
+                    </div>
                 </div>
             </div>
+            
             <div class="footer-bottom">
                 <p>&copy; 2025 HotelBooking. Tất cả các quyền được bảo lưu.</p>
             </div>
@@ -517,7 +540,82 @@
     
     <!-- Custom JS -->
     <script>
-        const hotelId = {{ hotel_id }};
+        const hotelDetailRoot = document.getElementById('hotel-detail-page');
+        const hotelId = hotelDetailRoot ? Number(hotelDetailRoot.dataset.hotelId || 0) : 0;
+        const currencyFormatter = new Intl.NumberFormat('vi-VN');
+        const roomAmenityMap = [
+            { keywords: ['không hút thuốc', 'non smoking', 'nonsmoking'], icon: 'bi-slash-circle' },
+            { keywords: ['wifi', 'wi-fi', 'wi fi'], icon: 'bi-wifi' },
+            { keywords: ['ăn sáng', 'breakfast'], icon: 'bi-cup-hot' },
+            { keywords: ['vòi sen', 'shower'], icon: 'bi-droplet' },
+            { keywords: ['tắm đứng', 'bath'], icon: 'bi-droplet-half' },
+            { keywords: ['tủ lạnh', 'fridge', 'mini bar', 'minibar'], icon: 'bi-archive' },
+            { keywords: ['nước nóng', 'water heater'], icon: 'bi-thermometer-high' },
+            { keywords: ['điều hòa', 'air con', 'air conditioning'], icon: 'bi-snow' },
+            { keywords: ['tivi', 'tv'], icon: 'bi-tv' },
+            { keywords: ['két sắt', 'safe'], icon: 'bi-shield-lock' }
+        ];
+        
+        function formatCurrency(value) {
+            if (value === null || value === undefined || value === '') {
+                return 'Chưa cập nhật';
+            }
+            const numericValue = Number(value);
+            if (Number.isNaN(numericValue)) {
+                return 'Chưa cập nhật';
+            }
+            return currencyFormatter.format(numericValue) + '₫';
+        }
+        
+        function getRoomStatusClass(status) {
+            switch (status) {
+                case 'available':
+                    return 'bg-success';
+                case 'maintenance':
+                    return 'bg-warning text-dark';
+                case 'occupied':
+                    return 'bg-secondary';
+                default:
+                    return 'bg-light text-dark';
+            }
+        }
+        
+        function truncateText(text, limit = 140) {
+            if (!text) {
+                return '';
+            }
+            return text.length > limit ? text.slice(0, limit) + '…' : text;
+        }
+        
+        function buildRoomAmenityFeatures(amenities = []) {
+            if (!amenities.length) {
+                return '<span class="text-secondary small">Chưa cập nhật tiện nghi</span>';
+            }
+            
+            return amenities.slice(0, 6).map(amenity => {
+                const name = amenity.amenity_name || 'Tiện nghi';
+                const normalizedName = name.toLowerCase();
+                const mapping = roomAmenityMap.find(item =>
+                    item.keywords.some(keyword => normalizedName.includes(keyword))
+                );
+                const iconClass = mapping ? mapping.icon : 'bi-check-circle';
+                
+                return `
+                    <div class="room-feature">
+                        <i class="bi ${iconClass}"></i>
+                        <span>${name}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Attach lightbox triggers
+        document.querySelectorAll('[data-open-lightbox]').forEach(element => {
+            element.addEventListener('click', () => {
+                const index = Number(element.getAttribute('data-gallery-index')) || 0;
+                openLightbox(index);
+            });
+        });
         
         // Open lightbox
         function openLightbox(index) {
@@ -565,60 +663,6 @@
             });
         }
         
-        // Calculate booking price
-        function calculatePrice() {
-            const checkin = document.getElementById('checkin').value;
-            const checkout = document.getElementById('checkout').value;
-            
-            if (checkin && checkout) {
-                const checkinDate = new Date(checkin);
-                const checkoutDate = new Date(checkout);
-                const nights = Math.ceil((checkoutDate - checkinDate) / (1000 * 60 * 60 * 24));
-                
-                if (nights > 0) {
-                    document.getElementById('numNights').textContent = nights;
-                    // Will be updated when room is selected
-                } else {
-                    document.getElementById('numNights').textContent = '0';
-                    document.getElementById('totalPrice').textContent = '0₫';
-                }
-            }
-        }
-        
-        document.getElementById('checkin').addEventListener('change', calculatePrice);
-        document.getElementById('checkout').addEventListener('change', calculatePrice);
-        
-        // Set min date for checkin to today
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('checkin').setAttribute('min', today);
-        
-        // Set min date for checkout based on checkin
-        document.getElementById('checkin').addEventListener('change', function() {
-            const checkinDate = this.value;
-            const nextDay = new Date(checkinDate);
-            nextDay.setDate(nextDay.getDate() + 1);
-            document.getElementById('checkout').setAttribute('min', nextDay.toISOString().split('T')[0]);
-        });
-        
-        // Go to room selection
-        function goToRoomSelection() {
-            const checkin = document.getElementById('checkin').value;
-            const checkout = document.getElementById('checkout').value;
-            const guests = document.getElementById('guests').value;
-            
-            if (!checkin || !checkout) {
-                alert('Vui lòng chọn ngày nhận và trả phòng!');
-                return;
-            }
-            
-            // Switch to rooms tab
-            const roomsTab = new bootstrap.Tab(document.getElementById('rooms-tab'));
-            roomsTab.show();
-            
-            // Load rooms
-            loadRooms();
-        }
-        
         // Load rooms
         function loadRooms() {
             fetch(`/hotel/${hotelId}/rooms`)
@@ -627,28 +671,89 @@
                     if (data.success && data.data.rooms.length > 0) {
                         let html = '<div class="rooms-list">';
                         data.data.rooms.forEach(room => {
+                            const imageMarkup = (room.images && room.images.length > 0)
+                                ? `<img src="${room.images[0].image_url}" class="room-image" alt="${room.room_name}">`
+                                : '<img src="https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=400" class="room-image" alt="Room">';
+                            const areaText = room.area ? `${room.area} m²` : 'Chưa cập nhật';
+                            const guestText = room.max_guests ? `${room.max_guests} khách` : 'Chưa cập nhật';
+                            const bedText = room.num_beds ? `${room.num_beds} ${room.bed_type || 'giường'}` : 'Chưa cập nhật';
+                            const statusText = room.status ? room.status.replace('_', ' ') : '';
+                            const statusBadge = room.status
+                                ? `<span class="badge ${getRoomStatusClass(room.status)} text-uppercase">${statusText}</span>`
+                                : '';
+                            const amenitiesMarkup = buildRoomAmenityFeatures(room.amenities || []);
+                            const basePriceValue = Number(room.base_price) || 0;
+                            const weekendPriceValue = room.weekend_price ? Number(room.weekend_price) : null;
+                            const fallbackOriginal = basePriceValue ? basePriceValue * 1.15 : null;
+                            const originalPriceValue = weekendPriceValue && weekendPriceValue > basePriceValue ? weekendPriceValue : fallbackOriginal;
+                            const hasDiscount = originalPriceValue && basePriceValue && originalPriceValue > basePriceValue;
+                            const flashSaleBadge = hasDiscount ? `<span class="flash-sale-badge"><i class="bi bi-lightning-charge-fill"></i> Ưu đãi phút chót!</span>` : '';
+                            const oldPriceMarkup = hasDiscount ? `<span class="old-price">${formatCurrency(originalPriceValue)}</span>` : '';
+                            const priceDisplay = basePriceValue ? formatCurrency(basePriceValue) : 'Liên hệ';
+                            const availabilityText = room.status === 'available' ? 'Còn phòng!' : room.status === 'occupied' ? 'Hết phòng' : 'Đang bảo trì';
+                            const availabilityClass = room.status === 'available' ? 'text-success' : 'text-secondary';
+                            const availabilityMarkup = `<span class="room-availability ${availabilityClass}">${availabilityText}</span>`;
+                            const paymentText = room.status === 'available' ? 'Thanh toán tại khách sạn hoặc khi nhận phòng' : 'Đang cập nhật hình thức thanh toán';
+                            const policyText = room.status === 'available' ? 'Không hoàn lại' : 'Liên hệ khách sạn để biết thêm chi tiết';
+                            const cancellationText = 'Chính sách hủy áp dụng theo khách sạn';
+                            const descriptionSnippet = truncateText(room.description, 140) || 'Chưa có mô tả chi tiết.';
+                            
                             html += `
                                 <div class="room-card">
-                                    <div class="row">
-                                        <div class="col-md-4">
-                                            ${room.images && room.images.length > 0 ? 
-                                                `<img src="${room.images[0].image_url}" class="room-image" alt="${room.room_name}">` :
-                                                '<img src="https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=400" class="room-image" alt="Room">'
-                                            }
+                                    <div class="room-card-left">
+                                        <div class="room-media">
+                                            ${imageMarkup}
                                         </div>
-                                        <div class="col-md-8">
-                                            <h5>${room.room_name}</h5>
-                                            <p class="text-secondary"><i class="bi bi-arrows-fullscreen"></i> Diện tích: ${room.room_size || 'N/A'} m²</p>
-                                            <p class="text-secondary"><i class="bi bi-people"></i> Tối đa: ${room.max_occupancy} khách</p>
-                                            <div class="room-amenities mb-2">
-                                                ${room.amenities ? room.amenities.slice(0, 5).map(a => `<span class="badge bg-light text-dark">${a.amenity_name}</span>`).join(' ') : ''}
+                                        <div class="room-specs">
+                                            <div class="spec-item">
+                                                <i class="bi bi-aspect-ratio"></i>
+                                                <span>${areaText}</span>
                                             </div>
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <div>
-                                                    <span class="price-amount">${room.base_price.toLocaleString()}₫</span>
-                                                    <span class="text-secondary">/đêm</span>
+                                            <div class="spec-item">
+                                                <i class="bi bi-people"></i>
+                                                <span>${guestText}</span>
+                                            </div>
+                                            <div class="spec-item">
+                                                <i class="bi bi-bed"></i>
+                                                <span>${bedText}</span>
+                                            </div>
+                                            <div class="spec-item">
+                                                <i class="bi bi-shield-check"></i>
+                                                <span>${statusText || 'Đang cập nhật'}</span>
+                                            </div>
+                                        </div>
+                                        <div class="room-feature-grid">
+                                            ${amenitiesMarkup}
+                                        </div>
+                                        <span class="room-detail-link">Xem chi tiết phòng</span>
+                                    </div>
+                                    <div class="room-card-right">
+                                        <div class="room-option">
+                                            <div class="room-option-header">
+                            <div>
+                                <h5 class="room-option-title">${room.room_name}</h5>
+                                <p class="room-option-description mb-0">${descriptionSnippet}</p>
+                            </div>
+                            ${statusBadge}
+                        </div>
+                                            <ul class="room-option-meta">
+                                                <li><i class="bi bi-cup-hot"></i> Không bao gồm bữa sáng</li>
+                                                <li><i class="bi bi-credit-card"></i> ${paymentText}</li>
+                                                <li><i class="bi bi-wallet2"></i> Thanh toán khi nhận phòng</li>
+                                                <li><i class="bi bi-shield-lock"></i> ${cancellationText}</li>
+                                                <li><i class="bi bi-info-circle"></i> ${policyText}</li>
+                                            </ul>
+                                            <div class="room-price-stack">
+                                                <div class="price-tag">
+                                                    ${flashSaleBadge}
+                                                    ${oldPriceMarkup}
+                                                    <span class="new-price">${priceDisplay}</span>
+                                                    <small>Không bao gồm thuế và phí</small>
                                                 </div>
-                                                <a href="/booking/create?hotel_id=${hotelId}&room_id=${room.room_id}" class="btn btn-primary">Chọn phòng</a>
+                                                <div class="room-card-actions">
+                                                    ${availabilityMarkup}
+                                                    <a href="/booking/create?hotel_id=${hotelId}&room_id=${room.room_id}" class="btn btn-primary">Chọn</a>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

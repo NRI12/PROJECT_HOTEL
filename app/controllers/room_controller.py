@@ -14,6 +14,7 @@ from werkzeug.utils import secure_filename
 from datetime import datetime, date
 from sqlalchemy import and_, or_
 import os
+import uuid
 from app.models.room_type import RoomType
 from app.models.user import User
 from app.schemas.room_schema import RoomTypeCreateSchema, RoomTypeUpdateSchema
@@ -145,20 +146,19 @@ class RoomController:
                         continue
                     
                     if '.' in file.filename and file.filename.rsplit('.', 1)[1].lower() in allowed_extensions:
-                        from werkzeug.utils import secure_filename
-                        import os
-                        from datetime import datetime
+                        # Tạo tên file random với UUID
+                        file_ext = file.filename.rsplit('.', 1)[1].lower()
+                        random_filename = f"{uuid.uuid4().hex}.{file_ext}"
                         
-                        filename = secure_filename(f"room_{room.room_id}_{datetime.now().timestamp()}_{file.filename}")
                         upload_folder = os.path.join('uploads', 'rooms')
                         os.makedirs(upload_folder, exist_ok=True)
                         
-                        file_path = os.path.join(upload_folder, filename)
+                        file_path = os.path.join(upload_folder, random_filename)
                         file.save(file_path)
                         
                         image = RoomImage(
                             room_id=room.room_id,
-                            image_url=f"/uploads/rooms/{filename}",
+                            image_url=f"/uploads/rooms/{random_filename}",
                             is_primary=(idx == 0),
                             display_order=idx
                         )
@@ -218,15 +218,14 @@ class RoomController:
                         continue
                     
                     if '.' in file.filename and file.filename.rsplit('.', 1)[1].lower() in allowed_extensions:
-                        from werkzeug.utils import secure_filename
-                        import os
-                        from datetime import datetime
+                        # Tạo tên file random với UUID
+                        file_ext = file.filename.rsplit('.', 1)[1].lower()
+                        random_filename = f"{uuid.uuid4().hex}.{file_ext}"
                         
-                        filename = secure_filename(f"room_{room.room_id}_{datetime.now().timestamp()}_{file.filename}")
                         upload_folder = os.path.join('uploads', 'rooms')
                         os.makedirs(upload_folder, exist_ok=True)
                         
-                        file_path = os.path.join(upload_folder, filename)
+                        file_path = os.path.join(upload_folder, random_filename)
                         file.save(file_path)
                         
                         # Set as primary only if no images exist
@@ -234,7 +233,7 @@ class RoomController:
                         
                         image = RoomImage(
                             room_id=room.room_id,
-                            image_url=f"/uploads/rooms/{filename}",
+                            image_url=f"/uploads/rooms/{random_filename}",
                             is_primary=is_primary,
                             display_order=len(room.images) + idx
                         )

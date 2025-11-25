@@ -959,29 +959,226 @@ footer {
     border-radius: 1rem;
     padding: 1.5rem;
     transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+@media (min-width: 992px) {
+    .room-card {
+        flex-direction: row;
+        align-items: stretch;
+    }
 }
 
 .room-card:hover {
     box-shadow: var(--shadow-lg);
 }
 
-.room-image {
+.room-card-left,
+.room-card-right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+@media (min-width: 992px) {
+    .room-card-right {
+        flex: 1.2;
+        border-left: 1px solid var(--border-color);
+        padding-left: 1.5rem;
+        margin-left: 0.5rem;
+    }
+}
+
+.room-media {
+    position: relative;
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.room-media img {
     width: 100%;
-    height: 200px;
+    height: 240px;
     object-fit: cover;
-    border-radius: 0.5rem;
+    display: block;
 }
 
-.room-card h5 {
-    font-weight: 700;
-    color: var(--dark-color);
-    margin-bottom: 0.75rem;
-}
-
-.room-amenities {
+.room-specs {
     display: flex;
     flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.spec-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.75rem;
+    background-color: var(--light-color);
+    border-radius: 0.5rem;
+    font-weight: 600;
+    color: var(--dark-color);
+    font-size: 0.9rem;
+}
+
+.spec-item i {
+    color: var(--primary-color);
+    font-size: 1rem;
+}
+
+.room-feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+}
+
+.room-feature {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 0.75rem;
+    background-color: rgba(15, 23, 42, 0.04);
+    border-radius: 0.75rem;
+    font-weight: 600;
+    color: var(--dark-color);
+    font-size: 0.9rem;
+}
+
+.room-feature i {
+    color: var(--primary-color);
+    font-size: 1rem;
+}
+
+.room-detail-link {
+    font-weight: 600;
+    color: var(--primary-dark);
+    text-decoration: none;
+    font-size: 0.95rem;
+}
+
+.room-detail-link:hover {
+    text-decoration: underline;
+}
+
+.room-option {
+    background-color: #f8fafc;
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+.room-option-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.room-option-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--dark-color);
+    margin: 0;
+}
+
+.room-option-description {
+    color: var(--text-secondary);
+    margin-bottom: 0;
+}
+
+.room-option-meta {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.room-option-meta li {
+    display: flex;
+    align-items: center;
     gap: 0.5rem;
+    margin-bottom: 0.4rem;
+}
+
+.room-option-meta li:last-child {
+    margin-bottom: 0;
+}
+
+.room-option-meta i {
+    color: var(--primary-color);
+}
+
+.flash-sale-badge {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--danger-color);
+    background-color: rgba(239, 68, 68, 0.1);
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.room-price-stack {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.price-tag {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.price-tag .old-price {
+    text-decoration: line-through;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.price-tag .new-price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-dark);
+}
+
+.price-tag small {
+    color: var(--text-secondary);
+}
+
+.room-availability {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.room-availability.text-success {
+    color: #0f9d58 !important;
+}
+
+.room-availability.text-secondary {
+    color: var(--text-secondary) !important;
+}
+
+.room-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.room-card-actions .btn {
+    min-width: 120px;
 }
 
 /* === AMENITIES GRID === */

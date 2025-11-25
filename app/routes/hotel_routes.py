@@ -26,7 +26,16 @@ def create_hotel():
         result = HotelController.create_hotel()
         if result[1] == 201:
             flash('Tạo khách sạn thành công. Đang chờ duyệt.', 'success')
-            return redirect(url_for('hotel.list_hotels'))
+            # Lấy hotel_id từ response để redirect đến trang chi tiết
+            try:
+                response_data = result[0].get_json()
+                hotel_id = response_data.get('data', {}).get('hotel', {}).get('hotel_id')
+                if hotel_id:
+                    return redirect(url_for('hotel.hotel_detail', hotel_id=hotel_id))
+            except:
+                pass
+            # Fallback: redirect về danh sách khách sạn của owner
+            return redirect(url_for('owner.my_hotels'))
         else:
             try:
                 error_data = result[0].get_json()

@@ -17,6 +17,7 @@ from marshmallow import ValidationError
 from werkzeug.utils import secure_filename
 from datetime import datetime, time
 import os
+import uuid
 
 class HotelController:
     
@@ -157,10 +158,52 @@ class HotelController:
             )
             
             db.session.add(hotel)
+            db.session.flush()  # Flush để có hotel_id
+            
+            # Xử lý upload hình ảnh nếu có
+            uploaded_images = []
+            if 'images' in request.files:
+                files = request.files.getlist('images')
+                if files and files[0].filename != '':
+                    allowed_extensions = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
+                    
+                    for idx, file in enumerate(files):
+                        if file.filename == '':
+                            continue
+                        
+                        if not ('.' in file.filename and file.filename.rsplit('.', 1)[1].lower() in allowed_extensions):
+                            continue
+                        
+                        # Tạo tên file random với UUID
+                        file_ext = file.filename.rsplit('.', 1)[1].lower()
+                        random_filename = f"{uuid.uuid4().hex}.{file_ext}"
+                        
+                        upload_folder = os.path.join('uploads', 'hotels')
+                        os.makedirs(upload_folder, exist_ok=True)
+                        
+                        file_path = os.path.join(upload_folder, random_filename)
+                        file.save(file_path)
+                        
+                        # Ảnh đầu tiên là ảnh chính
+                        is_primary = (idx == 0)
+                        
+                        image = HotelImage(
+                            hotel_id=hotel.hotel_id,
+                            image_url=f"/uploads/hotels/{random_filename}",
+                            is_primary=is_primary,
+                            display_order=idx
+                        )
+                        
+                        db.session.add(image)
+                        uploaded_images.append(image)
+            
             db.session.commit()
             
+            hotel_dict = hotel.to_dict()
+            hotel_dict['images'] = [img.to_dict() for img in uploaded_images]
+            
             return success_response(
-                data={'hotel': hotel.to_dict()},
+                data={'hotel': hotel_dict},
                 message='Tạo khách sạn thành công. Đang chờ duyệt.',
                 status_code=201
             )
@@ -192,6 +235,43 @@ class HotelController:
             for key, value in validated_data.items():
                 if hasattr(hotel, key):
                     setattr(hotel, key, value)
+            
+            # Xử lý upload hình ảnh nếu có
+            uploaded_images = []
+            if 'images' in request.files:
+                files = request.files.getlist('images')
+                if files and files[0].filename != '':
+                    allowed_extensions = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
+                    
+                    for idx, file in enumerate(files):
+                        if file.filename == '':
+                            continue
+                        
+                        if not ('.' in file.filename and file.filename.rsplit('.', 1)[1].lower() in allowed_extensions):
+                            continue
+                        
+                        # Tạo tên file random với UUID
+                        file_ext = file.filename.rsplit('.', 1)[1].lower()
+                        random_filename = f"{uuid.uuid4().hex}.{file_ext}"
+                        
+                        upload_folder = os.path.join('uploads', 'hotels')
+                        os.makedirs(upload_folder, exist_ok=True)
+                        
+                        file_path = os.path.join(upload_folder, random_filename)
+                        file.save(file_path)
+                        
+                        # Ảnh đầu tiên là primary nếu chưa có ảnh nào
+                        is_primary = len(hotel.images) == 0 and idx == 0
+                        
+                        image = HotelImage(
+                            hotel_id=hotel_id,
+                            image_url=f"/uploads/hotels/{random_filename}",
+                            is_primary=is_primary,
+                            display_order=len(hotel.images) + idx
+                        )
+                        
+                        db.session.add(image)
+                        uploaded_images.append(image)
             
             db.session.commit()
             
@@ -260,18 +340,21 @@ class HotelController:
                 if not ('.' in file.filename and file.filename.rsplit('.', 1)[1].lower() in allowed_extensions):
                     continue
                 
-                filename = secure_filename(f"hotel_{hotel_id}_{datetime.now().timestamp()}_{file.filename}")
+                # Tạo tên file random với UUID
+                file_ext = file.filename.rsplit('.', 1)[1].lower()
+                random_filename = f"{uuid.uuid4().hex}.{file_ext}"
+                
                 upload_folder = os.path.join('uploads', 'hotels')
                 os.makedirs(upload_folder, exist_ok=True)
                 
-                file_path = os.path.join(upload_folder, filename)
+                file_path = os.path.join(upload_folder, random_filename)
                 file.save(file_path)
                 
                 is_primary = len(hotel.images) == 0
                 
                 image = HotelImage(
                     hotel_id=hotel_id,
-                    image_url=f"/uploads/hotels/{filename}",
+                    image_url=f"/uploads/hotels/{random_filename}",
                     is_primary=is_primary,
                     display_order=len(hotel.images)
                 )
