@@ -12,7 +12,6 @@ def _extract_payload(result):
     except Exception:
         return {}
 
-
 def _render_template(result, template, **context):
     payload = _extract_payload(result)
     error = payload.get('message') if result[1] >= 400 else None

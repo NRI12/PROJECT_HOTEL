@@ -21,7 +21,7 @@ class UserRegistrationSchema(Schema):
         return data
     
     @validates('email')
-    def validate_email(self, value):
+    def validate_email(self, value, **kwargs):
         if not value:
             raise ValidationError('Email là bắt buộc')
         if not is_valid_email(value):
@@ -30,18 +30,18 @@ class UserRegistrationSchema(Schema):
             raise ValidationError('Email quá dài (tối đa 100 ký tự)')
     
     @validates('full_name')
-    def validate_full_name(self, value):
+    def validate_full_name(self, value, **kwargs):
         is_valid, message = is_valid_full_name(value)
         if not is_valid:
             raise ValidationError(message)
     
     @validates('phone')
-    def validate_phone(self, value):
+    def validate_phone(self, value, **kwargs):
         if value and not is_valid_phone(value):
             raise ValidationError('Định dạng số điện thoại không hợp lệ. Sử dụng định dạng Việt Nam: +84xxxxxxxxx hoặc 0xxxxxxxxx')
     
     @validates('password')
-    def validate_password(self, value):
+    def validate_password(self, value, **kwargs):
         if not value:
             raise ValidationError('Mật khẩu là bắt buộc')
         is_valid, message = is_valid_password(value)
@@ -59,14 +59,14 @@ class UserLoginSchema(Schema):
         return data
     
     @validates('email')
-    def validate_email(self, value):
+    def validate_email(self, value, **kwargs):
         if not value:
             raise ValidationError('Email là bắt buộc')
         if not is_valid_email(value):
             raise ValidationError('Định dạng email không hợp lệ')
     
     @validates('password')
-    def validate_password(self, value):
+    def validate_password(self, value, **kwargs):
         if not value:
             raise ValidationError('Mật khẩu là bắt buộc')
         if len(value) < 1:
@@ -91,14 +91,14 @@ class UserUpdateSchema(Schema):
         return data
     
     @validates('full_name')
-    def validate_full_name(self, value):
+    def validate_full_name(self, value, **kwargs):
         if value:
             is_valid, message = is_valid_full_name(value)
             if not is_valid:
                 raise ValidationError(message)
     
     @validates('phone')
-    def validate_phone(self, value):
+    def validate_phone(self, value, **kwargs):
         if value and not is_valid_phone(value):
             raise ValidationError('Định dạng số điện thoại không hợp lệ. Sử dụng định dạng Việt Nam: +84xxxxxxxxx hoặc 0xxxxxxxxx')
 
@@ -107,12 +107,12 @@ class ChangePasswordSchema(Schema):
     new_password = fields.Str(required=True, validate=validate.Length(min=6))
     
     @validates('old_password')
-    def validate_old_password(self, value):
+    def validate_old_password(self, value, **kwargs):
         if not value:
             raise ValidationError('Mật khẩu cũ là bắt buộc')
     
     @validates('new_password')
-    def validate_password(self, value):
+    def validate_password(self, value, **kwargs):
         if not value:
             raise ValidationError('Mật khẩu mới là bắt buộc')
         is_valid, message = is_valid_password(value)
@@ -129,7 +129,7 @@ class ForgotPasswordSchema(Schema):
         return data
     
     @validates('email')
-    def validate_email(self, value):
+    def validate_email(self, value, **kwargs):
         if not value:
             raise ValidationError('Email là bắt buộc')
         if not is_valid_email(value):
@@ -140,14 +140,14 @@ class ResetPasswordSchema(Schema):
     new_password = fields.Str(required=True, validate=validate.Length(min=6))
     
     @validates('token')
-    def validate_token(self, value):
+    def validate_token(self, value, **kwargs):
         if not value:
             raise ValidationError('Token là bắt buộc')
         if not is_valid_token_format(value):
             raise ValidationError('Định dạng token không hợp lệ')
     
     @validates('new_password')
-    def validate_password(self, value):
+    def validate_password(self, value, **kwargs):
         if not value:
             raise ValidationError('Mật khẩu mới là bắt buộc')
         is_valid, message = is_valid_password(value)

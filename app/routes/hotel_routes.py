@@ -109,8 +109,6 @@ def hotel_reviews(hotel_id):
     result = HotelController.get_hotel_reviews(hotel_id)
     return render_template('hotel/reviews.html', hotel_id=hotel_id, result=result)
 
-
-# API Endpoint for AJAX
 @hotel_bp.route('/api/<int:hotel_id>/rooms', methods=['GET'])
 def api_get_hotel_rooms(hotel_id):
     """API endpoint to get rooms for a specific hotel (for AJAX calls)"""
