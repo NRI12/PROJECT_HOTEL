@@ -5,28 +5,96 @@ from app.models.room import Room
 from app.models.booking_detail import BookingDetail
 from app.models.search_history import SearchHistory
 from app.models.user import User
+from app.models.amenity import Amenity
+from app.models.cancellation_policy import CancellationPolicy
+from app.models.promotion import Promotion
 from app.schemas.search_schema import SearchSchema, AdvancedSearchSchema, CheckAvailabilitySchema
 from app.utils.response import success_response, error_response, paginated_response, validation_error_response
 from app.utils.validators import validate_required_fields
 from marshmallow import ValidationError
 from datetime import datetime, date
 from sqlalchemy import and_, or_, func
+from sqlalchemy.orm import joinedload
 
 class SearchController:
     
     @staticmethod
     def _get_request_data():
-        if request.form:
+        data = {}
+        
+        # Ưu tiên GET params từ URL
+        if request.args:
+            data = {}
+            for key in request.args.keys():
+                values = request.args.getlist(key)
+                if len(values) > 1:
+                    data[key] = values
+                else:
+                    data[key] = values[0]
+        elif request.form:
             data = dict(request.form)
             for key, value in data.items():
                 if isinstance(value, list) and len(value) == 1:
                     data[key] = value[0]
-            return data
         elif request.is_json:
-            return request.get_json() or {}
-        else:
-            return {}
-    
+            data = request.get_json() or {}
+        
+        # Chuẩn hóa tên field để tương thích
+        if 'city' in data and 'destination' not in data:
+            data['destination'] = data['city']
+        if 'checkin' in data and 'check_in' not in data:
+            data['check_in'] = data['checkin']
+        if 'checkout' in data and 'check_out' not in data:
+            data['check_out'] = data['checkout']
+        if 'guests' in data and 'num_guests' not in data:
+            # Xử lý format "2 người" -> 2
+            guests_str = data['guests']
+            if isinstance(guests_str, str):
+                data['num_guests'] = guests_str.split()[0] if guests_str else '2'
+            else:
+                data['num_guests'] = guests_str
+        
+        # Chuẩn hóa danh sách hạng sao
+        star_raw = data.get('star_rating')
+        if star_raw:
+            star_values = star_raw if isinstance(star_raw, list) else [star_raw]
+            star_ints = []
+            for value in star_values:
+                try:
+                    star_ints.append(int(value))
+                except (TypeError, ValueError):
+                    continue
+            if star_ints:
+                data['star_ratings'] = star_ints
+                data['star_rating'] = min(star_ints)
+        
+        # Chuẩn hóa danh sách tiện nghi
+        amenity_raw = data.get('amenity')
+        if amenity_raw:
+            amenity_values = amenity_raw if isinstance(amenity_raw, list) else [amenity_raw]
+            amenity_ids = []
+            for value in amenity_values:
+                try:
+                    amenity_ids.append(int(value))
+                except (TypeError, ValueError):
+                    continue
+            data['amenity_ids'] = amenity_ids
+            data.pop('amenity', None)
+        
+        # Chuẩn hóa boolean
+        def parse_bool(value):
+            if isinstance(value, list):
+                value = value[-1]
+            if isinstance(value, str):
+                return value.lower() in ('1', 'true', 'on', 'yes')
+            return bool(value)
+        
+        for bool_field in ('free_cancel', 'has_promotion', 'is_featured'):
+            if bool_field in data:
+                data[bool_field] = parse_bool(data[bool_field])
+        
+        return data
+
     @staticmethod
     def search():
         try:
@@ -298,6 +366,173 @@ class SearchController:
     
     @staticmethod
     def search_for_web():
+        try:
+            data = SearchController._get_request_data()
+            
+            from app.schemas.search_schema import SearchSchema
+            from marshmallow import ValidationError
+            
+            try:
+                schema = SearchSchema()
+                validated_data = schema.load(data)
+            except ValidationError as e:
+                # Nếu validation fail, vẫn tiếp tục với data gốc
+                validated_data = data
+            
+            # Query khách sạn active
+            query = Hotel.query.filter_by(status='active')
+            
+            # Filter theo destination
+            if validated_data.get('destination'):
+                destination = validated_data['destination']
+                query = query.filter(
+                    or_(
+                        Hotel.city.ilike(f'%{destination}%'),
+                        Hotel.address.ilike(f'%{destination}%'),
+                        Hotel.hotel_name.ilike(f'%{destination}%')
+                    )
+                )
+            
+            # Filter theo giá (cần join với Room)
+            if validated_data.get('min_price') or validated_data.get('max_price'):
+                query = query.join(Room, Room.hotel_id == Hotel.hotel_id)
+                
+                if validated_data.get('min_price'):
+                    query = query.filter(Room.base_price >= validated_data['min_price'])
+                
+                if validated_data.get('max_price'):
+                    query = query.filter(Room.base_price <= validated_data['max_price'])
+            
+            # Filter theo star rating
+            star_filters = validated_data.get('star_ratings') or []
+            if star_filters:
+                min_star = min(star_filters)
+                query = query.filter(Hotel.star_rating >= min_star)
+            elif validated_data.get('star_rating'):
+                query = query.filter(Hotel.star_rating >= validated_data['star_rating'])
+            
+            # Filter tiện nghi
+            amenity_filters = validated_data.get('amenity_ids')
+            if amenity_filters:
+                for amenity_id in amenity_filters:
+                    query = query.filter(Hotel.amenities.any(Amenity.amenity_id == amenity_id))
+            
+            # Filter featured
+            if validated_data.get('is_featured'):
+                query = query.filter(Hotel.is_featured.is_(True))
+            
+            # Filter hủy miễn phí
+            if validated_data.get('free_cancel'):
+                query = query.filter(
+                    Hotel.cancellation_policies.any(CancellationPolicy.refund_percentage == 100.00)
+                )
+            
+            # Filter khuyến mãi đang chạy
+            if validated_data.get('has_promotion'):
+                now = datetime.utcnow()
+                query = query.filter(
+                    Hotel.promotions.any(
+                        and_(
+                            Promotion.is_active.is_(True),
+                            Promotion.start_date <= now,
+                            Promotion.end_date >= now
+                        )
+                    )
+                )
+            
+            # Phân trang
+            page = request.args.get('page', 1, type=int)
+            per_page = request.args.get('per_page', 10, type=int)
+            
+            # Đếm tổng và lấy dữ liệu (distinct để tránh duplicate khi join)
+            total = query.distinct().count()
+            hotels = query.options(
+                joinedload(Hotel.images),
+                joinedload(Hotel.amenities)
+            ).distinct().offset((page - 1) * per_page).limit(per_page).all()
+            
+            # Build response data
+            hotels_data = []
+            for hotel in hotels:
+                # Tính giá thấp nhất
+                from app.models.review import Review
+                min_price = db.session.query(func.min(Room.base_price))\
+                    .filter(Room.hotel_id == hotel.hotel_id)\
+                    .filter(Room.status == 'available')\
+                    .scalar() or 1000000
+                
+                # Tính rating trung bình
+                review_count = Review.query.filter_by(
+                    hotel_id=hotel.hotel_id, 
+                    status='active'
+                ).count()
+                
+                avg_rating = db.session.query(func.avg(Review.rating))\
+                    .filter_by(hotel_id=hotel.hotel_id, status='active')\
+                    .scalar()
+                
+                # Kiểm tra có chính sách hủy miễn phí không (refund_percentage = 100%)
+                from app.models.cancellation_policy import CancellationPolicy
+                from app.models.promotion import Promotion
+                has_free_cancellation = CancellationPolicy.query.filter_by(
+                    hotel_id=hotel.hotel_id
+                ).filter(
+                    CancellationPolicy.refund_percentage == 100.00
+                ).first() is not None
+                
+                # Kiểm tra có promotion đang active không
+                has_active_promotion = Promotion.query.filter(
+                    Promotion.hotel_id == hotel.hotel_id,
+                    Promotion.start_date <= datetime.utcnow(),
+                    Promotion.end_date >= datetime.utcnow(),
+                    Promotion.is_active == True
+                ).first() is not None
+                
+                hotels_data.append({
+                    'hotel': hotel,
+                    'min_price': int(min_price),
+                    'review_count': review_count,
+                    'avg_rating': float(avg_rating) if avg_rating else 4.0,
+                    'has_free_cancellation': has_free_cancellation,
+                    'has_active_promotion': has_active_promotion
+                })
+            
+            # Lưu lịch sử tìm kiếm (nếu user đã login)
+            if 'user_id' in session and validated_data.get('destination'):
+                try:
+                    history = SearchHistory(
+                        user_id=session['user_id'],
+                        destination=validated_data['destination'],
+                        check_in_date=validated_data.get('check_in'),
+                        check_out_date=validated_data.get('check_out'),
+                        num_guests=validated_data.get('num_guests')
+                    )
+                    db.session.add(history)
+                    db.session.commit()
+                except:
+                    db.session.rollback()
+            
+            # Tính total_pages
+            total_pages = (total + per_page - 1) // per_page if total > 0 else 1
+            
+            # Return dict thay vì response object
+            return {
+                'data': hotels_data,
+                'total': total,
+                'page': page,
+                'per_page': per_page,
+                'total_pages': total_pages
+            }
+            
+        except Exception as e:
+            print(f"Search error: {str(e)}")
+            return {
+                'data': [],
+                'total': 0,
+                'page': 1,
+                'per_page': 10,
+                'total_pages': 1
+            }
         try:
             data = SearchController._get_request_data()
             

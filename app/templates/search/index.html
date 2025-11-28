@@ -4,82 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tìm Kiếm Khách Sạn - HotelBooking</title>
-    
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    
-    <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 
-    <!-- HEADER / NAVIGATION -->
-    <nav class="navbar navbar-expand-lg">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('main.index') }}">
-                <i class="bi bi-building"></i> HotelBooking
-            </a>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav mx-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.index') }}">Trang chủ</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="{{ url_for('main.search_page') }}">Khách sạn</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.index') }}#promotions">Ưu đãi</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.index') }}#about">Về chúng tôi</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.index') }}#contact">Liên hệ</a>
-                    </li>
-                </ul>
-                
-                {% if user_logged_in %}
-                <ul class="navbar-nav navbar-icons">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('favorite.favorite_list') }}" title="Yêu thích">
-                            <i class="bi bi-heart"></i>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('notification.list_notifications') }}" title="Thông báo">
-                            <i class="bi bi-bell"></i>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('booking.list_bookings') }}" title="Đặt phòng">
-                            <i class="bi bi-calendar-check"></i>
-                        </a>
-                    </li>
-                </ul>
-                
-                <div class="d-flex gap-2 ms-3">
-                    <a href="{{ url_for('user.profile') }}" class="btn btn-outline-primary">Tài khoản</a>
-                    <form action="{{ url_for('auth.logout') }}" method="POST" style="display: inline;">
-                        <button type="submit" class="btn btn-primary">Đăng xuất</button>
-                    </form>
-                </div>
-                {% else %}
-                <div class="d-flex gap-2 ms-3">
-                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary">Đăng nhập</a>
-                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Đăng ký</a>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </nav>
+    {% include "components/header.html" %}
 
     <!-- SEARCH HEADER -->
     <section class="py-4" style="background-color: var(--light-color);">
@@ -102,18 +33,18 @@
                         <div class="col-md-2">
                             <label for="guests">Số khách</label>
                             <select class="form-select" id="guests" name="guests">
-                                <option {% if guests == '1' %}selected{% endif %}>1 người</option>
-                                <option {% if guests == '2' or not guests %}selected{% endif %}>2 người</option>
-                                <option {% if guests == '3' %}selected{% endif %}>3 người</option>
-                                <option {% if guests == '4+' %}selected{% endif %}>4+ người</option>
+                                <option value="1" {% if guests == '1' %}selected{% endif %}>1 người</option>
+                                <option value="2" {% if guests == '2' %}selected{% endif %}>2 người</option>
+                                <option value="3" {% if guests == '3' %}selected{% endif %}>3 người</option>
+                                <option value="4" {% if guests == '4' %}selected{% endif %}>4+ người</option>
                             </select>
                         </div>
                         <div class="col-md-2">
                             <label for="rooms">Số phòng</label>
                             <select class="form-select" id="rooms" name="rooms">
-                                <option selected>1 phòng</option>
-                                <option>2 phòng</option>
-                                <option>3+ phòng</option>
+                                <option value="1" {% if rooms == '1' %}selected{% endif %}>1 phòng</option>
+                                <option value="2" {% if rooms == '2' %}selected{% endif %}>2 phòng</option>
+                                <option value="3" {% if rooms == '3' %}selected{% endif %}>3+ phòng</option>
                             </select>
                         </div>
                         <div class="col-md-1 d-flex align-items-end">
@@ -147,6 +78,8 @@
                             <input type="hidden" name="checkin" value="{{ checkin }}">
                             <input type="hidden" name="checkout" value="{{ checkout }}">
                             <input type="hidden" name="guests" value="{{ guests }}">
+                            <input type="hidden" name="rooms" value="{{ rooms }}">
+                            <input type="hidden" name="sort" value="{{ sort_option }}">
 
                             <!-- Star Rating Filter -->
                             <div class="filter-group">
@@ -154,22 +87,39 @@
                                     <i class="bi bi-star"></i> Đánh giá sao
                                 </h4>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="star_rating" value="5" id="star5">
+                                    <input class="form-check-input" type="checkbox" name="star_rating" value="5" id="star5" {% if '5' in filter_state.stars %}checked{% endif %}>
                                     <label class="form-check-label" for="star5">
                                         <span class="stars">★★★★★</span> (5 sao)
                                     </label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="star_rating" value="4" id="star4">
+                                    <input class="form-check-input" type="checkbox" name="star_rating" value="4" id="star4" {% if '4' in filter_state.stars %}checked{% endif %}>
                                     <label class="form-check-label" for="star4">
                                         <span class="stars">★★★★</span> (4 sao trở lên)
                                     </label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="star_rating" value="3" id="star3">
+                                    <input class="form-check-input" type="checkbox" name="star_rating" value="3" id="star3" {% if '3' in filter_state.stars %}checked{% endif %}>
                                     <label class="form-check-label" for="star3">
                                         <span class="stars">★★★</span> (3 sao trở lên)
                                     </label>
+                                </div>
+                            </div>
+
+                            <!-- Price Filter -->
+                            <div class="filter-group">
+                                <h4 class="filter-group-title">
+                                    <i class="bi bi-cash-stack"></i> Khoảng giá (VNĐ)
+                                </h4>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <label class="form-label small">Tối thiểu</label>
+                                        <input type="number" class="form-control" name="min_price" placeholder="Từ" value="{{ filter_state.min_price }}">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small">Tối đa</label>
+                                        <input type="number" class="form-control" name="max_price" placeholder="Đến" value="{{ filter_state.max_price }}">
+                                    </div>
                                 </div>
                             </div>
 
@@ -181,14 +131,32 @@
                                 </h4>
                                 {% for amenity in amenities[:6] %}
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="amenity" value="{{ amenity.amenity_id }}" id="amenity{{ amenity.amenity_id }}">
+                                    <input class="form-check-input" type="checkbox" name="amenity" value="{{ amenity.amenity_id }}" id="amenity{{ amenity.amenity_id }}" {% if amenity.amenity_id|string in filter_state.amenities %}checked{% endif %}>
                                     <label class="form-check-label" for="amenity{{ amenity.amenity_id }}">
-                                        <i class="bi bi-{{ amenity.icon_class or 'check-circle' }}"></i> {{ amenity.amenity_name }}
+                                        <i class="bi bi-{{ amenity.icon or 'check-circle' }}"></i> {{ amenity.amenity_name }}
                                     </label>
                                 </div>
                                 {% endfor %}
                             </div>
                             {% endif %}
+
+                            <div class="filter-group">
+                                <h4 class="filter-group-title">
+                                    <i class="bi bi-sliders"></i> Tùy chọn nhanh
+                                </h4>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="free_cancel" value="1" id="freeCancel" {% if filter_state.free_cancel %}checked{% endif %}>
+                                    <label class="form-check-label" for="freeCancel">Hủy miễn phí 100%</label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="has_promotion" value="1" id="hasPromotion" {% if filter_state.has_promotion %}checked{% endif %}>
+                                    <label class="form-check-label" for="hasPromotion">Đang có ưu đãi</label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="is_featured" value="1" id="isFeatured" {% if filter_state.is_featured %}checked{% endif %}>
+                                    <label class="form-check-label" for="isFeatured">Khách sạn nổi bật</label>
+                                </div>
+                            </div>
 
                             <button type="submit" class="btn btn-primary w-100 mt-4">
                                 <i class="bi bi-check-circle"></i> Áp dụng bộ lọc
@@ -207,12 +175,12 @@
                             </div>
                             <div class="sort-dropdown">
                                 <label for="sortBy" style="margin-right: 0.5rem;">Sắp xếp:</label>
-                                <select class="form-select" id="sortBy" style="width: auto;" onchange="window.location.href='{{ url_for('main.search_page') }}?city={{ city }}&sort=' + this.value">
-                                    <option>Khuyến nghị</option>
-                                    <option>Giá thấp đến cao</option>
-                                    <option>Giá cao đến thấp</option>
-                                    <option>Đánh giá cao nhất</option>
-                                    <option>Khoảng cách</option>
+                                <select class="form-select" id="sortBy" style="width: auto;" data-base="{{ url_for('main.search_page') }}">
+                                    <option value="" {% if not sort_option %}selected{% endif %}>Khuyến nghị</option>
+                                    <option value="price_asc" {% if sort_option == 'price_asc' %}selected{% endif %}>Giá thấp đến cao</option>
+                                    <option value="price_desc" {% if sort_option == 'price_desc' %}selected{% endif %}>Giá cao đến thấp</option>
+                                    <option value="rating_desc" {% if sort_option == 'rating_desc' %}selected{% endif %}>Đánh giá cao nhất</option>
+                                    <option value="rating_asc" {% if sort_option == 'rating_asc' %}selected{% endif %}>Đánh giá thấp nhất</option>
                                 </select>
                             </div>
                         </div>
@@ -249,24 +217,42 @@
                                                 <div>
                                                     <h3 class="hotel-card-title">{{ hotel.hotel_name }}</h3>
                                                     <div class="hotel-rating">
-                                                        <span class="stars">
-                                                            {% for i in range(hotel.star_rating or 4) %}
-                                                            <i class="bi bi-star-fill"></i>
-                                                            {% endfor %}
-                                                            {% for i in range(5 - (hotel.star_rating or 4)) %}
-                                                            <i class="bi bi-star"></i>
-                                                            {% endfor %}
-                                                        </span>
-                                                        <span class="rating-count">({{ item.review_count }} đánh giá)</span>
-                                                        
-                                                        {% if item.avg_rating >= 9 %}
-                                                        <span class="ms-2 badge bg-success">Xuất sắc {{ "%.1f"|format(item.avg_rating) }}</span>
-                                                        {% elif item.avg_rating >= 8 %}
-                                                        <span class="ms-2 badge bg-success">Tuyệt vời {{ "%.1f"|format(item.avg_rating) }}</span>
-                                                        {% elif item.avg_rating >= 7 %}
-                                                        <span class="ms-2 badge bg-info text-dark">Rất tốt {{ "%.1f"|format(item.avg_rating) }}</span>
+                                                        <div class="mb-2">
+                                                            <div class="d-flex align-items-center gap-2">
+                                                                <span class="stars">
+                                                                    {% for i in range(hotel.star_rating or 4) %}
+                                                                    <i class="bi bi-star-fill"></i>
+                                                                    {% endfor %}
+                                                                    {% for i in range(5 - (hotel.star_rating or 4)) %}
+                                                                    <i class="bi bi-star"></i>
+                                                                    {% endfor %}
+                                                                </span>
+                                                                <strong>Khách sạn {{ hotel.star_rating or 4 }} sao</strong>
+                                                            </div>
+                                                        </div>
+                                                        {% if item.review_count > 0 %}
+                                                        <div class="mb-1">
+                                                            <span class="text-muted small">Đánh giá từ người dùng: </span>
+                                                            <strong class="text-primary">{{ "%.1f"|format(item.avg_rating) }}/5</strong>
+                                                            {% if item.avg_rating >= 4.5 %}
+                                                            <span class="badge bg-success ms-2">Xuất sắc</span>
+                                                            {% elif item.avg_rating >= 4.0 %}
+                                                            <span class="badge bg-success ms-2">Tuyệt vời</span>
+                                                            {% elif item.avg_rating >= 3.5 %}
+                                                            <span class="badge bg-info text-dark ms-2">Rất tốt</span>
+                                                            {% elif item.avg_rating >= 3.0 %}
+                                                            <span class="badge bg-info text-dark ms-2">Tốt</span>
+                                                            {% else %}
+                                                            <span class="badge bg-warning text-dark ms-2">Cần cải thiện</span>
+                                                            {% endif %}
+                                                        </div>
+                                                        <div class="text-muted small">
+                                                            ({{ item.review_count }} đánh giá)
+                                                        </div>
                                                         {% else %}
-                                                        <span class="ms-2 badge bg-info text-dark">Tốt {{ "%.1f"|format(item.avg_rating) }}</span>
+                                                        <div class="text-muted small">
+                                                            Chưa có đánh giá từ người dùng
+                                                        </div>
                                                         {% endif %}
                                                     </div>
                                                     <div class="hotel-location">
@@ -276,18 +262,15 @@
                                                     <div class="hotel-amenities">
                                                         {% if hotel.amenities %}
                                                             {% for amenity in hotel.amenities[:5] %}
-                                                            <i class="bi bi-{{ amenity.icon_class or 'check-circle' }} amenity-icon" title="{{ amenity.amenity_name }}"></i>
+                                                            <i class="bi bi-{{ amenity.icon or 'check-circle' }} amenity-icon" title="{{ amenity.amenity_name }}"></i>
                                                             {% endfor %}
-                                                        {% else %}
-                                                        <i class="bi bi-wifi amenity-icon" title="WiFi miễn phí"></i>
-                                                        <i class="bi bi-water amenity-icon" title="Hồ bơi"></i>
-                                                        <i class="bi bi-p-circle amenity-icon" title="Bãi đỗ xe"></i>
-                                                        <i class="bi bi-cup-hot amenity-icon" title="Nhà hàng"></i>
                                                         {% endif %}
                                                     </div>
                                                     <div class="mt-2">
+                                                        {% if item.has_free_cancellation %}
                                                         <span class="badge bg-primary">Hủy miễn phí</span>
-                                                        {% if hotel.is_featured %}
+                                                        {% endif %}
+                                                        {% if item.has_active_promotion %}
                                                         <span class="badge bg-warning text-dark">Giảm giá</span>
                                                         {% endif %}
                                                     </div>
@@ -321,7 +304,8 @@
                     <nav aria-label="Page navigation" class="mt-4">
                         <ul class="pagination">
                             <li class="page-item {% if page == 1 %}disabled{% endif %}">
-                                <a class="page-link" href="{{ url_for('main.search_page', city=city, page=page-1, checkin=checkin, checkout=checkout, guests=guests) }}" tabindex="-1">
+                                {% set prev_query = build_query(page=page-1) %}
+                                <a class="page-link" href="{{ url_for('main.search_page') }}{% if prev_query %}?{{ prev_query }}{% endif %}" tabindex="-1">
                                     <i class="bi bi-chevron-left"></i>
                                 </a>
                             </li>
@@ -329,7 +313,8 @@
                             {% for p in range(1, total_pages + 1) %}
                                 {% if p <= 5 or p == total_pages %}
                                 <li class="page-item {% if p == page %}active{% endif %}">
-                                    <a class="page-link" href="{{ url_for('main.search_page', city=city, page=p, checkin=checkin, checkout=checkout, guests=guests) }}">{{ p }}</a>
+                                    {% set page_query = build_query(page=p) %}
+                                    <a class="page-link" href="{{ url_for('main.search_page') }}{% if page_query %}?{{ page_query }}{% endif %}">{{ p }}</a>
                                 </li>
                                 {% elif p == 6 %}
                                 <li class="page-item disabled">
@@ -339,7 +324,8 @@
                             {% endfor %}
                             
                             <li class="page-item {% if page == total_pages %}disabled{% endif %}">
-                                <a class="page-link" href="{{ url_for('main.search_page', city=city, page=page+1, checkin=checkin, checkout=checkout, guests=guests) }}">
+                                {% set next_query = build_query(page=page+1) %}
+                                <a class="page-link" href="{{ url_for('main.search_page') }}{% if next_query %}?{{ next_query }}{% endif %}">
                                     <i class="bi bi-chevron-right"></i>
                                 </a>
                             </li>
@@ -430,6 +416,22 @@
                 }
             });
         });
+
+        const sortSelect = document.getElementById('sortBy');
+        if (sortSelect) {
+            sortSelect.addEventListener('change', function() {
+                const params = new URLSearchParams(window.location.search);
+                if (this.value) {
+                    params.set('sort', this.value);
+                } else {
+                    params.delete('sort');
+                }
+                params.delete('page');
+                const query = params.toString();
+                const baseUrl = this.dataset.base || '{{ url_for("main.search_page") }}';
+                window.location.href = query ? `${baseUrl}?${query}` : baseUrl;
+            });
+        }
     </script>
 </body>
 </html>

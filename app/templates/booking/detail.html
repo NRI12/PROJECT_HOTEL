@@ -16,61 +16,8 @@
 </head>
 <body>
 
-    <!-- HEADER / NAVIGATION -->
-    <nav class="navbar navbar-expand-lg">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('main.index') }}">
-                <i class="bi bi-building"></i> HotelBooking
-            </a>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav mx-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.index') }}">Trang chủ</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.search_page') }}">Khách sạn</a>
-                    </li>
-                </ul>
-                
-                {% if session.get('user_id') %}
-                <ul class="navbar-nav navbar-icons">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('favorite.favorite_list') }}" title="Yêu thích">
-                            <i class="bi bi-heart"></i>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('notification.list_notifications') }}" title="Thông báo">
-                            <i class="bi bi-bell"></i>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="{{ url_for('booking.list_bookings') }}" title="Đặt phòng">
-                            <i class="bi bi-calendar-check"></i>
-                        </a>
-                    </li>
-                </ul>
-                
-                <div class="d-flex gap-2 ms-3">
-                    <a href="{{ url_for('user.profile') }}" class="btn btn-outline-primary">Tài khoản</a>
-                    <form action="{{ url_for('auth.logout') }}" method="POST" style="display: inline;">
-                        <button type="submit" class="btn btn-primary">Đăng xuất</button>
-                    </form>
-                </div>
-                {% else %}
-                <div class="d-flex gap-2 ms-3">
-                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary">Đăng nhập</a>
-                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Đăng ký</a>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </nav>
+    {% set user_logged_in = session.get('user_id') %}
+    {% include "components/header.html" %}
 
     <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}

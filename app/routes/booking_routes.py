@@ -124,17 +124,6 @@ def cancel_booking(booking_id):
         flash('Hủy booking thất bại', 'error')
     return redirect(url_for('booking.booking_detail', booking_id=booking_id))
 
-# INSTANT CONFIRM - No longer need confirm route
-# @booking_bp.route('/<int:booking_id>/confirm', methods=['POST'])
-# @role_required('admin', 'hotel_owner')
-# def confirm_booking(booking_id):
-#     result = BookingController.confirm_booking(booking_id)
-#     if result[1] == 200:
-#         flash('Xác nhận booking thành công', 'success')
-#     else:
-#         flash('Xác nhận booking thất bại', 'error')
-#     return redirect(url_for('booking.booking_detail', booking_id=booking_id))
-
 @booking_bp.route('/<int:booking_id>/check-in', methods=['POST'])
 @role_required('admin', 'hotel_owner')
 def check_in(booking_id):

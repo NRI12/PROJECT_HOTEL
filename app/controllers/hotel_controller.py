@@ -6,6 +6,7 @@ from app.models.hotel_amenity import hotel_amenities
 from app.models.amenity import Amenity
 from app.models.room import Room
 from app.models.review import Review
+from app.models.booking import Booking
 from app.models.cancellation_policy import CancellationPolicy
 from app.schemas.hotel_schema import (
     HotelCreateSchema, HotelUpdateSchema, HotelSearchSchema,
@@ -15,7 +16,7 @@ from app.utils.response import success_response, error_response, paginated_respo
 from app.utils.validators import validate_required_fields
 from marshmallow import ValidationError
 from werkzeug.utils import secure_filename
-from datetime import datetime, time
+from datetime import datetime, time, date
 import os
 import uuid
 
@@ -118,7 +119,56 @@ class HotelController:
             hotel_dict['average_rating'] = float(avg_rating) if avg_rating else None
             hotel_dict['review_count'] = Review.query.filter_by(hotel_id=hotel_id, status='active').count()
             
-            return success_response(data={'hotel': hotel_dict})
+            rooms_query = Room.query.filter_by(hotel_id=hotel_id, status='available').order_by(Room.base_price.asc()).all()
+            rooms_data = []
+            for room in rooms_query:
+                room_dict = room.to_dict()
+                room_dict['images'] = [img.to_dict() for img in room.images]
+                room_dict['amenities'] = [amenity.to_dict() for amenity in room.amenities]
+                room_dict['room_type'] = room.room_type.to_dict() if room.room_type else None
+                rooms_data.append(room_dict)
+
+            recent_reviews = Review.query.filter_by(hotel_id=hotel_id, status='active')\
+                .order_by(Review.created_at.desc())\
+                .limit(5).all()
+            reviews_data = []
+            for review in recent_reviews:
+                review_dict = review.to_dict()
+                review_dict['user'] = review.user.to_dict() if review.user else None
+                reviews_data.append(review_dict)
+
+            eligible_bookings = []
+            user_id = session.get('user_id')
+            if user_id:
+                today = date.today()
+                
+                bookings_query = Booking.query.filter(
+                    Booking.user_id == user_id,
+                    Booking.hotel_id == hotel_id,
+                    Booking.status == 'checked_out',
+                    Booking.check_out_date <= today
+                ).order_by(Booking.check_out_date.desc()).limit(10).all()
+
+                for booking in bookings_query:
+                    has_review = Review.query.filter_by(booking_id=booking.booking_id).first()
+                    if has_review:
+                        continue
+
+                    booking_dict = booking.to_dict()
+                    eligible_bookings.append({
+                        'booking_id': booking.booking_id,
+                        'booking_code': booking.booking_code,
+                        'check_in': booking_dict.get('check_in_date'),
+                        'check_out': booking_dict.get('check_out_date'),
+                        'created_at': booking_dict.get('created_at')
+                    })
+            
+            return success_response(data={
+                'hotel': hotel_dict,
+                'rooms': rooms_data,
+                'reviews': reviews_data,
+                'eligible_bookings': eligible_bookings
+            })
             
         except Exception as e:
             return error_response(f'Lỗi khi lấy chi tiết khách sạn: {str(e)}', 500)
@@ -472,6 +522,7 @@ class HotelController:
                 room_dict = room.to_dict()
                 room_dict['images'] = [img.to_dict() for img in room.images]
                 room_dict['amenities'] = [amenity.to_dict() for amenity in room.amenities]
+                room_dict['room_type'] = room.room_type.to_dict() if room.room_type else None
                 rooms_data.append(room_dict)
             
             return success_response(data={'rooms': rooms_data})

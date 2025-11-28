@@ -4,75 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Trang người dùng{% endblock %} - HotelBooking</title>
-    
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    
-    <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     
     {% block extra_styles %}{% endblock %}
 </head>
 <body>
-    <!-- HEADER / NAVIGATION -->
-    <nav class="navbar navbar-expand-lg">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('main.index') }}">
-                <i class="bi bi-building"></i> HotelBooking
-            </a>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav mx-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.index') }}">Trang chủ</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.search_page') }}">Khách sạn</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#promotions">Ưu đãi</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#contact">Liên hệ</a>
-                    </li>
-                </ul>
-                
-                <ul class="navbar-nav navbar-icons">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('favorite.favorite_list') }}" title="Yêu thích">
-                            <i class="bi bi-heart"></i>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('notification.list_notifications') }}" title="Thông báo">
-                            <i class="bi bi-bell"></i>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('booking.list_bookings') }}" title="Đặt phòng">
-                            <i class="bi bi-calendar-check"></i>
-                        </a>
-                    </li>
-                </ul>
-                
-                <div class="d-flex gap-2 ms-3">
-                    <a href="{{ url_for('user.profile') }}" class="btn btn-outline-primary">Tài khoản</a>
-                    <form action="{{ url_for('auth.logout') }}" method="POST" style="display: inline;">
-                        <button type="submit" class="btn btn-primary">Đăng xuất</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- USER DASHBOARD SECTION -->
+    {% include "components/header.html" %}
     <section class="user-dashboard-section py-5">
         <div class="container">
             <div class="row">
@@ -157,42 +96,8 @@
         </div>
     </section>
 
-    <!-- FOOTER -->
-    <footer class="footer">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-4 mb-4">
-                    <h5><i class="bi bi-building"></i> HotelBooking</h5>
-                    <p class="text-muted">Nền tảng đặt phòng khách sạn trực tuyến hàng đầu Việt Nam</p>
-                </div>
-                <div class="col-md-4 mb-4">
-                    <h6>Liên kết nhanh</h6>
-                    <ul class="list-unstyled">
-                        <li><a href="{{ url_for('main.index') }}">Trang chủ</a></li>
-                        <li><a href="{{ url_for('main.search_page') }}">Khách sạn</a></li>
-                        <li><a href="#">Về chúng tôi</a></li>
-                        <li><a href="#">Liên hệ</a></li>
-                    </ul>
-                </div>
-                <div class="col-md-4 mb-4">
-                    <h6>Liên hệ</h6>
-                    <ul class="list-unstyled">
-                        <li><i class="bi bi-telephone"></i> 1900-1234</li>
-                        <li><i class="bi bi-envelope"></i> support@hotelbooking.vn</li>
-                        <li><i class="bi bi-geo-alt"></i> Hà Nội, Việt Nam</li>
-                    </ul>
-                </div>
-            </div>
-            <hr>
-            <div class="text-center">
-                <p class="mb-0">&copy; 2025 HotelBooking. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
-    
-    <!-- Bootstrap 5 JS Bundle -->
+    {% include "components/footer.html" %}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
     {% block extra_scripts %}{% endblock %}
 </body>
 </html>

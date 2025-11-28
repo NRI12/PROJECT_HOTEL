@@ -5,6 +5,7 @@ from app.models.room import Room
 from app.models.review import Review
 from app.models.promotion import Promotion
 from app.models.amenity import Amenity
+from app.models.cancellation_policy import CancellationPolicy
 from sqlalchemy import func
 from datetime import datetime
 
@@ -28,11 +29,28 @@ class MainController:
                     .filter_by(hotel_id=hotel.hotel_id, status='active')\
                     .scalar() or 4.0
                 
+                # Kiểm tra có chính sách hủy miễn phí không (refund_percentage = 100%)
+                has_free_cancellation = CancellationPolicy.query.filter_by(
+                    hotel_id=hotel.hotel_id
+                ).filter(
+                    CancellationPolicy.refund_percentage == 100.00
+                ).first() is not None
+                
+                # Kiểm tra có promotion đang active không
+                has_active_promotion = Promotion.query.filter(
+                    Promotion.hotel_id == hotel.hotel_id,
+                    Promotion.start_date <= datetime.utcnow(),
+                    Promotion.end_date >= datetime.utcnow(),
+                    Promotion.is_active == True
+                ).first() is not None
+                
                 hotels_data.append({
                     'hotel': hotel,
                     'min_price': int(min_price),
                     'review_count': review_count,
-                    'avg_rating': float(avg_rating) if avg_rating else 4.0
+                    'avg_rating': float(avg_rating) if avg_rating else 4.0,
+                    'has_free_cancellation': has_free_cancellation,
+                    'has_active_promotion': has_active_promotion
                 })
             
             cities = db.session.query(
