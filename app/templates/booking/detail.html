@@ -13,6 +13,69 @@
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .booking-detail-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem 0;
+            margin-bottom: 1.5rem;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+        .status-confirmed { background: #10b981; }
+        .status-pending { background: #f59e0b; }
+        .status-checked_in { background: #3b82f6; }
+        .status-checked_out { background: #6b7280; }
+        .status-cancelled { background: #ef4444; }
+        .payment-paid { background: #10b981; }
+        .payment-unpaid { background: #f59e0b; }
+        .payment-partial { background: #f59e0b; }
+        .compact-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .compact-info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border-radius: 0.5rem;
+        }
+        .compact-info-item i {
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+        .compact-info-label {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-bottom: 0.25rem;
+        }
+        .compact-info-value {
+            font-weight: 600;
+            color: #212529;
+        }
+        .room-table {
+            font-size: 0.9rem;
+        }
+        .room-table th {
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 0.75rem 0.5rem;
+            background: #f8f9fa;
+        }
+        .room-table td {
+            padding: 0.75rem 0.5rem;
+            vertical-align: middle;
+        }
+    </style>
 </head>
 <body>
 
@@ -38,20 +101,20 @@
         {% set booking = result[0].json.data.booking %}
         
         <!-- BOOKING HEADER -->
-        <div class="booking-header">
+        <div class="booking-detail-header">
             <div class="container">
-                <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <div>
-                        <div class="booking-code">
-                            <i class="bi bi-receipt"></i> {{ booking.booking_code }}
-                        </div>
-                        <p class="mb-0">
-                            <i class="bi bi-calendar"></i> Đặt ngày {{ booking.created_at[:10] }}
-                        </p>
+                        <h4 class="mb-1">
+                            <i class="bi bi-receipt me-2"></i>{{ booking.booking_code }}
+                        </h4>
+                        <small class="opacity-75">
+                            <i class="bi bi-calendar me-1"></i>Đặt ngày {{ booking.created_at[:10] }}
+                        </small>
                     </div>
-                    <div class="text-end">
-                        <div class="status-badge status-{{ booking.status }}">
-                            <i class="bi bi-circle-fill me-2"></i>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="status-badge status-{{ booking.status }}">
+                            <i class="bi bi-circle-fill me-1"></i>
                             {% if booking.status == 'pending' %}Chờ xác nhận
                             {% elif booking.status == 'confirmed' %}Đã xác nhận
                             {% elif booking.status == 'checked_in' %}Đã nhận phòng
@@ -60,139 +123,161 @@
                             {% elif booking.status == 'refunded' %}Đã hoàn tiền
                             {% else %}{{ booking.status }}
                             {% endif %}
-                        </div>
-                        <div class="status-badge payment-{{ booking.payment_status }}">
-                            <i class="bi bi-credit-card me-2"></i>
+                        </span>
+                        <span class="status-badge payment-{{ booking.payment_status }}">
+                            <i class="bi bi-credit-card me-1"></i>
                             {% if booking.payment_status == 'unpaid' %}Chưa thanh toán
                             {% elif booking.payment_status == 'partial' %}Thanh toán 1 phần
                             {% elif booking.payment_status == 'paid' %}Đã thanh toán
                             {% elif booking.payment_status == 'refunded' %}Đã hoàn tiền
                             {% else %}{{ booking.payment_status }}
                             {% endif %}
-                        </div>
+                        </span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="container mb-5">
-            <div class="row">
+        <div class="container mb-4">
+            <div class="row g-3">
                 <!-- Left Column -->
                 <div class="col-lg-8">
-                    <!-- Hotel Information -->
-                    <div class="info-card">
-                        <h3>
-                            <i class="bi bi-building me-2"></i>
-                            Thông tin khách sạn
-                        </h3>
-                        {% if booking.hotel %}
-                        <div class="hotel-preview">
-                            <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=300" alt="{{ booking.hotel.hotel_name }}">
-                            <div class="hotel-preview-info">
-                                <h4>{{ booking.hotel.hotel_name }}</h4>
-                                <p><i class="bi bi-geo-alt text-primary"></i> {{ booking.hotel.address }}</p>
-                                <p><i class="bi bi-telephone text-primary"></i> {{ booking.hotel.phone or 'N/A' }}</p>
-                                <p><i class="bi bi-envelope text-primary"></i> {{ booking.hotel.email or 'N/A' }}</p>
-                                <div class="mt-2">
-                                    <a href="{{ url_for('hotel.hotel_detail', hotel_id=booking.hotel.hotel_id) }}" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-eye me-1"></i> Xem chi tiết
-                                    </a>
+                    <!-- Hotel & Booking Info Combined -->
+                    <div class="content-card mb-3">
+                        <div class="row g-3">
+                            {% if booking.hotel %}
+                            <div class="col-md-4">
+                                {% if booking.hotel.images and booking.hotel.images[0] %}
+                                <img src="{{ booking.hotel.images[0].image_url }}" alt="{{ booking.hotel.hotel_name }}" 
+                                     class="img-fluid rounded mb-2" style="width: 100%; height: 120px; object-fit: cover;">
+                                {% else %}
+                                <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=300" alt="{{ booking.hotel.hotel_name }}" 
+                                     class="img-fluid rounded mb-2" style="width: 100%; height: 120px; object-fit: cover;">
+                                {% endif %}
+                                <h6 class="mb-1">{{ booking.hotel.hotel_name }}</h6>
+                                <p class="text-muted small mb-2">
+                                    <i class="bi bi-geo-alt me-1"></i>{{ booking.hotel.address }}
+                                </p>
+                                <a href="{{ url_for('hotel.hotel_detail', hotel_id=booking.hotel.hotel_id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye me-1"></i>Xem chi tiết
+                                </a>
+                            </div>
+                            {% endif %}
+                            <div class="col-md-8">
+                                <h5 class="mb-3">
+                                    <i class="bi bi-calendar-check me-2"></i>Chi tiết đặt phòng
+                                </h5>
+                                <div class="compact-info-grid">
+                                    <div class="compact-info-item">
+                                        <i class="bi bi-calendar-event"></i>
+                                        <div>
+                                            <div class="compact-info-label">Ngày nhận</div>
+                                            <div class="compact-info-value">{{ booking.check_in_date }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="compact-info-item">
+                                        <i class="bi bi-calendar-x"></i>
+                                        <div>
+                                            <div class="compact-info-label">Ngày trả</div>
+                                            <div class="compact-info-value">{{ booking.check_out_date }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="compact-info-item">
+                                        <i class="bi bi-moon"></i>
+                                        <div>
+                                            <div class="compact-info-label">Số đêm</div>
+                                            <div class="compact-info-value">
+                                                {% if booking.details and booking.details[0] %}
+                                                    {{ booking.details[0].num_nights }} đêm
+                                                {% else %}
+                                                    N/A
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="compact-info-item">
+                                        <i class="bi bi-people"></i>
+                                        <div>
+                                            <div class="compact-info-label">Số khách</div>
+                                            <div class="compact-info-value">{{ booking.num_guests }} người</div>
+                                        </div>
+                                    </div>
                                 </div>
+                                {% if booking.special_requests %}
+                                <div class="mt-3 p-2 bg-light rounded">
+                                    <small class="text-muted"><i class="bi bi-chat-dots me-1"></i>Yêu cầu đặc biệt:</small>
+                                    <div class="mt-1">{{ booking.special_requests }}</div>
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
-                        {% else %}
-                        <p class="text-muted">Không có thông tin khách sạn</p>
-                        {% endif %}
-                    </div>
-
-                    <!-- Booking Details -->
-                    <div class="info-card">
-                        <h3>
-                            <i class="bi bi-calendar-check me-2"></i>
-                            Chi tiết đặt phòng
-                        </h3>
-                        <div class="info-row">
-                            <span class="info-label"><i class="bi bi-calendar-event me-2"></i>Ngày nhận phòng</span>
-                            <span class="info-value">{{ booking.check_in_date }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label"><i class="bi bi-calendar-x me-2"></i>Ngày trả phòng</span>
-                            <span class="info-value">{{ booking.check_out_date }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label"><i class="bi bi-moon me-2"></i>Số đêm</span>
-                            <span class="info-value">
-                                {% set check_in = booking.check_in_date %}
-                                {% set check_out = booking.check_out_date %}
-                                {% if booking.details and booking.details[0] %}
-                                    {{ booking.details[0].num_nights }} đêm
-                                {% else %}
-                                    N/A
-                                {% endif %}
-                            </span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label"><i class="bi bi-people me-2"></i>Số khách</span>
-                            <span class="info-value">{{ booking.num_guests }} người</span>
-                        </div>
-                        {% if booking.special_requests %}
-                        <div class="info-row">
-                            <span class="info-label"><i class="bi bi-chat-dots me-2"></i>Yêu cầu đặc biệt</span>
-                            <span class="info-value">{{ booking.special_requests }}</span>
-                        </div>
-                        {% endif %}
                     </div>
 
                     <!-- Room Details -->
-                    <div class="info-card">
-                        <h3>
-                            <i class="bi bi-door-open me-2"></i>
-                            Chi tiết phòng
-                        </h3>
-                        <table class="room-table">
-                            <thead>
-                                <tr>
-                                    <th>Phòng</th>
-                                    <th class="text-center">Số lượng</th>
-                                    <th class="text-end">Giá/đêm</th>
-                                    <th class="text-center">Số đêm</th>
-                                    <th class="text-end">Tổng</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for detail in booking.details %}
-                                <tr>
-                                    <td>
-                                        <strong>Phòng #{{ detail.room_id }}</strong>
-                                    </td>
-                                    <td class="text-center">{{ detail.quantity }}</td>
-                                    <td class="text-end">{{ "{:,.0f}".format(detail.price_per_night) }}₫</td>
-                                    <td class="text-center">{{ detail.num_nights }}</td>
-                                    <td class="text-end"><strong>{{ "{:,.0f}".format(detail.subtotal) }}₫</strong></td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                    <div class="content-card mb-3">
+                        <h5 class="mb-3">
+                            <i class="bi bi-door-open me-2"></i>Chi tiết phòng
+                        </h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm room-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Phòng</th>
+                                        <th class="text-center">SL</th>
+                                        <th class="text-end">Giá/đêm</th>
+                                        <th class="text-center">Đêm</th>
+                                        <th class="text-end">Tổng</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for detail in booking.details %}
+                                    <tr>
+                                        <td><strong>Phòng #{{ detail.room_id }}</strong></td>
+                                        <td class="text-center">{{ detail.quantity }}</td>
+                                        <td class="text-end">{{ "{:,.0f}".format(detail.price_per_night) }}₫</td>
+                                        <td class="text-center">{{ detail.num_nights }}</td>
+                                        <td class="text-end"><strong>{{ "{:,.0f}".format(detail.subtotal) }}₫</strong></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <!-- Guest Information -->
                     {% if booking.user %}
-                    <div class="info-card">
-                        <h3>
-                            <i class="bi bi-person me-2"></i>
-                            Thông tin khách hàng
-                        </h3>
-                        <div class="info-row">
-                            <span class="info-label"><i class="bi bi-person-circle me-2"></i>Họ tên</span>
-                            <span class="info-value">{{ booking.user.full_name }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label"><i class="bi bi-envelope me-2"></i>Email</span>
-                            <span class="info-value">{{ booking.user.email }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label"><i class="bi bi-telephone me-2"></i>Số điện thoại</span>
-                            <span class="info-value">{{ booking.user.phone or 'N/A' }}</span>
+                    <div class="content-card mb-3">
+                        <h5 class="mb-3">
+                            <i class="bi bi-person me-2"></i>Thông tin khách hàng
+                        </h5>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="compact-info-item">
+                                    <i class="bi bi-person-circle"></i>
+                                    <div>
+                                        <div class="compact-info-label">Họ tên</div>
+                                        <div class="compact-info-value">{{ booking.user.full_name }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="compact-info-item">
+                                    <i class="bi bi-envelope"></i>
+                                    <div>
+                                        <div class="compact-info-label">Email</div>
+                                        <div class="compact-info-value small">{{ booking.user.email }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="compact-info-item">
+                                    <i class="bi bi-telephone"></i>
+                                    <div>
+                                        <div class="compact-info-label">Điện thoại</div>
+                                        <div class="compact-info-value">{{ booking.user.phone or 'N/A' }}</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     {% endif %}
@@ -201,44 +286,43 @@
                 <!-- Right Column -->
                 <div class="col-lg-4">
                     <!-- Payment Summary -->
-                    <div class="info-card">
-                        <h3>
-                            <i class="bi bi-receipt me-2"></i>
-                            Tổng thanh toán
-                        </h3>
-                        <div class="price-summary">
-                            <div class="price-row">
+                    <div class="content-card mb-3">
+                        <h5 class="mb-3">
+                            <i class="bi bi-receipt me-2"></i>Tổng thanh toán
+                        </h5>
+                        <div class="price-breakdown">
+                            <div class="d-flex justify-content-between mb-2">
                                 <span>Tổng tiền phòng</span>
                                 <strong>{{ "{:,.0f}".format(booking.total_amount) }}₫</strong>
                             </div>
                             {% if booking.discount_amount > 0 %}
-                            <div class="price-row text-success">
+                            <div class="d-flex justify-content-between mb-2 text-success">
                                 <span><i class="bi bi-tag me-1"></i>Giảm giá</span>
                                 <strong>-{{ "{:,.0f}".format(booking.discount_amount) }}₫</strong>
                             </div>
                             {% endif %}
-                            <div class="price-row price-total">
-                                <span>Tổng cộng</span>
-                                <span>{{ "{:,.0f}".format(booking.final_amount) }}₫</span>
+                            <hr class="my-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">Tổng cộng</span>
+                                <span class="fw-bold text-primary fs-5">{{ "{:,.0f}".format(booking.final_amount) }}₫</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Booking Timeline -->
-                    <div class="info-card">
-                        <h3>
-                            <i class="bi bi-clock-history me-2"></i>
-                            Lịch sử
-                        </h3>
+                    <div class="content-card mb-3">
+                        <h5 class="mb-3">
+                            <i class="bi bi-clock-history me-2"></i>Lịch sử
+                        </h5>
                         <div class="timeline">
                             <div class="timeline-item">
                                 <strong>Đặt phòng</strong>
-                                <p class="text-muted small mb-0">{{ booking.created_at }}</p>
+                                <p class="text-muted small mb-0">{{ booking.created_at[:16] }}</p>
                             </div>
                             {% if booking.status in ['confirmed', 'checked_in', 'checked_out'] %}
                             <div class="timeline-item">
                                 <strong>Đã xác nhận</strong>
-                                <p class="text-muted small mb-0">{{ booking.updated_at }}</p>
+                                <p class="text-muted small mb-0">{{ booking.updated_at[:16] }}</p>
                             </div>
                             {% endif %}
                             {% if booking.status in ['checked_in', 'checked_out'] %}
@@ -256,7 +340,7 @@
                             {% if booking.status == 'cancelled' %}
                             <div class="timeline-item">
                                 <strong class="text-danger">Đã hủy</strong>
-                                <p class="text-muted small mb-0">{{ booking.cancelled_at or booking.updated_at }}</p>
+                                <p class="text-muted small mb-0">{{ (booking.cancelled_at or booking.updated_at)[:16] }}</p>
                                 {% if booking.cancellation_reason %}
                                 <p class="text-muted small mb-0">Lý do: {{ booking.cancellation_reason }}</p>
                                 {% endif %}
@@ -266,24 +350,21 @@
                     </div>
 
                     <!-- Quick Actions -->
-                    <div class="info-card">
-                        <h3>
-                            <i class="bi bi-lightning me-2"></i>
-                            Thao tác nhanh
-                        </h3>
+                    <div class="content-card mb-3">
+                        <h5 class="mb-3">
+                            <i class="bi bi-lightning me-2"></i>Thao tác nhanh
+                        </h5>
                         <div class="d-grid gap-2">
-                            <a href="{{ url_for('booking.invoice', booking_id=booking_id) }}" class="btn btn-outline-primary">
+                            <a href="{{ url_for('booking.invoice', booking_id=booking_id) }}" class="btn btn-outline-primary btn-sm">
                                 <i class="bi bi-file-earmark-text me-2"></i>Xem hóa đơn
                             </a>
-                            
-                            <form action="{{ url_for('booking.resend_confirmation', booking_id=booking_id) }}" method="POST">
-                                <button type="submit" class="btn btn-outline-secondary w-100">
-                                    <i class="bi bi-envelope me-2"></i>Gửi lại email xác nhận
+                            <form action="{{ url_for('booking.resend_confirmation', booking_id=booking_id) }}" method="POST" class="mb-0">
+                                <button type="submit" class="btn btn-outline-secondary btn-sm w-100">
+                                    <i class="bi bi-envelope me-2"></i>Gửi lại email
                                 </button>
                             </form>
-                            
                             {% if booking.status in ['pending', 'confirmed'] %}
-                            <a href="{{ url_for('booking.edit_booking', booking_id=booking_id) }}" class="btn btn-outline-warning">
+                            <a href="{{ url_for('booking.edit_booking', booking_id=booking_id) }}" class="btn btn-outline-warning btn-sm">
                                 <i class="bi bi-pencil me-2"></i>Chỉnh sửa
                             </a>
                             {% endif %}
@@ -293,17 +374,16 @@
             </div>
 
             <!-- Action Buttons -->
-            <div class="row mt-4">
+            <div class="row mt-3">
                 <div class="col-12">
-                    <div class="info-card">
-                        <div class="action-buttons">
-                            <a href="{{ url_for('booking.list_bookings') }}" class="btn btn-secondary">
+                    <div class="content-card">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <a href="{{ url_for('booking.list_bookings') }}" class="btn btn-outline-secondary btn-sm">
                                 <i class="bi bi-arrow-left me-2"></i>Quay lại danh sách
                             </a>
-                            
                             {% if booking.status in ['pending', 'confirmed'] %}
                             <form action="{{ url_for('booking.cancel_booking', booking_id=booking_id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đặt phòng này?')">
-                                <button type="submit" class="btn btn-danger">
+                                <button type="submit" class="btn btn-danger btn-sm">
                                     <i class="bi bi-x-circle me-2"></i>Hủy đặt phòng
                                 </button>
                             </form>
@@ -316,7 +396,7 @@
 
     {% else %}
         <div class="container my-5">
-            <div class="info-card text-center py-5">
+            <div class="content-card text-center py-5">
                 <i class="bi bi-exclamation-triangle" style="font-size: 4rem; color: #ffc107;"></i>
                 <h2 class="mt-3">Không tìm thấy đặt phòng</h2>
                 <p class="text-muted">Đặt phòng bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.</p>
@@ -327,14 +407,7 @@
         </div>
     {% endif %}
 
-    <!-- FOOTER -->
-    <footer>
-        <div class="container">
-            <div class="footer-bottom">
-                <p>&copy; 2025 HotelBooking. Tất cả các quyền được bảo lưu.</p>
-            </div>
-        </div>
-    </footer>
+    {% include "components/footer.html" %}
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

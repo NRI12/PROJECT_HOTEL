@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liên Hệ - HotelBooking</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    {% include "components/header.html" %}
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="container mt-3" style="margin-top: 120px !important;">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+                    <i class="bi bi-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' }}-fill me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- CONTACT SECTION -->
+    <section class="py-6" style="margin-top: 100px;">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="section-title">Liên Hệ Với Chúng Tôi</h2>
+                <p class="section-subtitle">Chúng tôi luôn sẵn sàng hỗ trợ bạn mọi lúc, mọi nơi</p>
+            </div>
+            
+            <div class="row g-4">
+                <!-- Contact Information -->
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body p-4">
+                            <h3 class="mb-4">Thông Tin Liên Hệ</h3>
+                            
+                            <div class="contact-item mb-4">
+                                <div class="d-flex align-items-start">
+                                    <div class="contact-icon me-3">
+                                        <i class="bi bi-telephone-fill"></i>
+                                    </div>
+                                    <div>
+                                        <h5>Hotline</h5>
+                                        <p class="mb-0">1900-1234</p>
+                                        <small class="text-muted">0123 456 789</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="contact-item mb-4">
+                                <div class="d-flex align-items-start">
+                                    <div class="contact-icon me-3">
+                                        <i class="bi bi-envelope-fill"></i>
+                                    </div>
+                                    <div>
+                                        <h5>Email</h5>
+                                        <p class="mb-0">support@hotelbooking.vn</p>
+                                        <small class="text-muted">info@hotelbooking.com</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="contact-item mb-4">
+                                <div class="d-flex align-items-start">
+                                    <div class="contact-icon me-3">
+                                        <i class="bi bi-clock-fill"></i>
+                                    </div>
+                                    <div>
+                                        <h5>Giờ Làm Việc</h5>
+                                        <p class="mb-0">24/7</p>
+                                        <small class="text-muted">Hỗ trợ khách hàng mọi lúc</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="contact-item">
+                                <div class="d-flex align-items-start">
+                                    <div class="contact-icon me-3">
+                                        <i class="bi bi-geo-alt-fill"></i>
+                                    </div>
+                                    <div>
+                                        <h5>Địa Chỉ</h5>
+                                        <p class="mb-0">123 Đường ABC, Quận XYZ</p>
+                                        <small class="text-muted">Thành phố Hồ Chí Minh, Việt Nam</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Contact Form -->
+                <div class="col-md-8">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h3 class="mb-4">Gửi Tin Nhắn Cho Chúng Tôi</h3>
+                            
+                            <form id="contactForm" method="POST" action="{{ url_for('main.contact') }}">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="name" class="form-label">Họ và Tên <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="name" name="name" required>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                                        <input type="email" class="form-control" id="email" name="email" required>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label for="phone" class="form-label">Số Điện Thoại</label>
+                                        <input type="tel" class="form-control" id="phone" name="phone">
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <label for="subject" class="form-label">Chủ Đề <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="subject" name="subject" required>
+                                            <option value="">Chọn chủ đề...</option>
+                                            <option value="booking">Đặt phòng</option>
+                                            <option value="payment">Thanh toán</option>
+                                            <option value="cancellation">Hủy đặt phòng</option>
+                                            <option value="complaint">Khiếu nại</option>
+                                            <option value="suggestion">Góp ý</option>
+                                            <option value="other">Khác</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="col-12">
+                                        <label for="message" class="form-label">Nội Dung Tin Nhắn <span class="text-danger">*</span></label>
+                                        <textarea class="form-control" id="message" name="message" rows="6" required></textarea>
+                                    </div>
+                                    
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-primary btn-lg">
+                                            <i class="bi bi-send-fill"></i> Gửi Tin Nhắn
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Social Media -->
+            <div class="row mt-5">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4 text-center">
+                            <h3 class="mb-3">Theo Dõi Chúng Tôi</h3>
+                            <p class="text-muted mb-4">Kết nối với chúng tôi trên các mạng xã hội</p>
+                            <div class="social-links d-flex justify-content-center gap-3">
+                                <a href="#" class="social-icon-large" title="Facebook">
+                                    <i class="bi bi-facebook"></i>
+                                </a>
+                                <a href="#" class="social-icon-large" title="Twitter">
+                                    <i class="bi bi-twitter"></i>
+                                </a>
+                                <a href="#" class="social-icon-large" title="Instagram">
+                                    <i class="bi bi-instagram"></i>
+                                </a>
+                                <a href="#" class="social-icon-large" title="YouTube">
+                                    <i class="bi bi-youtube"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    {% include "components/footer.html" %}
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Form will submit normally and show flash message from server
+    </script>
+    
+    <style>
+        .contact-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            font-size: 1.2rem;
+        }
+        
+        .social-icon-large {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .social-icon-large:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-5px);
+            color: white;
+        }
+    </style>
+</body>
+</html>
+

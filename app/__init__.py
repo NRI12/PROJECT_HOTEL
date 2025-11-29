@@ -52,6 +52,12 @@ def create_app(config_name='development'):
     from app.middleware.error_handler import register_error_handlers
     register_error_handlers(app)
     
+    # Context processor để tự động có biến user_logged_in trong tất cả templates
+    @app.context_processor
+    def inject_user_logged_in():
+        from flask import session
+        return dict(user_logged_in='user_id' in session)
+    
     # Route để serve uploaded files
     @app.route('/uploads/<path:filename>')
     def uploaded_file(filename):

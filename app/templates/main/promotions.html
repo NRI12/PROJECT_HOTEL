@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ưu Đãi & Khuyến Mãi - HotelBooking</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    {% include "components/header.html" %}
+
+    <!-- PROMOTIONS SECTION -->
+    <section class="py-6" style="background-color: var(--light-color); margin-top: 100px;">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="section-title">Khuyến Mãi & Ưu Đãi</h2>
+                <p class="section-subtitle">Đừng bỏ lỡ những deal hot nhất trong tháng</p>
+            </div>
+            
+            <div class="row g-4">
+                {% if promotions %}
+                    {% for promotion in promotions %}
+                    <div class="col-md-6">
+                        <div class="promotion-card">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h3 class="promo-title mb-1">{{ promotion.title }}</h3>
+                                    {% if promotion.hotel %}
+                                    <p class="text-muted mb-2">Khách sạn: {{ promotion.hotel.hotel_name }}</p>
+                                    {% endif %}
+                                </div>
+                                <span class="discount-badge">
+                                    {% if promotion.discount_type == 'percentage' %}
+                                        Giảm {{ promotion.discount_value|int }}%
+                                    {% else %}
+                                        Giảm {{ "{:,.0f}".format(promotion.discount_value or 0) }}₫
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <p class="mb-3">{{ promotion.description }}</p>
+                            <ul class="promotion-meta">
+                                <li><i class="bi bi-calendar-event"></i>Áp dụng từ {{ promotion.start_date.strftime('%d/%m/%Y') if promotion.start_date else 'N/A' }}</li>
+                                <li><i class="bi bi-calendar-check"></i>Đến hết {{ promotion.end_date.strftime('%d/%m/%Y') if promotion.end_date else 'N/A' }}</li>
+                                {% if promotion.min_nights %}
+                                <li><i class="bi bi-moon-stars"></i>Tối thiểu {{ promotion.min_nights }} đêm</li>
+                                {% endif %}
+                            </ul>
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <div class="promo-code">
+                                    <i class="bi bi-ticket-perforated"></i>
+                                    {% if promotion.discount_type == 'percentage' %}
+                                        Giảm {{ promotion.discount_value|int }}%
+                                    {% else %}
+                                        Giảm {{ "{:,.0f}".format(promotion.discount_value or 0) }}₫
+                                    {% endif %}
+                                </div>
+                                {% if promotion.hotel_id %}
+                                <a href="{{ url_for('hotel.hotel_detail', hotel_id=promotion.hotel_id) }}" class="btn btn-primary">Đặt ngay</a>
+                                {% else %}
+                                <a href="{{ url_for('main.search_page') }}" class="btn btn-primary">Xem khách sạn</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="col-12">
+                        <div class="promotion-card text-center">
+                            <h3 class="promo-title mb-2">Hiện chưa có khuyến mãi nào</h3>
+                            <p class="mb-3">Vui lòng quay lại sau để nhận ưu đãi mới nhất.</p>
+                            <a href="{{ url_for('main.search_page') }}" class="btn btn-primary">Xem tất cả khách sạn</a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    {% include "components/footer.html" %}
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

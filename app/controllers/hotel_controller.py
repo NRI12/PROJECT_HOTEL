@@ -7,6 +7,7 @@ from app.models.amenity import Amenity
 from app.models.room import Room
 from app.models.review import Review
 from app.models.booking import Booking
+from app.models.booking_detail import BookingDetail
 from app.models.cancellation_policy import CancellationPolicy
 from app.schemas.hotel_schema import (
     HotelCreateSchema, HotelUpdateSchema, HotelSearchSchema,
@@ -115,27 +116,134 @@ class HotelController:
             hotel_dict['amenities'] = [amenity.to_dict() for amenity in hotel.amenities]
             hotel_dict['cancellation_policies'] = [policy.to_dict() for policy in hotel.cancellation_policies]
             
-            avg_rating = db.session.query(db.func.avg(Review.rating)).filter_by(hotel_id=hotel_id, status='active').scalar()
-            hotel_dict['average_rating'] = float(avg_rating) if avg_rating else None
-            hotel_dict['review_count'] = Review.query.filter_by(hotel_id=hotel_id, status='active').count()
+            # Tính avg_rating và review_count
+            from sqlalchemy import func
+            avg_rating = db.session.query(func.avg(Review.rating))\
+                .filter(Review.hotel_id == hotel_id, Review.status == 'active')\
+                .scalar()
+            review_count = Review.query.filter_by(
+                hotel_id=hotel_id, 
+                status='active'
+            ).count()
+            # Chuyển đổi avg_rating sang float trước khi làm tròn
+            if avg_rating is not None:
+                avg_rating_float = float(avg_rating)
+                hotel_dict['avg_rating'] = round(avg_rating_float, 1)
+                hotel_dict['average_rating'] = round(avg_rating_float, 1)  # Keep for backward compatibility
+            else:
+                hotel_dict['avg_rating'] = 0
+                hotel_dict['average_rating'] = 0
+            hotel_dict['review_count'] = review_count
             
-            rooms_query = Room.query.filter_by(hotel_id=hotel_id, status='available').order_by(Room.base_price.asc()).all()
+            # Tính đánh giá trung bình theo từng tiêu chí
+            avg_cleanliness = db.session.query(func.avg(Review.cleanliness_rating))\
+                .filter(Review.hotel_id == hotel_id, Review.status == 'active', Review.cleanliness_rating.isnot(None))\
+                .scalar()
+            avg_service = db.session.query(func.avg(Review.service_rating))\
+                .filter(Review.hotel_id == hotel_id, Review.status == 'active', Review.service_rating.isnot(None))\
+                .scalar()
+            avg_facilities = db.session.query(func.avg(Review.facilities_rating))\
+                .filter(Review.hotel_id == hotel_id, Review.status == 'active', Review.facilities_rating.isnot(None))\
+                .scalar()
+            avg_location = db.session.query(func.avg(Review.location_rating))\
+                .filter(Review.hotel_id == hotel_id, Review.status == 'active', Review.location_rating.isnot(None))\
+                .scalar()
+            
+            hotel_dict['avg_cleanliness_rating'] = round(float(avg_cleanliness), 1) if avg_cleanliness is not None else None
+            hotel_dict['avg_service_rating'] = round(float(avg_service), 1) if avg_service is not None else None
+            hotel_dict['avg_facilities_rating'] = round(float(avg_facilities), 1) if avg_facilities is not None else None
+            hotel_dict['avg_location_rating'] = round(float(avg_location), 1) if avg_location is not None else None
+            
+            # Lấy rooms với xử lý lỗi
             rooms_data = []
-            for room in rooms_query:
-                room_dict = room.to_dict()
-                room_dict['images'] = [img.to_dict() for img in room.images]
-                room_dict['amenities'] = [amenity.to_dict() for amenity in room.amenities]
-                room_dict['room_type'] = room.room_type.to_dict() if room.room_type else None
-                rooms_data.append(room_dict)
+            try:
+                rooms_query = Room.query.filter_by(hotel_id=hotel_id, status='available').order_by(Room.base_price.asc()).all()
+                for room in rooms_query:
+                    try:
+                        room_dict = room.to_dict()
+                        room_dict['images'] = [img.to_dict() for img in room.images]
+                        room_dict['amenities'] = [amenity.to_dict() for amenity in room.amenities]
+                        room_dict['room_type'] = room.room_type.to_dict() if room.room_type else None
+                        rooms_data.append(room_dict)
+                    except Exception as e:
+                        print(f"Error processing room {room.room_id}: {str(e)}")
+                        continue
+            except Exception as e:
+                print(f"Error getting rooms: {str(e)}")
+                rooms_data = []
 
-            recent_reviews = Review.query.filter_by(hotel_id=hotel_id, status='active')\
+            # Lấy reviews với xử lý lỗi riêng
+            reviews_data = []
+            try:
+                from sqlalchemy.orm import joinedload
+                from app.models.room_type import RoomType
+                
+                recent_reviews = Review.query.options(
+                    joinedload(Review.user),
+                    joinedload(Review.booking).joinedload(Booking.booking_details).joinedload(BookingDetail.room).joinedload(Room.room_type)
+                ).filter_by(hotel_id=hotel_id, status='active')\
                 .order_by(Review.created_at.desc())\
                 .limit(5).all()
-            reviews_data = []
-            for review in recent_reviews:
-                review_dict = review.to_dict()
-                review_dict['user'] = review.user.to_dict() if review.user else None
-                reviews_data.append(review_dict)
+                
+                for review in recent_reviews:
+                    try:
+                        review_dict = review.to_dict()
+                        # Load user với thông tin đầy đủ
+                        if review.user:
+                            review_dict['user'] = {
+                                'user_id': review.user.user_id,
+                                'full_name': review.user.full_name,
+                                'email': review.user.email,
+                                'name': review.user.full_name or review.user.email,
+                                'avatar_url': review.user.avatar_url
+                            }
+                        else:
+                            review_dict['user'] = None
+                        
+                        # Lấy thông tin phòng từ booking_details qua relationship
+                        rooms_info = []
+                        try:
+                            if review.booking and review.booking.booking_details:
+                                for detail in review.booking.booking_details:
+                                    try:
+                                        # Sử dụng relationship đã được load
+                                        if detail.room:
+                                            room = detail.room
+                                            room_info = {
+                                                'room_id': room.room_id,
+                                                'room_name': room.room_name if room.room_name else f'Phòng #{room.room_id}',
+                                                'room_type': room.room_type.room_type_name if room.room_type and hasattr(room.room_type, 'room_type_name') else None,
+                                                'area': float(room.area) if room.area else None,
+                                                'max_guests': room.max_guests if room.max_guests else None,
+                                                'quantity': detail.quantity if detail.quantity else 1
+                                            }
+                                            rooms_info.append(room_info)
+                                    except Exception as e:
+                                        # Bỏ qua nếu không lấy được thông tin phòng
+                                        print(f"Error getting room info for detail {detail.detail_id}: {str(e)}")
+                                        import traceback
+                                        traceback.print_exc()
+                                        continue
+                        except Exception as e:
+                            # Bỏ qua nếu không lấy được booking_details
+                            print(f"Error getting booking_details for review {review.review_id}: {str(e)}")
+                            import traceback
+                            traceback.print_exc()
+                        
+                        review_dict['rooms'] = rooms_info if rooms_info else []
+                        reviews_data.append(review_dict)
+                    except Exception as e:
+                        # Bỏ qua review nếu có lỗi
+                        print(f"Error processing review {review.review_id}: {str(e)}")
+                        import traceback
+                        traceback.print_exc()
+                        continue
+            except Exception as e:
+                # Nếu có lỗi khi lấy reviews, vẫn tiếp tục với reviews_data = []
+                print(f"Error getting reviews: {str(e)}")
+                import traceback
+                traceback.print_exc()
+                reviews_data = []
 
             eligible_bookings = []
             user_id = session.get('user_id')

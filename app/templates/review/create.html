@@ -1,53 +1,137 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Create Review</title>
-</head>
-<body>
-    <h1>Create Review</h1>
-    
-    {% if error %}
-    <p style="color: red;">{{ error }}</p>
-    {% endif %}
-    
-    <form method="POST" action="/review/create">
-        <div>
-            <label>Booking ID:</label>
-            <input type="number" name="booking_id" required value="{{ request.args.get('booking_id', '') }}">
+{% extends "user/base_user.html" %}
+
+{% block title %}Đánh giá khách sạn{% endblock %}
+{% block page_icon %}star{% endblock %}
+{% block page_title %}Viết đánh giá{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        {% if booking %}
+        <div class="alert alert-info mb-4">
+            <h6 class="alert-heading">
+                <i class="fas fa-hotel me-2"></i>Đánh giá cho booking #{{ booking.booking_code }}
+            </h6>
+            <p class="mb-1">
+                <strong>Khách sạn:</strong> {{ booking.hotel.hotel_name if booking.hotel else 'N/A' }}
+            </p>
+            <p class="mb-0">
+                <strong>Thời gian:</strong> {{ booking.check_in_date }} → {{ booking.check_out_date }}
+            </p>
         </div>
-        
-        <div>
-            <label>Overall Rating (1-5):</label>
-            <input type="number" name="rating" min="1" max="5" required value="{{ request.args.get('rating', '') }}">
+        {% endif %}
+
+        {% if error %}
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
         </div>
-        
-        <div>
-            <label>Cleanliness Rating (1-5):</label>
-            <input type="number" name="cleanliness_rating" min="1" max="5" value="{{ request.args.get('cleanliness_rating', '') }}">
-        </div>
-        
-        <div>
-            <label>Service Rating (1-5):</label>
-            <input type="number" name="service_rating" min="1" max="5" value="{{ request.args.get('service_rating', '') }}">
-        </div>
-        
-        <div>
-            <label>Facilities Rating (1-5):</label>
-            <input type="number" name="facilities_rating" min="1" max="5" value="{{ request.args.get('facilities_rating', '') }}">
-        </div>
-        
-        <div>
-            <label>Location Rating (1-5):</label>
-            <input type="number" name="location_rating" min="1" max="5" value="{{ request.args.get('location_rating', '') }}">
-        </div>
-        
-        <div>
-            <label>Comment:</label>
-            <textarea name="comment">{{ request.args.get('comment', '') }}</textarea>
-        </div>
-        
-        <button type="submit">Create Review</button>
-        <a href="/review">Cancel</a>
-    </form>
-</body>
-</html>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('review.create_review') }}">
+            {% if booking %}
+            <input type="hidden" name="booking_id" value="{{ booking.booking_id }}">
+            {% else %}
+            <div class="mb-3">
+                <label for="booking_id" class="form-label">
+                    <i class="fas fa-calendar-check me-2"></i>Booking ID <span class="text-danger">*</span>
+                </label>
+                <input type="number" 
+                       class="form-control" 
+                       id="booking_id" 
+                       name="booking_id" 
+                       required 
+                       value="{{ request.args.get('booking_id', '') }}"
+                       placeholder="Nhập ID booking đã checkout">
+                <div class="form-text">Chỉ có thể đánh giá các booking đã checkout và chưa có đánh giá</div>
+            </div>
+            {% endif %}
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="rating" class="form-label">
+                        <i class="fas fa-star me-2 text-warning"></i>Điểm tổng thể <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select" id="rating" name="rating" required>
+                        <option value="">-- Chọn điểm --</option>
+                        {% for i in range(5, 0, -1) %}
+                        <option value="{{ i }}" {% if request.args.get('rating') == i|string or (not request.args.get('rating') and i == 5) %}selected{% endif %}>
+                            {{ i }} sao
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="cleanliness_rating" class="form-label">
+                        <i class="fas fa-broom me-2"></i>Điểm vệ sinh
+                    </label>
+                    <select class="form-select" id="cleanliness_rating" name="cleanliness_rating">
+                        <option value="">-- Không đánh giá --</option>
+                        {% for i in range(5, 0, -1) %}
+                        <option value="{{ i }}">{{ i }} sao</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="service_rating" class="form-label">
+                        <i class="fas fa-concierge-bell me-2"></i>Điểm dịch vụ
+                    </label>
+                    <select class="form-select" id="service_rating" name="service_rating">
+                        <option value="">-- Không đánh giá --</option>
+                        {% for i in range(5, 0, -1) %}
+                        <option value="{{ i }}">{{ i }} sao</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="facilities_rating" class="form-label">
+                        <i class="fas fa-swimming-pool me-2"></i>Điểm tiện nghi
+                    </label>
+                    <select class="form-select" id="facilities_rating" name="facilities_rating">
+                        <option value="">-- Không đánh giá --</option>
+                        {% for i in range(5, 0, -1) %}
+                        <option value="{{ i }}">{{ i }} sao</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="location_rating" class="form-label">
+                        <i class="fas fa-map-marker-alt me-2"></i>Điểm vị trí
+                    </label>
+                    <select class="form-select" id="location_rating" name="location_rating">
+                        <option value="">-- Không đánh giá --</option>
+                        {% for i in range(5, 0, -1) %}
+                        <option value="{{ i }}">{{ i }} sao</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="comment" class="form-label">
+                    <i class="fas fa-comment me-2"></i>Nhận xét
+                </label>
+                <textarea class="form-control" 
+                          id="comment" 
+                          name="comment" 
+                          rows="5" 
+                          placeholder="Chia sẻ trải nghiệm của bạn về khách sạn...">{{ request.args.get('comment', '') }}</textarea>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('user.bookings') }}" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i>Hủy
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane me-2"></i>Gửi đánh giá
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

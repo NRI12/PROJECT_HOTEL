@@ -12,9 +12,14 @@
         <p class="owner-header-subtitle">Xem tổng quan hoạt động kinh doanh của bạn</p>
     </div>
     <div class="owner-header-actions">
-        <span class="text-muted">
+        <span class="text-muted me-3">
             <i class="far fa-clock"></i> {{ now().strftime('%d/%m/%Y %H:%M') if now else '' }}
         </span>
+        <form action="{{ url_for('auth.logout') }}" method="POST" style="display: inline;">
+            <button type="submit" class="owner-btn owner-btn-danger">
+                <i class="fas fa-sign-out-alt"></i> Đăng xuất
+            </button>
+        </form>
     </div>
 </div>
 

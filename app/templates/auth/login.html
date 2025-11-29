@@ -9,6 +9,9 @@
 
 {% block form_content %}
 <form method="POST" action="/auth/login">
+    {% if next %}
+    <input type="hidden" name="next" value="{{ next }}">
+    {% endif %}
     <!-- Email Field -->
     <div class="mb-3">
         <label for="email" class="form-label">Email</label>

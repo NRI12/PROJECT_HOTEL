@@ -7,7 +7,7 @@ class Payment(db.Model):
     
     payment_id = db.Column(db.Integer, primary_key=True)
     booking_id = db.Column(db.Integer, db.ForeignKey('bookings.booking_id'), nullable=False, index=True)
-    payment_method = db.Column(db.Enum('credit_card', 'bank_transfer', 'momo', 'zalopay', 'vnpay', 'cash'), nullable=False)
+    payment_method = db.Column(db.Enum('credit_card', 'bank_transfer', 'momo', 'zalopay', 'vnpay', 'cash', 'paypal'), nullable=False)
     amount = db.Column(db.Numeric(12, 2), nullable=False)
     transaction_id = db.Column(db.String(100))
     payment_status = db.Column(db.Enum('pending', 'completed', 'failed', 'refunded'), default='pending')

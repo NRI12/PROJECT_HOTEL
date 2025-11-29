@@ -134,18 +134,24 @@
                         </div>
                         <div class="text-end">
                             <div class="owner-review-rating mb-2">
-                                {% for i in range(5) %}
-                                    {% if i < review.rating %}
-                                        <i class="fas fa-star"></i>
-                                    {% else %}
-                                        <i class="far fa-star"></i>
-                                    {% endif %}
-                                {% endfor %}
-                                <strong class="ms-2">{{ review.rating }}/5</strong>
+                                {% if review.rating %}
+                                    {% for i in range(5) %}
+                                        {% if i < review.rating %}
+                                            <i class="fas fa-star"></i>
+                                        {% else %}
+                                            <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <strong class="ms-2">{{ review.rating }}/5</strong>
+                                {% else %}
+                                    <span class="text-muted">Chưa có đánh giá</span>
+                                {% endif %}
                             </div>
+                            {% if review.status %}
                             <span class="owner-badge status-{{ review.status }}">
                                 {{ review.status }}
                             </span>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="owner-review-content">
@@ -158,14 +164,14 @@
                         {% endif %}
                     </div>
                     
-                    {% if review.owner_reply %}
+                    {% if review.hotel_response %}
                         <div class="owner-reply">
                             <div class="owner-reply-header">
                                 <i class="fas fa-reply me-2"></i>
                                 <strong>Phản hồi từ chủ khách sạn:</strong>
                             </div>
                             <div class="owner-reply-content">
-                                {{ review.owner_reply }}
+                                {{ review.hotel_response }}
                             </div>
                         </div>
                     {% else %}
@@ -252,12 +258,16 @@
                             User #{{ review.user_id }}
                         </td>
                         <td class="text-center">
-                            <div class="text-warning">
-                                {% for i in range(review.rating) %}
-                                    <i class="fas fa-star"></i>
-                                {% endfor %}
-                            </div>
-                            <strong>{{ review.rating }}/5</strong>
+                            {% if review.rating %}
+                                <div class="text-warning">
+                                    {% for i in range(review.rating) %}
+                                        <i class="fas fa-star"></i>
+                                    {% endfor %}
+                                </div>
+                                <strong>{{ review.rating }}/5</strong>
+                            {% else %}
+                                <span class="text-muted small">Chưa có đánh giá</span>
+                            {% endif %}
                         </td>
                         <td class="text-center">
                             <span class="owner-badge status-{{ review.status }}">

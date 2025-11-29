@@ -31,7 +31,7 @@
                         <div>
                             <div class="owner-review-user">
                                 <i class="fas fa-user-circle me-2"></i>
-                                {{ review.user.username if review.user else 'N/A' }}
+                                {{ review.user.full_name if review.user and review.user.full_name else (review.user.email if review.user else 'N/A') }}
                             </div>
                             <div class="text-muted small">
                                 <i class="fas fa-hotel me-1"></i>
@@ -40,18 +40,24 @@
                         </div>
                         <div class="text-end">
                             <div class="owner-review-rating mb-2">
-                                {% for i in range(5) %}
-                                    {% if i < review.rating %}
-                                        <i class="fas fa-star"></i>
-                                    {% else %}
-                                        <i class="far fa-star"></i>
-                                    {% endif %}
-                                {% endfor %}
-                                <strong class="ms-2">{{ review.rating }}/5</strong>
+                                {% if review.rating %}
+                                    {% for i in range(5) %}
+                                        {% if i < review.rating %}
+                                            <i class="fas fa-star"></i>
+                                        {% else %}
+                                            <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <strong class="ms-2">{{ review.rating }}/5</strong>
+                                {% else %}
+                                    <span class="text-muted">Chưa có đánh giá</span>
+                                {% endif %}
                             </div>
+                            {% if review.status %}
                             <span class="owner-badge status-{{ review.status }}">
                                 {{ review.status }}
                             </span>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="owner-review-content">

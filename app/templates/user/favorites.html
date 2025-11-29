@@ -106,20 +106,84 @@
 </div>
 
 <!-- Pagination -->
-{% if favorites and favorites|length > 0 %}
-<nav class="mt-4">
+{% if pagination and pagination.pages > 1 %}
+<nav aria-label="Page navigation" class="mt-4">
     <ul class="pagination justify-content-center">
-        <li class="page-item disabled">
-            <a class="page-link" href="#"><i class="bi bi-chevron-left"></i></a>
+        <!-- Previous Button -->
+        <li class="page-item {% if current_page <= 1 %}disabled{% endif %}">
+            {% if current_page > 1 %}
+            <a class="page-link" href="{{ url_for('user.favorites', page=current_page-1) }}" aria-label="Previous">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+            {% else %}
+            <span class="page-link"><i class="bi bi-chevron-left"></i></span>
+            {% endif %}
         </li>
-        <li class="page-item active"><a class="page-link" href="#">1</a></li>
-        <li class="page-item"><a class="page-link" href="#">2</a></li>
-        <li class="page-item"><a class="page-link" href="#">3</a></li>
-        <li class="page-item">
-            <a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a>
+        
+        <!-- Page Numbers -->
+        {% set total_pages = pagination.pages %}
+        {% set current = current_page %}
+        {% set start_page = 1 %}
+        {% set end_page = total_pages %}
+        
+        {% if total_pages > 10 %}
+            {% if current <= 5 %}
+                {% set start_page = 1 %}
+                {% set end_page = 7 %}
+            {% elif current >= total_pages - 4 %}
+                {% set start_page = total_pages - 6 %}
+                {% set end_page = total_pages %}
+            {% else %}
+                {% set start_page = current - 3 %}
+                {% set end_page = current + 3 %}
+            {% endif %}
+        {% endif %}
+        
+        {% if start_page > 1 %}
+        <li class="page-item {% if current == 1 %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('user.favorites', page=1) }}">1</a>
+        </li>
+        {% if start_page > 2 %}
+        <li class="page-item disabled">
+            <span class="page-link">...</span>
+        </li>
+        {% endif %}
+        {% endif %}
+        
+        {% for p in range(start_page, end_page + 1) %}
+        <li class="page-item {% if p == current %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('user.favorites', page=p) }}">{{ p }}</a>
+        </li>
+        {% endfor %}
+        
+        {% if end_page < total_pages %}
+        {% if end_page < total_pages - 1 %}
+        <li class="page-item disabled">
+            <span class="page-link">...</span>
+        </li>
+        {% endif %}
+        <li class="page-item {% if current == total_pages %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('user.favorites', page=total_pages) }}">{{ total_pages }}</a>
+        </li>
+        {% endif %}
+        
+        <!-- Next Button -->
+        <li class="page-item {% if current_page >= pagination.pages %}disabled{% endif %}">
+            {% if current_page < pagination.pages %}
+            <a class="page-link" href="{{ url_for('user.favorites', page=current_page+1) }}" aria-label="Next">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+            {% else %}
+            <span class="page-link"><i class="bi bi-chevron-right"></i></span>
+            {% endif %}
         </li>
     </ul>
 </nav>
+
+<!-- Pagination Info -->
+<div class="text-center text-muted mt-2">
+    <small>Trang {{ current_page }} / {{ pagination.pages }} (Tổng {{ pagination.total }} khách sạn)</small>
+</div>
 {% endif %}
 {% endblock %}
 

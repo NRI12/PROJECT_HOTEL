@@ -86,7 +86,7 @@ class OwnerDashboardController:
             total_bookings = booking_query.count()
             pending_bookings = booking_query.filter_by(status='pending').count()
 
-            revenue = booking_query.filter(Booking.status.in_(OwnerDashboardController.SAFE_BOOKING_STATUSES)) \
+            revenue = booking_query.filter(Booking.status == 'checked_out') \
                 .with_entities(func.coalesce(func.sum(Booking.final_amount), 0)).scalar() or 0
 
             recent_bookings = booking_query.order_by(Booking.created_at.desc()).limit(5).all()

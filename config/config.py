@@ -1,9 +1,6 @@
 import os
 from datetime import timedelta
 
-import os
-from datetime import timedelta
-
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'mysql+pymysql://root:password@localhost/hotel_booking'
@@ -24,6 +21,12 @@ class Config:
     
     UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER') or 'uploads'
     MAX_CONTENT_LENGTH = int(os.environ.get('MAX_CONTENT_LENGTH', 16 * 1024 * 1024))
+    
+    PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID') or os.environ.get('PAYPAL-SANDBOX-CLIENT-ID')
+    PAYPAL_CLIENT_SECRET = os.environ.get('PAYPAL_CLIENT_SECRET')
+    PAYPAL_MODE = os.environ.get('PAYPAL_MODE') or os.environ.get('PAYPAL_ENVIRONMENT', 'sandbox')
+    PAYPAL_RETURN_URL = os.environ.get('PAYPAL_RETURN_URL') or 'http://localhost:5000/payment/paypal-return'
+    PAYPAL_CANCEL_URL = os.environ.get('PAYPAL_CANCEL_URL') or 'http://localhost:5000/payment/paypal-cancel'
 config = {
     'development': Config,
     'production': Config,

@@ -29,8 +29,26 @@ def create_review():
                 error_message = error_data.get('message', 'Tạo review thất bại')
             except:
                 error_message = 'Tạo review thất bại'
-            return render_template('review/create.html', error=error_message)
-    return render_template('review/create.html')
+            # Lấy lại thông tin booking nếu có booking_id
+            booking_id = request.form.get('booking_id', type=int) or request.args.get('booking_id', type=int)
+            booking_data = None
+            if booking_id:
+                from app.controllers.booking_controller import BookingController
+                booking_result = BookingController.get_booking(booking_id)
+                if booking_result[1] == 200:
+                    booking_data = booking_result[0].get_json().get('data', {}).get('booking')
+            return render_template('review/create.html', error=error_message, booking=booking_data)
+    
+    # GET request - lấy thông tin booking nếu có booking_id
+    booking_id = request.args.get('booking_id', type=int)
+    booking_data = None
+    if booking_id:
+        from app.controllers.booking_controller import BookingController
+        booking_result = BookingController.get_booking(booking_id)
+        if booking_result[1] == 200:
+            booking_data = booking_result[0].get_json().get('data', {}).get('booking')
+    
+    return render_template('review/create.html', booking=booking_data)
 
 @review_bp.route('/<int:review_id>/edit', methods=['GET', 'POST'])
 @login_required

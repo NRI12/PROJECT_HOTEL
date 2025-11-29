@@ -146,11 +146,17 @@ class SearchController:
                 
                 avg_rating = db.session.query(func.avg(Review.rating))\
                     .filter_by(hotel_id=hotel.hotel_id, status='active')\
-                    .scalar() or 4.0
+                    .scalar()
+                
+                # Chuyển đổi avg_rating sang float an toàn
+                try:
+                    avg_rating_float = float(avg_rating) if avg_rating is not None else 0.0
+                except (TypeError, ValueError):
+                    avg_rating_float = 0.0
                 
                 hotel_dict['min_price'] = int(min_price)
                 hotel_dict['review_count'] = review_count
-                hotel_dict['avg_rating'] = float(avg_rating) if avg_rating else 4.0
+                hotel_dict['avg_rating'] = round(avg_rating_float, 1) if avg_rating_float > 0 else 0.0
                 
                 hotels_data.append(hotel_dict)
             
@@ -471,6 +477,12 @@ class SearchController:
                     .filter_by(hotel_id=hotel.hotel_id, status='active')\
                     .scalar()
                 
+                # Chuyển đổi avg_rating sang float an toàn
+                try:
+                    avg_rating_float = float(avg_rating) if avg_rating is not None else 0.0
+                except (TypeError, ValueError):
+                    avg_rating_float = 0.0
+                
                 # Kiểm tra có chính sách hủy miễn phí không (refund_percentage = 100%)
                 from app.models.cancellation_policy import CancellationPolicy
                 from app.models.promotion import Promotion
@@ -492,7 +504,7 @@ class SearchController:
                     'hotel': hotel,
                     'min_price': int(min_price),
                     'review_count': review_count,
-                    'avg_rating': float(avg_rating) if avg_rating else 4.0,
+                    'avg_rating': round(avg_rating_float, 1) if avg_rating_float > 0 else 0.0,
                     'has_free_cancellation': has_free_cancellation,
                     'has_active_promotion': has_active_promotion
                 })
@@ -581,13 +593,19 @@ class SearchController:
                 
                 avg_rating = db.session.query(func.avg(Review.rating))\
                     .filter_by(hotel_id=hotel.hotel_id, status='active')\
-                    .scalar() or 4.0
+                    .scalar()
+                
+                # Chuyển đổi avg_rating sang float an toàn
+                try:
+                    avg_rating_float = float(avg_rating) if avg_rating is not None else 0.0
+                except (TypeError, ValueError):
+                    avg_rating_float = 0.0
                 
                 hotels_data.append({
                     'hotel': hotel,
                     'min_price': int(min_price),
                     'review_count': review_count,
-                    'avg_rating': float(avg_rating) if avg_rating else 4.0
+                    'avg_rating': round(avg_rating_float, 1) if avg_rating_float > 0 else 0.0
                 })
             
             if 'user_id' in session and validated_data.get('destination'):

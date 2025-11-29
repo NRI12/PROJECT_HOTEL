@@ -19,6 +19,7 @@ from datetime import datetime, date
 from sqlalchemy import and_, or_
 import random
 import string
+import re
 
 class BookingController:
     
@@ -26,10 +27,52 @@ class BookingController:
     def _get_request_data():
         if request.form:
             data = dict(request.form)
+            
+            # Parse nested arrays like rooms[0][room_id]
+            parsed_data = {}
+            rooms_data = []
+            guests_data = []
+            
             for key, value in data.items():
                 if isinstance(value, list) and len(value) == 1:
-                    data[key] = value[0]
-            return data
+                    value = value[0]
+                
+                # Parse rooms array
+                if key.startswith('rooms[') and ']' in key:
+                    match = re.match(r'rooms\[(\d+)\]\[(\w+)\]', key)
+                    if match:
+                        index = int(match.group(1))
+                        field = match.group(2)
+                        while len(rooms_data) <= index:
+                            rooms_data.append({})
+                        if field in ['room_id', 'quantity']:
+                            rooms_data[index][field] = int(value) if value else 0
+                        else:
+                            rooms_data[index][field] = value
+                        continue
+                
+                # Parse guests array
+                if key.startswith('guests[') and ']' in key:
+                    match = re.match(r'guests\[(\d+)\]\[(\w+)\]', key)
+                    if match:
+                        index = int(match.group(1))
+                        field = match.group(2)
+                        while len(guests_data) <= index:
+                            guests_data.append({})
+                        guests_data[index][field] = value
+                        continue
+                
+                # Regular fields
+                parsed_data[key] = value
+            
+            # Add parsed arrays
+            if rooms_data:
+                # Filter out empty dicts but keep dicts with room_id
+                parsed_data['rooms'] = [r for r in rooms_data if r and r.get('room_id')]
+            if guests_data:
+                parsed_data['guests'] = [g for g in guests_data if g]
+            
+            return parsed_data
         elif request.is_json:
             return request.get_json() or {}
         else:
@@ -100,6 +143,15 @@ class BookingController:
             booking_dict['details'] = [detail.to_dict() for detail in booking.booking_details]
             booking_dict['payments'] = [payment.to_dict() for payment in booking.payments]
             
+            # Include discount usage information
+            discount_usages = []
+            for usage in booking.discount_usage:
+                usage_dict = usage.to_dict()
+                if usage.discount_code:
+                    usage_dict['discount_code'] = usage.discount_code.to_dict()
+                discount_usages.append(usage_dict)
+            booking_dict['discount_usage'] = discount_usages
+            
             return success_response(data={'booking': booking_dict})
             
         except Exception as e:
@@ -133,7 +185,10 @@ class BookingController:
             num_nights = (check_out - check_in).days
             total_amount = 0
             booking_details = []
+            check_in_datetime = datetime.combine(check_in, datetime.min.time())
+            check_out_datetime = datetime.combine(check_out, datetime.min.time())
             
+            # Calculate base prices first
             for room_data in validated_data['rooms']:
                 room = Room.query.get(room_data['room_id'])
                 if not room:
@@ -144,7 +199,7 @@ class BookingController:
                 
                 quantity = room_data['quantity']
                 price_per_night = room.base_price
-                subtotal = price_per_night * quantity * num_nights
+                subtotal = float(price_per_night) * quantity * num_nights
                 total_amount += subtotal
                 
                 booking_details.append({
@@ -155,7 +210,55 @@ class BookingController:
                     'subtotal': subtotal
                 })
             
-            # Xử lý discount code nếu có
+            # Apply promotions (check for each room)
+            promotion_discount_total = 0
+            from app.models.promotion import Promotion
+            from sqlalchemy import or_, and_
+            
+            for room_data in validated_data['rooms']:
+                room = Room.query.get(room_data['room_id'])
+                quantity = room_data['quantity']
+                room_subtotal = float(room.base_price) * quantity * num_nights
+                
+                # Find active promotions for this room
+                promotion_query = Promotion.query.filter(
+                    Promotion.is_active == True,
+                    Promotion.start_date <= check_out_datetime,
+                    Promotion.end_date >= check_in_datetime,
+                    or_(
+                        Promotion.room_id == room.room_id,
+                        and_(Promotion.hotel_id == validated_data['hotel_id'], Promotion.room_id.is_(None))
+                    )
+                )
+                
+                best_discount = 0
+                for promo in promotion_query.all():
+                    # Check min_nights
+                    if promo.min_nights and num_nights < promo.min_nights:
+                        continue
+                    
+                    # Check applicable_days if specified
+                    if promo.applicable_days:
+                        check_in_weekday = check_in.weekday()
+                        applicable_days_list = [int(d.strip()) for d in promo.applicable_days.split(',') if d.strip().isdigit()]
+                        if applicable_days_list and check_in_weekday not in applicable_days_list:
+                            continue
+                    
+                    # Calculate discount for this room
+                    if promo.discount_type == 'percentage':
+                        discount = room_subtotal * (float(promo.discount_value) / 100)
+                    else:  # fixed
+                        discount = float(promo.discount_value) * quantity  # Apply per room
+                    
+                    if discount > best_discount:
+                        best_discount = discount
+                
+                promotion_discount_total += best_discount
+            
+            # Apply promotion discount
+            total_amount_after_promotion = total_amount - promotion_discount_total
+            
+            # Xử lý discount code nếu có (áp dụng sau promotion)
             discount_amount = 0
             discount_code_obj = None
             
@@ -175,13 +278,13 @@ class BookingController:
                     # Kiểm tra validity
                     now = datetime.utcnow()
                     if discount_code_obj.start_date <= now <= discount_code_obj.end_date:
-                        # Kiểm tra minimum order amount
-                        if total_amount >= (discount_code_obj.min_order_amount or 0):
+                        # Kiểm tra minimum order amount (sau khi áp dụng promotion)
+                        if total_amount_after_promotion >= (discount_code_obj.min_order_amount or 0):
                             # Kiểm tra usage limit
                             if not discount_code_obj.usage_limit or discount_code_obj.used_count < discount_code_obj.usage_limit:
-                                # Tính discount
+                                # Tính discount (dựa trên tổng sau promotion)
                                 if discount_code_obj.discount_type == 'percentage':
-                                    discount_amount = total_amount * (discount_code_obj.discount_value / 100)
+                                    discount_amount = total_amount_after_promotion * (discount_code_obj.discount_value / 100)
                                 else:  # fixed
                                     discount_amount = discount_code_obj.discount_value
                                 
@@ -189,7 +292,8 @@ class BookingController:
                                 if discount_code_obj.max_discount_amount:
                                     discount_amount = min(discount_amount, discount_code_obj.max_discount_amount)
             
-            final_amount = total_amount - discount_amount
+            final_amount = total_amount_after_promotion - discount_amount
+            total_discount = promotion_discount_total + discount_amount
             booking_code = BookingController._generate_booking_code()
             
             booking = Booking(
@@ -200,7 +304,7 @@ class BookingController:
                 check_out_date=check_out,
                 num_guests=validated_data['num_guests'],
                 total_amount=total_amount,
-                discount_amount=discount_amount,
+                discount_amount=total_discount,
                 final_amount=final_amount,
                 special_requests=validated_data.get('special_requests'),
                 status='confirmed'  # INSTANT CONFIRM - Changed from 'pending'
@@ -540,5 +644,38 @@ class BookingController:
             
         except ValidationError as e:
             return validation_error_response(e.messages)
+        except Exception as e:
+            return error_response(f'Lỗi validate: {str(e)}', 500)
+    
+    @staticmethod
+    def validate_contact():
+        if 'user_id' not in session:
+            return error_response('Chưa đăng nhập', 401)
+        
+        try:
+            data = BookingController._get_request_data()
+            errors = {}
+            
+            email = data.get('email', '').strip()
+            phone = data.get('phone', '').strip()
+            current_user_id = session['user_id']
+            
+            # Validate email exists in system (but allow current user's email)
+            if email:
+                existing_user = User.query.filter_by(email=email).first()
+                if existing_user and existing_user.user_id != current_user_id:
+                    errors['email'] = 'Email này đã được sử dụng bởi tài khoản khác'
+            
+            # Validate phone exists in system (but allow current user's phone)
+            if phone:
+                existing_user = User.query.filter_by(phone=phone).first()
+                if existing_user and existing_user.user_id != current_user_id:
+                    errors['phone'] = 'Số điện thoại này đã được sử dụng bởi tài khoản khác'
+            
+            if errors:
+                return validation_error_response(errors)
+            
+            return success_response(message='Thông tin liên hệ hợp lệ')
+            
         except Exception as e:
             return error_response(f'Lỗi validate: {str(e)}', 500)

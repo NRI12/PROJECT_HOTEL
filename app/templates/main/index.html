@@ -237,6 +237,14 @@
                     </div>
                 {% endif %}
             </div>
+            
+            {% if promotions|length > 1 or total_promotions_count > promotions|length %}
+            <div class="text-center mt-5">
+                <a href="{{ url_for('main.promotions') }}" class="btn btn-outline-primary btn-lg">
+                    <i class="bi bi-arrow-right me-2"></i>Xem thêm ưu đãi
+                </a>
+            </div>
+            {% endif %}
         </div>
     </section>
 

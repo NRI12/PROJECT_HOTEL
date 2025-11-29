@@ -27,7 +27,13 @@ class MainController:
                 
                 avg_rating = db.session.query(func.avg(Review.rating))\
                     .filter_by(hotel_id=hotel.hotel_id, status='active')\
-                    .scalar() or 4.0
+                    .scalar()
+                
+                # Chuyển đổi avg_rating sang float an toàn
+                try:
+                    avg_rating_float = float(avg_rating) if avg_rating is not None else 0.0
+                except (TypeError, ValueError):
+                    avg_rating_float = 0.0
                 
                 # Kiểm tra có chính sách hủy miễn phí không (refund_percentage = 100%)
                 has_free_cancellation = CancellationPolicy.query.filter_by(
@@ -48,7 +54,7 @@ class MainController:
                     'hotel': hotel,
                     'min_price': int(min_price),
                     'review_count': review_count,
-                    'avg_rating': float(avg_rating) if avg_rating else 4.0,
+                    'avg_rating': round(avg_rating_float, 1) if avg_rating_float > 0 else 0.0,
                     'has_free_cancellation': has_free_cancellation,
                     'has_active_promotion': has_active_promotion
                 })
@@ -70,6 +76,14 @@ class MainController:
                     'image': sample_hotel.images[0].image_url if sample_hotel and sample_hotel.images else None
                 })
             
+            # Get total count of active promotions
+            total_promotions_count = Promotion.query.filter(
+                Promotion.start_date <= datetime.utcnow(),
+                Promotion.end_date >= datetime.utcnow(),
+                Promotion.is_active == True
+            ).count()
+            
+            # Get limited promotions for display (2 items)
             active_promotions = Promotion.query.filter(
                 Promotion.start_date <= datetime.utcnow(),
                 Promotion.end_date >= datetime.utcnow(),
@@ -79,7 +93,8 @@ class MainController:
             return {
                 'featured_hotels': hotels_data,
                 'popular_cities': popular_cities,
-                'active_promotions': active_promotions
+                'active_promotions': active_promotions,
+                'total_promotions_count': total_promotions_count
             }
             
         except Exception as e:
@@ -131,4 +146,23 @@ class MainController:
         except Exception as e:
             print(f'Lỗi lấy amenities: {str(e)}')
             return []
+    
+    @staticmethod
+    def get_promotions_data():
+        try:
+            active_promotions = Promotion.query.filter(
+                Promotion.start_date <= datetime.utcnow(),
+                Promotion.end_date >= datetime.utcnow(),
+                Promotion.is_active == True
+            ).order_by(Promotion.start_date.desc()).all()
+            
+            return {
+                'promotions': active_promotions
+            }
+            
+        except Exception as e:
+            print(f'Lỗi lấy dữ liệu khuyến mãi: {str(e)}')
+            return {
+                'promotions': []
+            }
 

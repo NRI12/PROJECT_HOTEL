@@ -1,93 +1,268 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Review Detail</title>
-</head>
-<body>
-    <h1>Review Detail</h1>
-    
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <p style="color: {% if category == 'error' %}red{% else %}green{% endif %};">{{ message }}</p>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-    
-    {% if result and result[0].json.data.review %}
-        {% set review = result[0].json.data.review %}
-        
-        <h2>Review Information</h2>
-        <p>Hotel: {{ review.hotel.hotel_name if review.hotel else 'N/A' }}</p>
-        <p>User: {{ review.user.full_name if review.user else 'N/A' }}</p>
-        <p>Booking ID: {{ review.booking_id }}</p>
-        <p>Status: {{ review.status }}</p>
-        
-        <h3>Ratings</h3>
-        <p>Overall Rating: {{ review.rating }}/5</p>
-        {% if review.cleanliness_rating %}
-        <p>Cleanliness: {{ review.cleanliness_rating }}/5</p>
-        {% endif %}
-        {% if review.service_rating %}
-        <p>Service: {{ review.service_rating }}/5</p>
-        {% endif %}
-        {% if review.facilities_rating %}
-        <p>Facilities: {{ review.facilities_rating }}/5</p>
-        {% endif %}
-        {% if review.location_rating %}
-        <p>Location: {{ review.location_rating }}/5</p>
-        {% endif %}
-        
-        <h3>Comment</h3>
-        <p>{{ review.comment or 'No comment' }}</p>
-        
-        {% if review.hotel_response %}
-        <h3>Hotel Response</h3>
-        <p>{{ review.hotel_response }}</p>
-        <p>Response Date: {{ review.response_date }}</p>
-        
-        <h4>Update Response</h4>
-        <form method="POST" action="/review/{{ review_id }}/response/update">
-            <div>
-                <label>Response:</label>
-                <textarea name="response" required>{{ review.hotel_response }}</textarea>
+{% extends "user/base_user.html" %}
+
+{% block title %}Chi tiết đánh giá{% endblock %}
+{% block page_icon %}star{% endblock %}
+{% block page_title %}Chi tiết đánh giá{% endblock %}
+
+{% block content %}
+{% if result and result[0].get_json() and result[0].get_json().success %}
+    {% set review_data = result[0].get_json().data %}
+    {% set review = review_data.review %}
+    {% set hotel = review.hotel %}
+    {% set user = review.user %}
+    {% set booking = review.booking %}
+
+    <!-- Hotel Info Card -->
+    {% if hotel %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h5 class="card-title mb-2">
+                        <i class="fas fa-hotel text-primary me-2"></i>
+                        <a href="{{ url_for('hotel.hotel_detail', hotel_id=hotel.hotel_id) }}" class="text-decoration-none">
+                            {{ hotel.hotel_name }}
+                        </a>
+                    </h5>
+                    <p class="text-muted mb-1">
+                        <i class="fas fa-map-marker-alt me-2"></i>
+                        {{ hotel.city if hotel.city else 'N/A' }}
+                    </p>
+                    {% if booking %}
+                    <p class="text-muted mb-0 small">
+                        <i class="fas fa-calendar-check me-2"></i>
+                        Booking #{{ booking.booking_code if booking.booking_code else booking.booking_id }} · 
+                        {{ booking.check_in_date if booking.check_in_date else 'N/A' }} → 
+                        {{ booking.check_out_date if booking.check_out_date else 'N/A' }}
+                    </p>
+                    {% endif %}
+                </div>
+                <a href="{{ url_for('hotel.hotel_detail', hotel_id=hotel.hotel_id) }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-external-link-alt me-2"></i>Xem khách sạn
+                </a>
             </div>
-            <button type="submit">Update Response</button>
-        </form>
-        {% else %}
-        <h3>Add Response</h3>
-        <form method="POST" action="/review/{{ review_id }}/response">
-            <div>
-                <label>Response:</label>
-                <textarea name="response" required></textarea>
-            </div>
-            <button type="submit">Add Response</button>
-        </form>
-        {% endif %}
-        
-        <h3>Actions</h3>
-        <a href="/review/{{ review_id }}/edit">Edit Review</a>
-        
-        <form action="/review/{{ review_id }}/delete" method="POST" style="display:inline;">
-            <button type="submit" onclick="return confirm('Are you sure?')">Delete Review</button>
-        </form>
-        
-        <form action="/review/{{ review_id }}/helpful" method="POST" style="display:inline;">
-            <button type="submit">Mark as Helpful</button>
-        </form>
-        
-        <h4>Report Review</h4>
-        <form method="POST" action="/review/{{ review_id }}/report">
-            <div>
-                <label>Reason:</label>
-                <textarea name="reason" required></textarea>
-            </div>
-            <button type="submit">Report</button>
-        </form>
-    {% else %}
-        <p>Review not found</p>
+        </div>
+    </div>
     {% endif %}
-    
-    <p><a href="/review">Back to List</a></p>
-</body>
-</html>
+
+    <!-- Review Detail Card -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-star text-warning me-2"></i>Đánh giá #{{ review.review_id }}
+                </h5>
+                <span class="badge bg-{% if review.status == 'active' %}success{% elif review.status == 'hidden' %}warning{% else %}secondary{% endif %}">
+                    {{ review.status }}
+                </span>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- User Info -->
+            <div class="d-flex align-items-center mb-4">
+                <div class="review-avatar me-3">
+                    <i class="fas fa-user-circle" style="font-size: 3rem; color: #6c757d;"></i>
+                </div>
+                <div>
+                    <h6 class="mb-1">{{ user.full_name if user and user.full_name else (user.email if user else 'Khách hàng') }}</h6>
+                    <small class="text-muted">
+                        <i class="fas fa-clock me-1"></i>
+                        {{ review.created_at[:10] if review.created_at else 'N/A' }}
+                    </small>
+                </div>
+            </div>
+
+            <!-- Overall Rating -->
+            <div class="mb-4">
+                <h6 class="mb-2">
+                    <i class="fas fa-star text-warning me-2"></i>Điểm tổng thể
+                </h6>
+                <div class="d-flex align-items-center">
+                    <div class="stars me-3">
+                        {% for i in range(5) %}
+                            {% if i < review.rating %}
+                                <i class="fas fa-star text-warning" style="font-size: 1.5rem;"></i>
+                            {% else %}
+                                <i class="far fa-star text-warning" style="font-size: 1.5rem;"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <strong class="text-primary" style="font-size: 1.5rem;">{{ review.rating }}/5</strong>
+                </div>
+            </div>
+
+            <!-- Detailed Ratings -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h6 class="mb-3">
+                        <i class="fas fa-chart-bar me-2"></i>Đánh giá chi tiết
+                    </h6>
+                    
+                    {% if review.cleanliness_rating %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span>
+                                <i class="fas fa-broom me-2 text-info"></i>Vệ sinh
+                            </span>
+                            <div class="d-flex align-items-center">
+                                <div class="stars me-2">
+                                    {% for i in range(5) %}
+                                        {% if i < review.cleanliness_rating %}
+                                            <i class="fas fa-star text-warning"></i>
+                                        {% else %}
+                                            <i class="far fa-star text-warning"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <strong>{{ review.cleanliness_rating }}/5</strong>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if review.service_rating %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span>
+                                <i class="fas fa-concierge-bell me-2 text-success"></i>Dịch vụ
+                            </span>
+                            <div class="d-flex align-items-center">
+                                <div class="stars me-2">
+                                    {% for i in range(5) %}
+                                        {% if i < review.service_rating %}
+                                            <i class="fas fa-star text-warning"></i>
+                                        {% else %}
+                                            <i class="far fa-star text-warning"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <strong>{{ review.service_rating }}/5</strong>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if review.facilities_rating %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span>
+                                <i class="fas fa-swimming-pool me-2 text-primary"></i>Tiện nghi
+                            </span>
+                            <div class="d-flex align-items-center">
+                                <div class="stars me-2">
+                                    {% for i in range(5) %}
+                                        {% if i < review.facilities_rating %}
+                                            <i class="fas fa-star text-warning"></i>
+                                        {% else %}
+                                            <i class="far fa-star text-warning"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <strong>{{ review.facilities_rating }}/5</strong>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if review.location_rating %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span>
+                                <i class="fas fa-map-marker-alt me-2 text-danger"></i>Vị trí
+                            </span>
+                            <div class="d-flex align-items-center">
+                                <div class="stars me-2">
+                                    {% for i in range(5) %}
+                                        {% if i < review.location_rating %}
+                                            <i class="fas fa-star text-warning"></i>
+                                        {% else %}
+                                            <i class="far fa-star text-warning"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <strong>{{ review.location_rating }}/5</strong>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-6">
+                    <!-- Comment Section -->
+                    <h6 class="mb-3">
+                        <i class="fas fa-comment me-2"></i>Nhận xét
+                    </h6>
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            {% if review.comment %}
+                                <p class="mb-0" style="white-space: pre-wrap;">{{ review.comment }}</p>
+                            {% else %}
+                                <p class="text-muted mb-0">Không có nhận xét</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hotel Response -->
+            {% if review.hotel_response %}
+            <div class="alert alert-info mt-4">
+                <h6 class="alert-heading">
+                    <i class="fas fa-reply me-2"></i>Phản hồi từ khách sạn
+                </h6>
+                <p class="mb-2" style="white-space: pre-wrap;">{{ review.hotel_response }}</p>
+                {% if review.response_date %}
+                <small class="text-muted">
+                    <i class="fas fa-clock me-1"></i>
+                    {{ review.response_date[:10] if review.response_date else 'N/A' }}
+                </small>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Actions (for review owner or admin) -->
+            {% set user_logged_in = 'user_id' in session %}
+            {% set is_review_owner = user_logged_in and session.user_id == review.user_id %}
+            {% set is_admin = user_logged_in and session.get('role') == 'admin' %}
+            {% if is_review_owner or is_admin %}
+            <div class="mt-4 pt-3 border-top">
+                <h6 class="mb-3">Thao tác</h6>
+                <div class="btn-group" role="group">
+                    {% if is_review_owner %}
+                    <a href="{{ url_for('review.edit_review', review_id=review_id) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-edit me-2"></i>Sửa đánh giá
+                    </a>
+                    <form action="{{ url_for('review.delete_review', review_id=review_id) }}" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa đánh giá này?')">
+                            <i class="fas fa-trash me-2"></i>Xóa
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="d-flex justify-content-between">
+        <a href="{{ url_for('user.bookings') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Quay lại danh sách bookings
+        </a>
+        {% if hotel %}
+        <a href="{{ url_for('hotel.hotel_detail', hotel_id=hotel.hotel_id) }}" class="btn btn-primary">
+            <i class="fas fa-hotel me-2"></i>Xem khách sạn
+        </a>
+        {% endif %}
+    </div>
+
+{% else %}
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        Không tìm thấy đánh giá hoặc bạn không có quyền xem đánh giá này.
+    </div>
+    <a href="{{ url_for('user.bookings') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Quay lại
+    </a>
+{% endif %}
+{% endblock %}

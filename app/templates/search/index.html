@@ -230,7 +230,7 @@
                                                                 <strong>Khách sạn {{ hotel.star_rating or 4 }} sao</strong>
                                                             </div>
                                                         </div>
-                                                        {% if item.review_count > 0 %}
+                                                        {% if item.avg_rating and item.avg_rating > 0 and item.review_count > 0 %}
                                                         <div class="mb-1">
                                                             <span class="text-muted small">Đánh giá từ người dùng: </span>
                                                             <strong class="text-primary">{{ "%.1f"|format(item.avg_rating) }}/5</strong>

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, session, jsonify
+from flask import Blueprint, render_template, request, session, jsonify, flash, redirect, url_for
 from urllib.parse import urlencode
 
 main_bp = Blueprint('main', __name__)
@@ -14,6 +14,7 @@ def index():
                          featured_hotels=data.get('featured_hotels', []),
                          popular_cities=data.get('popular_cities', []),
                          promotions=data.get('active_promotions', []),
+                         total_promotions_count=data.get('total_promotions_count', 0),
                          user_logged_in='user_id' in session)
 
 @main_bp.route('/search')
@@ -90,4 +91,37 @@ def search_suggestions():
     data = MainController.get_search_suggestions(query_text)
     
     return jsonify(data)
+
+@main_bp.route('/promotions')
+def promotions():
+    from app.controllers.main_controller import MainController
+    
+    data = MainController.get_promotions_data()
+    
+    return render_template('main/promotions.html',
+                         promotions=data.get('promotions', []),
+                         user_logged_in='user_id' in session)
+
+@main_bp.route('/about')
+def about():
+    return render_template('main/about.html',
+                         user_logged_in='user_id' in session)
+
+@main_bp.route('/contact', methods=['GET', 'POST'])
+def contact():
+    if request.method == 'POST':
+        # Handle form submission
+        name = request.form.get('name')
+        email = request.form.get('email')
+        phone = request.form.get('phone')
+        subject = request.form.get('subject')
+        message = request.form.get('message')
+        
+        # TODO: Implement email sending or save to database
+        # For now, just show success message
+        flash('Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi sớm nhất có thể.', 'success')
+        return redirect(url_for('main.contact'))
+    
+    return render_template('main/contact.html',
+                         user_logged_in='user_id' in session)
 

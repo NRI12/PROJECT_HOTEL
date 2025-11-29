@@ -3,10 +3,15 @@ from app import db
 from app.models.user import User
 from app.models.notification import Notification
 from app.models.favorite import Favorite
+from app.models.hotel import Hotel
+from app.models.room import Room
+from app.models.review import Review
+from app.models.hotel_image import HotelImage
 from app.schemas.user_schema import UserUpdateSchema, ChangePasswordSchema
 from app.utils.response import success_response, error_response, paginated_response, validation_error_response
 from marshmallow import ValidationError
 from werkzeug.utils import secure_filename
+from sqlalchemy import func
 import os
 
 class UserController:
@@ -151,6 +156,9 @@ class UserController:
             return error_response('Chưa đăng nhập', 401)
         
         try:
+            from datetime import datetime
+            from app.models.booking import Booking
+            
             user = User.query.get(session['user_id'])
             
             if not user:
@@ -158,17 +166,55 @@ class UserController:
             
             page = request.args.get('page', 1, type=int)
             per_page = request.args.get('per_page', 10, type=int)
+            status = request.args.get('status', '').strip()
+            start_date = request.args.get('start_date', '').strip()
+            end_date = request.args.get('end_date', '').strip()
             
-            bookings_query = user.bookings
-            total = len(bookings_query)
+            # Bắt đầu với query từ user.bookings
+            bookings_query = Booking.query.filter_by(user_id=user.user_id)
             
-            start = (page - 1) * per_page
-            end = start + per_page
+            # Filter theo status
+            if status:
+                bookings_query = bookings_query.filter_by(status=status)
             
+            # Filter theo ngày
+            if start_date:
+                try:
+                    start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
+                    bookings_query = bookings_query.filter(Booking.check_in_date >= start_dt)
+                except ValueError:
+                    pass
+            
+            if end_date:
+                try:
+                    end_dt = datetime.strptime(end_date, '%Y-%m-%d').date()
+                    bookings_query = bookings_query.filter(Booking.check_out_date <= end_dt)
+                except ValueError:
+                    pass
+            
+            # Sắp xếp theo ngày tạo mới nhất
+            bookings_query = bookings_query.order_by(Booking.created_at.desc())
+            
+            total = bookings_query.count()
+            
+            # Phân trang
+            bookings_list = bookings_query.offset((page - 1) * per_page).limit(per_page).all()
+            
+            from app.models.review import Review
             bookings = []
-            for booking in bookings_query[start:end]:
+            for booking in bookings_list:
                 booking_dict = booking.to_dict()
                 booking_dict['hotel'] = booking.hotel.to_dict() if booking.hotel else None
+                # Kiểm tra xem booking đã checkout và chưa có review chưa
+                booking_dict['can_review'] = False
+                booking_dict['has_review'] = False
+                if booking.status == 'checked_out':
+                    existing_review = Review.query.filter_by(booking_id=booking.booking_id).first()
+                    if existing_review:
+                        booking_dict['has_review'] = True
+                        booking_dict['review_id'] = existing_review.review_id
+                    else:
+                        booking_dict['can_review'] = True
                 bookings.append(booking_dict)
             
             return paginated_response(bookings, page, per_page, total)
@@ -185,11 +231,51 @@ class UserController:
             page = request.args.get('page', 1, type=int)
             per_page = request.args.get('per_page', 10, type=int)
             
-            favorites_query = Favorite.query.filter_by(user_id=session['user_id'])
+            favorites_query = Favorite.query.filter_by(user_id=session['user_id']).order_by(Favorite.created_at.desc())
             total = favorites_query.count()
             
             favorites = favorites_query.offset((page - 1) * per_page).limit(per_page).all()
-            favorites_data = [favorite.to_dict() for favorite in favorites]
+            favorites_data = []
+            
+            for favorite in favorites:
+                favorite_dict = favorite.to_dict()
+                hotel = Hotel.query.get(favorite.hotel_id)
+                
+                if hotel:
+                    hotel_dict = hotel.to_dict()
+                    
+                    # Tính giá phòng thấp nhất
+                    min_price = db.session.query(func.min(Room.base_price))\
+                        .filter(Room.hotel_id == hotel.hotel_id)\
+                        .filter(Room.status == 'available')\
+                        .scalar() or 0
+                    hotel_dict['price_from'] = int(min_price)
+                    
+                    # Đếm số lượng đánh giá
+                    review_count = Review.query.filter_by(hotel_id=hotel.hotel_id, status='active').count()
+                    hotel_dict['review_count'] = review_count
+                    
+                    # Tính điểm đánh giá trung bình
+                    avg_rating = db.session.query(func.avg(Review.rating))\
+                        .filter_by(hotel_id=hotel.hotel_id, status='active')\
+                        .scalar()
+                    try:
+                        avg_rating_float = float(avg_rating) if avg_rating is not None else 0.0
+                    except (TypeError, ValueError):
+                        avg_rating_float = 0.0
+                    hotel_dict['rating'] = round(avg_rating_float, 1) if avg_rating_float > 0 else 0.0
+                    
+                    # Lấy hình ảnh đầu tiên
+                    primary_image = HotelImage.query.filter_by(hotel_id=hotel.hotel_id, is_primary=True).first()
+                    if not primary_image:
+                        primary_image = HotelImage.query.filter_by(hotel_id=hotel.hotel_id).order_by(HotelImage.display_order).first()
+                    hotel_dict['image_url'] = primary_image.image_url if primary_image else None
+                    
+                    favorite_dict['hotel'] = hotel_dict
+                else:
+                    favorite_dict['hotel'] = None
+                
+                favorites_data.append(favorite_dict)
             
             return paginated_response(favorites_data, page, per_page, total)
             

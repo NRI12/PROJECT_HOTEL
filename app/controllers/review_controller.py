@@ -57,8 +57,23 @@ class ReviewController:
             reviews_data = []
             for review in reviews:
                 review_dict = review.to_dict()
-                review_dict['user'] = review.user.to_dict() if review.user else None
-                review_dict['hotel'] = review.hotel.to_dict() if review.hotel else None
+                if review.user:
+                    review_dict['user'] = {
+                        'user_id': review.user.user_id,
+                        'name': review.user.full_name or review.user.email,
+                        'email': review.user.email,
+                        'full_name': review.user.full_name
+                    }
+                else:
+                    review_dict['user'] = None
+                if review.hotel:
+                    review_dict['hotel'] = {
+                        'hotel_id': review.hotel.hotel_id,
+                        'hotel_name': review.hotel.hotel_name,
+                        'city': review.hotel.city
+                    }
+                else:
+                    review_dict['hotel'] = None
                 reviews_data.append(review_dict)
             
             return paginated_response(reviews_data, page, per_page, total)

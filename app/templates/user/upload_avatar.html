@@ -5,31 +5,9 @@
 {% block page_title %}Đổi avatar{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <!-- Current Avatar -->
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white">
-                <h5 class="mb-0">
-                    <i class="bi bi-person-circle me-2"></i>
-                    Avatar hiện tại
-                </h5>
-            </div>
-            <div class="card-body text-center">
-                <div class="mb-3">
-                    <img src="{{ user.avatar_url if user and user.avatar_url else 'https://via.placeholder.com/200/2563eb/ffffff?text=Avatar' }}" 
-                         alt="Current Avatar" 
-                         class="rounded-circle border border-3 border-primary"
-                         style="width: 200px; height: 200px; object-fit: cover;">
-                </div>
-                <p class="text-muted mb-0">
-                    <i class="bi bi-info-circle"></i>
-                    Kích thước khuyến nghị: 200x200px
-                </p>
-            </div>
-        </div>
-        
-        <!-- Upload Form -->
+<div class="row">
+    <div class="col-12">
+        <!-- Current Avatar & Upload Form Combined -->
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white">
                 <h5 class="mb-0">
@@ -38,88 +16,117 @@
                 </h5>
             </div>
             <div class="card-body">
-                <form method="POST" action="/user/upload-avatar" enctype="multipart/form-data">
-                    <!-- File Upload Area -->
-                    <div class="mb-4">
-                        <label for="avatar" class="form-label">
-                            <i class="bi bi-image-fill me-1"></i>
-                            Chọn ảnh <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                            <input type="file" class="form-control" id="avatar" name="avatar" 
-                                   accept="image/*" required>
-                            <label class="input-group-text" for="avatar">
-                                <i class="bi bi-folder2-open"></i> Chọn file
-                            </label>
+                <div class="row">
+                    <!-- Current Avatar Column -->
+                    <div class="col-md-4 text-center mb-3 mb-md-0">
+                        <div class="mb-3">
+                            <img src="{{ user.avatar_url if user and user.avatar_url else 'https://via.placeholder.com/200/2563eb/ffffff?text=Avatar' }}" 
+                                 alt="Current Avatar" 
+                                 class="rounded-circle border border-3 border-primary"
+                                 style="width: 180px; height: 180px; object-fit: cover;">
                         </div>
-                        <small class="form-text text-muted">
-                            Định dạng hỗ trợ: JPG, PNG, GIF (Tối đa 5MB)
-                        </small>
+                        <p class="text-muted small mb-0">
+                            <i class="bi bi-info-circle"></i>
+                            Avatar hiện tại
+                        </p>
+                        <p class="text-muted small">
+                            Kích thước khuyến nghị: 200x200px
+                        </p>
                     </div>
                     
-                    <!-- Preview Area -->
-                    <div class="mb-4">
-                        <label class="form-label">
-                            <i class="bi bi-eye me-1"></i>
-                            Xem trước
-                        </label>
-                        <div class="text-center p-4 border rounded bg-light">
-                            <img id="preview" src="https://via.placeholder.com/150/e0e0e0/999999?text=Preview" 
-                                 alt="Preview" 
-                                 class="rounded-circle"
-                                 style="width: 150px; height: 150px; object-fit: cover;">
-                        </div>
+                    <!-- Upload Form Column -->
+                    <div class="col-md-8">
+                        <form method="POST" action="/user/upload-avatar" enctype="multipart/form-data">
+                            <!-- File Upload Area -->
+                            <div class="mb-3">
+                                <label for="avatar" class="form-label">
+                                    <i class="bi bi-image-fill me-1"></i>
+                                    Chọn ảnh <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <input type="file" class="form-control" id="avatar" name="avatar" 
+                                           accept="image/*" required>
+                                    <label class="input-group-text" for="avatar">
+                                        <i class="bi bi-folder2-open"></i> Chọn file
+                                    </label>
+                                </div>
+                                <small class="form-text text-muted">
+                                    Định dạng hỗ trợ: JPG, PNG, GIF (Tối đa 5MB)
+                                </small>
+                            </div>
+                            
+                            <!-- Preview Area -->
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <i class="bi bi-eye me-1"></i>
+                                    Xem trước
+                                </label>
+                                <div class="text-center p-3 border rounded bg-light">
+                                    <img id="preview" src="https://via.placeholder.com/150/e0e0e0/999999?text=Preview" 
+                                         alt="Preview" 
+                                         class="rounded-circle"
+                                         style="width: 120px; height: 120px; object-fit: cover;">
+                                </div>
+                            </div>
+                            
+                            <!-- Submit Buttons -->
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-cloud-upload me-2"></i>
+                                            Tải lên
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-grid">
+                                        <a href="/user/profile" class="btn btn-outline-secondary">
+                                            <i class="bi bi-arrow-left me-2"></i>
+                                            Hủy bỏ
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
                     </div>
-                    
-                    <!-- Upload Guidelines -->
-                    <div class="alert alert-info mb-4" role="alert">
-                        <i class="bi bi-info-circle-fill me-2"></i>
-                        <strong>Hướng dẫn:</strong>
-                        <ul class="mb-0 mt-2">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Guidelines & Tips Combined -->
+        <div class="row mt-3">
+            <div class="col-md-6 mb-3">
+                <div class="card border-0 bg-light h-100">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2">
+                            <i class="bi bi-info-circle-fill text-info me-1"></i>
+                            Hướng dẫn
+                        </h6>
+                        <ul class="mb-0 small">
                             <li>Sử dụng ảnh rõ nét, không mờ</li>
                             <li>Nên chọn ảnh chân dung (avatar)</li>
                             <li>Tránh ảnh có nội dung không phù hợp</li>
                             <li>Kích thước tệp không quá 5MB</li>
                         </ul>
                     </div>
-                    
-                    <!-- Submit Buttons -->
-                    <div class="row g-2">
-                        <div class="col-md-6">
-                            <div class="d-grid">
-                                <button type="submit" class="btn btn-primary btn-lg">
-                                    <i class="bi bi-cloud-upload me-2"></i>
-                                    Tải lên
-                                </button>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-grid">
-                                <a href="/user/profile" class="btn btn-outline-secondary btn-lg">
-                                    <i class="bi bi-arrow-left me-2"></i>
-                                    Hủy bỏ
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </form>
+                </div>
             </div>
-        </div>
-        
-        <!-- Avatar Tips -->
-        <div class="card border-0 bg-light mt-4">
-            <div class="card-body">
-                <h6 class="card-subtitle mb-2">
-                    <i class="bi bi-lightbulb text-warning me-1"></i>
-                    Mẹo chọn avatar đẹp
-                </h6>
-                <ul class="mb-0 small">
-                    <li>Chọn ảnh có ánh sáng tốt, tránh quá tối hoặc quá sáng</li>
-                    <li>Khuôn mặt nên ở giữa và chiếm khoảng 60% ảnh</li>
-                    <li>Tránh sử dụng ảnh selfie quá gần</li>
-                    <li>Nền đơn giản sẽ làm nổi bật khuôn mặt</li>
-                    <li>Cười tự nhiên sẽ tạo ấn tượng tốt hơn</li>
-                </ul>
+            <div class="col-md-6 mb-3">
+                <div class="card border-0 bg-light h-100">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2">
+                            <i class="bi bi-lightbulb text-warning me-1"></i>
+                            Mẹo chọn avatar đẹp
+                        </h6>
+                        <ul class="mb-0 small">
+                            <li>Chọn ảnh có ánh sáng tốt</li>
+                            <li>Khuôn mặt nên ở giữa và chiếm khoảng 60% ảnh</li>
+                            <li>Nền đơn giản sẽ làm nổi bật khuôn mặt</li>
+                            <li>Cười tự nhiên sẽ tạo ấn tượng tốt hơn</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

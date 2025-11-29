@@ -45,9 +45,13 @@ def login():
     if request.method == 'POST':
         result = AuthController.login()
         if result[1] == 200:
-            # Lấy thông tin user từ session để điều hướng đúng
             user_id = session.get('user_id')
             if user_id:
+                next_url = request.args.get('next') or request.form.get('next')
+                if next_url:
+                    flash('Đăng nhập thành công', 'success')
+                    return redirect(next_url)
+                
                 user = User.query.get(user_id)
                 redirect_url = _get_redirect_by_role(user)
                 flash('Đăng nhập thành công', 'success')
@@ -61,8 +65,8 @@ def login():
                 error_message = error_data.get('message', 'Đăng nhập thất bại')
             except:
                 error_message = 'Đăng nhập thất bại'
-            return render_template('auth/login.html', error=error_message)
-    return render_template('auth/login.html')
+            return render_template('auth/login.html', error=error_message, next=request.args.get('next'))
+    return render_template('auth/login.html', next=request.args.get('next'))
 
 @auth_bp.route('/logout', methods=['GET', 'POST'])
 def logout():

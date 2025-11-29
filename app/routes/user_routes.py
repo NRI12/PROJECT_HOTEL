@@ -89,7 +89,9 @@ def favorites():
     result = UserController.get_favorites()
     result_data = result[0].get_json() if result and result[0] else {}
     favorites_data = result_data.get('data', [])
-    return render_template('user/favorites.html', favorites=favorites_data, result=result)
+    pagination = result_data.get('pagination', {})
+    current_page = request.args.get('page', 1, type=int)
+    return render_template('user/favorites.html', favorites=favorites_data, pagination=pagination, current_page=current_page, result=result)
 
 @user_bp.route('/notifications', methods=['GET'])
 @login_required

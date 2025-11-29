@@ -77,9 +77,11 @@
                             </div>
                             
                             <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-                                <a href="/user/bookings" class="btn btn-primary btn-lg">
-                                    <i class="bi bi-calendar-check me-2"></i>Xem đặt phòng
+                                {% if booking_detail_url %}
+                                <a href="{{ booking_detail_url }}" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-calendar-check me-2"></i>Xem chi tiết đặt phòng
                                 </a>
+                                {% endif %}
                                 <a href="{{ url_for('main.index') }}" class="btn btn-outline-primary btn-lg">
                                     <i class="bi bi-house me-2"></i>Về trang chủ
                                 </a>
