@@ -10,6 +10,13 @@ class Config:
     SESSION_PERMANENT = True
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)
     
+    # Session cookie settings để giữ session qua PayPal redirect
+    SESSION_COOKIE_SAMESITE = 'Lax'  # Cho phép cookie qua redirect
+    SESSION_COOKIE_SECURE = False    # True nếu dùng HTTPS
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_NAME = 'session'  # Tên cookie session
+    # Không set SESSION_COOKIE_DOMAIN để cookie hoạt động với localhost
+    
     MAIL_SERVER = os.environ.get('MAIL_SERVER') or 'smtp.gmail.com'
     MAIL_PORT = int(os.environ.get('MAIL_PORT', 587))
     MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'True').lower() == 'true'

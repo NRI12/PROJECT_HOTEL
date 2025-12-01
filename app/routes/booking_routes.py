@@ -17,6 +17,45 @@ def booking_detail(booking_id):
     result = BookingController.get_booking(booking_id)
     return render_template('booking/detail.html', booking_id=booking_id, result=result)
 
+@booking_bp.route('/<int:booking_id>/view', methods=['GET'])
+def booking_detail_public(booking_id):
+    """Public booking view - không cần login, dùng sau khi thanh toán PayPal"""
+    from app.models.booking import Booking
+    from app.models.hotel import Hotel
+    from app.models.room import Room
+    from app.models.payment import Payment
+    
+    booking = Booking.query.get(booking_id)
+    if not booking:
+        flash('Không tìm thấy đơn đặt phòng', 'error')
+        return redirect(url_for('main.index'))
+    
+    # Chuẩn bị dữ liệu booking tương tự như BookingController.get_booking
+    booking_dict = booking.to_dict()
+    booking_dict['hotel'] = booking.hotel.to_dict() if booking.hotel else None
+    booking_dict['user'] = booking.user.to_dict() if booking.user else None
+    booking_dict['details'] = [detail.to_dict() for detail in booking.booking_details]
+    booking_dict['payments'] = [payment.to_dict() for payment in booking.payments]
+    
+    # Include discount usage information
+    from app.models.discount_usage import DiscountUsage
+    discount_usages = []
+    for usage in booking.discount_usage:
+        usage_dict = usage.to_dict()
+        if usage.discount_code:
+            usage_dict['discount_code'] = usage.discount_code.to_dict()
+        discount_usages.append(usage_dict)
+    booking_dict['discount_usage'] = discount_usages
+    
+    # Tạo result object tương tự như BookingController trả về
+    from app.utils.response import success_response
+    result = success_response(data={'booking': booking_dict})
+    
+    return render_template('booking/detail.html', 
+                          booking_id=booking_id, 
+                          result=result, 
+                          public_view=True)
+
 @booking_bp.route('/create', methods=['GET', 'POST'])
 @login_required
 def create_booking():
@@ -86,7 +125,7 @@ def create_booking():
                     session.pop('booking_step2', None)
                     return redirect(url_for('booking.booking_detail', booking_id=booking_id))
             
-            if payment_method in ['vnpay', 'momo']:
+            if payment_method in ['vnpay']:
                 pass
             elif payment_method == 'hotel':
                 pass

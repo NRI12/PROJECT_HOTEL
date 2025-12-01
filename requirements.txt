@@ -17,3 +17,4 @@ pytest
 pytest-flask
 flask-bcrypt
 paypalrestsdk
+Flask-Session

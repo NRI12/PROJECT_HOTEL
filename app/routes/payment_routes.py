@@ -101,14 +101,16 @@ def paypal_return():
             db.session.commit()
             session.pop('paypal_booking_id', None)
             
-            booking_detail_url = url_for('booking.booking_detail', booking_id=booking_id)
-            if 'user_id' in session:
-                flash('Thanh toán thành công!', 'success')
-                return redirect(booking_detail_url)
-            else:
-                from urllib.parse import quote
-                flash('Thanh toán thành công! Vui lòng đăng nhập để xem chi tiết đặt phòng.', 'success')
-                return redirect(url_for('auth.login', next=quote(booking_detail_url)))
+            # Khôi phục session nếu bị mất sau PayPal redirect
+            # An toàn vì đã verify payment với PayPal và booking hợp lệ
+            if 'user_id' not in session and booking.user_id:
+                session['user_id'] = booking.user_id
+                session.permanent = True
+                session.modified = True
+            
+            booking_detail_url = url_for('booking.booking_detail_public', booking_id=booking_id)
+            flash('Thanh toán thành công!', 'success')
+            return redirect(booking_detail_url)
         except Exception as e:
             db.session.rollback()
             flash(f'Lỗi khi lưu thanh toán: {str(e)}', 'error')
@@ -124,11 +126,11 @@ def paypal_cancel():
     flash('Bạn đã hủy thanh toán', 'warning')
     
     if 'user_id' in session and booking_id:
-        return redirect(url_for('booking.booking_detail', booking_id=booking_id))
+        return redirect(url_for('booking.booking_detail_public', booking_id=booking_id))
     elif 'user_id' in session:
         return redirect(url_for('payment.create_payment'))
     elif booking_id:
-        return redirect(url_for('booking.booking_detail', booking_id=booking_id))
+        return redirect(url_for('booking.booking_detail_public', booking_id=booking_id))
     else:
         return redirect(url_for('auth.login'))
 
@@ -176,7 +178,7 @@ def payment_success():
         flash('Không tìm thấy đơn đặt phòng', 'error')
         return redirect(url_for('main.index'))
     
-    booking_detail_url = url_for('booking.booking_detail', booking_id=booking_id)
+    booking_detail_url = url_for('booking.booking_detail_public', booking_id=booking_id)
     
     if 'user_id' in session:
         if booking.user_id == session.get('user_id'):

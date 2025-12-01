@@ -184,7 +184,6 @@
                             <td>{{ payment.payment_date[:10] if payment.payment_date else 'N/A' }}</td>
                             <td>
                                 {% if payment.payment_method == 'vnpay' %}VNPay
-                                {% elif payment.payment_method == 'momo' %}Momo
                                 {% elif payment.payment_method == 'hotel' %}Thanh toán tại khách sạn
                                 {% else %}{{ payment.payment_method }}
                                 {% endif %}

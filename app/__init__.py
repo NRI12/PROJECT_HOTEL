@@ -4,6 +4,7 @@ from flask_migrate import Migrate
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 from flask_mail import Mail
+from flask_session import Session
 from config.config import config
 import os
 
@@ -24,6 +25,7 @@ def create_app(config_name='development'):
     bcrypt.init_app(app)
     mail.init_app(app)
     CORS(app)
+    Session(app)  # Khởi tạo Flask-Session để quản lý session tốt hơn
 
     from app.routes.main_routes import main_bp
     from app.routes.auth_routes import auth_bp
